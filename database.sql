@@ -1,11 +1,11 @@
 PRAGMA foreign_keys = ON;
 
-CREATE TABLE Image {
+CREATE TABLE IF NOT EXISTS Image {
     id INTEGER PRIMARY KEY,
     path TEXT
 };
 
-CREATE TABLE Exercise {
+CREATE TABLE IF NOT EXISTS Exercise {
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     notes TEXT,
@@ -16,12 +16,12 @@ CREATE TABLE Exercise {
         ON DELETE SET NULL
 };
 
-CREATE TABLE TimeUnit {
+CREATE TABLE IF NOT EXISTS TimeUnit {
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL
 };
 
-CREATE TABLE ExerciseInstance {
+CREATE TABLE IF NOT EXISTS ExerciseInstance {
     id INTEGER PRIMARY KEY,
     rest_time INTEGER,
     time_unit_id INTEGER,
@@ -36,17 +36,18 @@ CREATE TABLE ExerciseInstance {
         ON DELETE RESTRICT
 };
 
-CREATE TABLE SetInfo {
+CREATE TABLE IF NOT EXISTS SetInfo {
+    id INTEGER PRIMARY KEY,
     ord INTEGER NOT NULL,
     exercise_inst_id INTEGER NOT NULL,
     reps INTEGER NOT NULL,
     weight INTEGER NOT NULL,
 
-    PRIMARY KEY(ord, exercise_inst_id),
     FOREIGN KEY (exercise_inst_id) REFERENCES ExerciseInstance(id)
+        ON DELETE CASCADE
 };
 
-CREATE TABLE Routine {
+CREATE TABLE IF NOT EXISTS Routine {
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
@@ -56,7 +57,7 @@ CREATE TABLE Routine {
         ON DELETE SET NULL
 };
 
-CREATE TABLE RoutineInstance {
+CREATE TABLE IF NOT EXISTS RoutineInstance {
     id INTEGER PRIMARY KEY,
     finish_timestamp INTEGER NOT NULL,
     routine_id INTEGER NOT NULL,
