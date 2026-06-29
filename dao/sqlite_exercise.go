@@ -27,8 +27,8 @@ func (d *SQLiteExerciseDAO) InsertExercise(m *model.Exercise) (int64, error) {
 	return res.LastInsertId()
 }
 
-func (d *SQLiteExerciseDAO) InsertExerciseInstance(m *model.ExerciseInstance) (int64, error) {
-	res, err := d.db.Exec(`INSERT INTO ExerciseInstance(rest_time, time_unit_id, exercise_id,
+func (d *SQLiteExerciseDAO) InsertPlannedExercise(m *model.PlannedExercise) (int64, error) {
+	res, err := d.db.Exec(`INSERT INTO PlannedExercise(rest_time, time_unit_id, exercise_id,
 		routine_id) VALUES (?, ?, ?, ?)`, m.RestTime, m.TimeUnitID, m.ExerciseID, m.RoutineID)
 
 	if err != nil {
@@ -39,8 +39,8 @@ func (d *SQLiteExerciseDAO) InsertExerciseInstance(m *model.ExerciseInstance) (i
 }
 
 func (d *SQLiteExerciseDAO) InsertSetInfo(m *model.SetInfo) (int64, error) {
-	res, err := d.db.Exec(`INSERT INTO SetInfo (ord, exercise_inst_id, reps, weight)
-		VALUES (?, ?, ?, ?)`, m.Ord, m.ExerciseInstanceID, m.Reps, m.Weight)
+	res, err := d.db.Exec(`INSERT INTO SetInfo (ord, exercise_inst_id, reps, notes)
+		VALUES (?, ?, ?, ?)`, m.Ord, m.PlannedExerciseID, m.Reps, m.Notes)
 
 	if err != nil {
 		return 0, err
@@ -62,10 +62,10 @@ func (d *SQLiteExerciseDAO) GetExerciseByID(id int64) (*model.Exercise, error) {
 	return &m, nil
 }
 
-func (d *SQLiteExerciseDAO) GetExerciseInstanceByID(id int64) (*model.ExerciseInstance, error) {
-	var m model.ExerciseInstance
+func (d *SQLiteExerciseDAO) GetPlannedExerciseByID(id int64) (*model.PlannedExercise, error) {
+	var m model.PlannedExercise
 	row := d.db.QueryRow(`SELECT id, rest_time, time_unit_id, exercise_id, routine_id 
-		FROM ExerciseInstance WHERE id = ?`, id)
+		FROM PlannedExercise WHERE id = ?`, id)
 	err := row.Scan(&m.ID, &m.RestTime, &m.TimeUnitID, &m.ExerciseID, &m.RoutineID)
 
 	if err != nil {
@@ -77,8 +77,8 @@ func (d *SQLiteExerciseDAO) GetExerciseInstanceByID(id int64) (*model.ExerciseIn
 
 func (d *SQLiteExerciseDAO) GetSetInfoByID(id int64) (*model.SetInfo, error) {
 	var m model.SetInfo
-	row := d.db.QueryRow(`SELECT id, ord, exercise_inst_id, reps, weight FROM SetInfo WHERE id = ?`, id)
-	err := row.Scan(&m.ID, &m.Ord, &m.ExerciseInstanceID, &m.Reps, &m.Weight)
+	row := d.db.QueryRow(`SELECT id, ord, exercise_inst_id, reps, notes FROM SetInfo WHERE id = ?`, id)
+	err := row.Scan(&m.ID, &m.Ord, &m.PlannedExerciseID, &m.Reps, &m.Notes)
 
 	if err != nil {
 		return nil, err
@@ -111,18 +111,18 @@ func (d *SQLiteExerciseDAO) GetAllExercises() ([]model.Exercise, error) {
 	return list, nil
 }
 
-func (d *SQLiteExerciseDAO) GetAllExerciseInstances() ([]model.ExerciseInstance, error) {
+func (d *SQLiteExerciseDAO) GetAllPlannedExercises() ([]model.PlannedExercise, error) {
 	rows, err := d.db.Query(`SELECT id, rest_time, time_unit_id, exercise_id, routine_id
-		FROM ExerciseInstance`)
+		FROM PlannedExercise`)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
-	var list []model.ExerciseInstance
+	var list []model.PlannedExercise
 	for rows.Next() {
-		var m model.ExerciseInstance
+		var m model.PlannedExercise
 
 		err := rows.Scan(&m.ID, &m.RestTime, &m.TimeUnitID, &m.ExerciseID, &m.RoutineID)
 		if err != nil {
@@ -144,8 +144,8 @@ func (d *SQLiteExerciseDAO) DeleteExercise(id int64) error {
 	return err
 }
 
-func (d *SQLiteExerciseDAO) DeleteExerciseInstance(id int64) error {
-	_, err := d.db.Exec("DELETE FROM ExerciseInstance WHERE id = ?", id)
+func (d *SQLiteExerciseDAO) DeletePlannedExercise(id int64) error {
+	_, err := d.db.Exec("DELETE FROM PlannedExercise WHERE id = ?", id)
 	return err
 }
 

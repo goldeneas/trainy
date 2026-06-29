@@ -27,15 +27,8 @@ func (d *SQLiteRoutineDAO) InsertRoutine(m *model.Routine) (int64, error) {
 	return res.LastInsertId()
 }
 
-func (d *SQLiteRoutineDAO) InsertRoutineInstance(m *model.RoutineInstance) (int64, error) {
-	res, err := d.db.Exec("INSERT INTO RoutineInstance (finish_timestamp, routine_id) VALUES (?, ?)",
-		m.FinishTimestamp, m.RoutineID)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return res.LastInsertId()
+func (d *SQLiteRoutineDAO) RegisterRoutineInstance(r *model.Routine, i []model.WeightInfo) {
+	return id, nil
 }
 
 func (d *SQLiteRoutineDAO) GetRoutineByID(id int64) (*model.Routine, error) {
@@ -56,6 +49,18 @@ func (d *SQLiteRoutineDAO) GetRoutineInstanceByID(id int64) (*model.RoutineInsta
 
 	row := d.db.QueryRow("SELECT id, finish_timestamp, routine_id FROM RoutineInstance WHERE id = ?", id)
 	err := row.Scan(&m.ID, &m.FinishTimestamp, &m.RoutineID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &m, nil
+}
+
+func (d *SQLiteRoutineDAO) GetWeightInfoByID(id int64) (*model.WeightInfo, error) {
+	var m model.WeightInfo
+	row := d.db.QueryRow(`SELECT id, weight, routine_inst_id, set_info_id FROM WeightInfo WHERE id = ?`, id)
+	err := row.Scan(&m.ID, &m.Weight, &m.RoutineInstanceID, &m.SetInfoID)
 
 	if err != nil {
 		return nil, err
@@ -119,5 +124,10 @@ func (d *SQLiteRoutineDAO) DeleteRoutine(id int64) error {
 
 func (d *SQLiteRoutineDAO) DeleteRoutineInstance(id int64) error {
 	_, err := d.db.Exec("DELETE FROM RoutineInstance WHERE id = ?", id)
+	return err
+}
+
+func (d *SQLiteRoutineDAO) DeleteWeightInfo(id int64) error {
+	_, err := d.db.Exec("DELETE FROM WeightInfo WHERE id = ?", id)
 	return err
 }

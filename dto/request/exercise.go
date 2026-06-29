@@ -1,0 +1,23 @@
+package dto_request
+
+type CreateExercise struct {
+	Name         string `json:"name"`
+	Notes        string `json:"notes"`
+	Instructions string `json:"instructions"`
+	ImageID      *int64 `json:"image_id"`
+}
+
+type RegisterPlannedExercise struct {
+	RestTime   *int      `json:"rest_time"`
+	TimeUnitID *int64    `json:"time_unit_id"`
+	ExerciseID int64     `json:"exercise_id"`
+	RoutineID  int64     `json:"routine_id"`
+	SetInfos   []SetInfo `json:"set_infos"`
+}
+
+type SetInfo struct {
+	Ord               int    `json:"ord"`
+	PlannedExerciseID int64  `json:"exercise_inst_id"`
+	Reps              int    `json:"reps"`
+	Notes             string `json:"notes"`
+}
