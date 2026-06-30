@@ -1,19 +1,23 @@
 package dao
 
-import "github.com/goldeneas/trainy/model"
+import (
+	"github.com/goldeneas/trainy/model"
+	"github.com/goldeneas/trainy/sqlw"
+)
 
 type RoutineDAO interface {
-	InsertRoutine(m *model.Routine) (int64, error)
-	RegisterRoutineInstance(r *model.RoutineInstance, i []model.WeightInfo) (int64, error)
+	InsertRoutine(dbtx sqlw.DBTX, r *model.Routine) (int64, error)
+	InsertRoutineInstance(dbtx sqlw.DBTX, r *model.RoutineInstance) (int64, error)
+	InsertWeightInfo(dbtx sqlw.DBTX, i *model.WeightInfo) (int64, error)
 
-	GetRoutineByID(id int64) (*model.Routine, error)
-	GetRoutineInstanceByID(id int64) (*model.RoutineInstance, error)
-	GetWeightInfoByID(id int64) (*model.WeightInfo, error)
+	GetRoutineByID(dbtx sqlw.DBTX, id int64) (*model.Routine, error)
+	GetRoutineInstanceByID(dbtx sqlw.DBTX, id int64) (*model.RoutineInstance, error)
+	GetWeightInfoByID(dbtx sqlw.DBTX, id int64) (*model.WeightInfo, error)
 
-	GetAllRoutines() ([]model.Routine, error)
-	GetAllRoutineInstances() ([]model.RoutineInstance, error)
+	GetAllRoutines(dbtx sqlw.DBTX) ([]model.Routine, error)
+	GetAllRoutineInstances(dbtx sqlw.DBTX) ([]model.RoutineInstance, error)
 
-	DeleteRoutine(id int64) error
-	DeleteRoutineInstance(id int64) error
-	DeleteWeightInfo(id int64) error
+	DeleteRoutine(dbtx sqlw.DBTX, id int64) error
+	DeleteRoutineInstance(dbtx sqlw.DBTX, id int64) error
+	DeleteWeightInfo(dbtx sqlw.DBTX, id int64) error
 }

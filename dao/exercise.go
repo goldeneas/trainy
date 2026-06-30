@@ -1,20 +1,23 @@
 package dao
 
-import "github.com/goldeneas/trainy/model"
+import (
+	"github.com/goldeneas/trainy/model"
+	"github.com/goldeneas/trainy/sqlw"
+)
 
 type ExerciseDAO interface {
-	InsertExercise(m *model.Exercise) (int64, error)
-	InsertPlannedExercise(m *model.PlannedExercise) (int64, error)
-	InsertSetInfo(m *model.SetInfo) (int64, error)
+	InsertExercise(dbtx sqlw.DBTX, m *model.Exercise) (int64, error)
+	InsertPlannedExercise(dbtx sqlw.DBTX, m *model.PlannedExercise) (int64, error)
+	InsertSetInfo(dbtx sqlw.DBTX, m *model.SetInfo) (int64, error)
 
-	GetExerciseByID(id int64) (*model.Exercise, error)
-	GetPlannedExerciseByID(id int64) (*model.PlannedExercise, error)
-	GetSetInfoByID(id int64) (*model.SetInfo, error)
+	GetExerciseByID(dbtx sqlw.DBTX, id int64) (*model.Exercise, error)
+	GetPlannedExerciseByID(dbtx sqlw.DBTX, id int64) (*model.PlannedExercise, error)
+	GetSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.SetInfo, error)
 
-	GetAllExercises() ([]model.Exercise, error)
-	GetAllPlannedExercises() ([]model.PlannedExercise, error)
+	GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, error)
+	GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error)
 
-	DeleteExercise(id int64) error
-	DeletePlannedExercise(id int64) error
-	DeleteSetInfo(id int64) error
+	DeleteExercise(dbtx sqlw.DBTX, id int64) error
+	DeletePlannedExercise(dbtx sqlw.DBTX, id int64) error
+	DeleteSetInfo(dbtx sqlw.DBTX, id int64) error
 }

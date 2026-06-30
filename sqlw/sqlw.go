@@ -1,31 +1,17 @@
 package sqlw
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
-func BulkInsert(db sql.DBTX, base string, data [][]any) error {
-	sqlStr := "("
-	for _ = range data[0] {
-		sqlStr += "?, "
-	}
-
-	// remove last ", "
-	sqlStr = sqlStr[0 : len(sqlStr)-2]
-	sqlStr += "),"
-
-	var vals []any
-	for _, row := range data {
-		for idx := range len(row) {
-			vals = append(vals, row[idx])
-		}
-	}
-
-	//trim the last ,
-	sqlStr = sqlStr[0 : len(sqlStr)-1]
-	stmt, err := db.Prepare(sqlStr)
-	if err != nil {
-		return err
-	}
-
-	_, err = stmt.Exec(vals...)
-	return err
+type DBTX interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	Prepare(query string) (*sql.Stmt, error)
+	Exec(query string, args ...any) (sql.Result, error)
+	QueryRow(query string, args ...any) *sql.Row
+	Query(query string, args ...any) (*sql.Rows, error)
 }
