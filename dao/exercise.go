@@ -14,7 +14,7 @@ type ExerciseDAO interface {
 	GetPlannedExerciseByID(dbtx sqlw.DBTX, id int64) (*model.PlannedExercise, error)
 	GetSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.SetInfo, error)
 
-	GetAllSetInfoByPlannedExerciseID(id int64) ([]model.SetInfo, error)
+	GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id int64) ([]model.SetInfo, error)
 	GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, error)
 	GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error)
 

@@ -6,18 +6,18 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/goldeneas/trainy/dao"
 	dto_request "github.com/goldeneas/trainy/dto/request"
 	"github.com/goldeneas/trainy/model"
+	"github.com/goldeneas/trainy/service"
 )
 
 type RoutineController struct {
-	dao dao.RoutineDAO
+	service *service.RoutineService
 }
 
-func EnableRoutineController(router *gin.Engine, routineDAO dao.RoutineDAO) {
+func EnableRoutineController(router *gin.Engine, routineService *service.RoutineService) {
 	c := &RoutineController{
-		dao: routineDAO,
+		service: routineService,
 	}
 
 	v1 := router.Group("/v1/routine")
@@ -51,7 +51,7 @@ func (c *RoutineController) CreateRoutine(ctx *gin.Context) {
 		ImageID:     request.ImageID,
 	}
 
-	id, err := c.dao.InsertRoutine(&r)
+	id, err := c.service.RegisterRoutine(&r)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -61,7 +61,7 @@ func (c *RoutineController) CreateRoutine(ctx *gin.Context) {
 }
 
 func (c *RoutineController) GetAllRoutines(ctx *gin.Context) {
-	res, err := c.dao.GetAllRoutines()
+	res, err := c.service.GetAllRoutines()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -82,7 +82,7 @@ func (c *RoutineController) GetRoutineByID(ctx *gin.Context) {
 		return
 	}
 
-	res, err := c.dao.GetRoutineByID(id)
+	res, err := c.service.GetRoutineByID(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "routine not found"})
 		return
@@ -99,7 +99,7 @@ func (c *RoutineController) DeleteRoutine(ctx *gin.Context) {
 		return
 	}
 
-	err = c.dao.DeleteRoutine(id)
+	err = c.service.DeleteRoutine(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -130,7 +130,7 @@ func (c *RoutineController) RegisterRoutineInstance(ctx *gin.Context) {
 		}
 	}
 
-	id, err := c.dao.RegisterRoutineInstance(&r, infos)
+	id, err := c.service.RegisterRoutineInstance(&r, infos)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -140,7 +140,7 @@ func (c *RoutineController) RegisterRoutineInstance(ctx *gin.Context) {
 }
 
 func (c *RoutineController) GetAllRoutineInstances(ctx *gin.Context) {
-	res, err := c.dao.GetAllRoutineInstances()
+	res, err := c.service.GetAllRoutineInstances()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -160,7 +160,7 @@ func (c *RoutineController) GetRoutineInstanceByID(ctx *gin.Context) {
 		return
 	}
 
-	res, err := c.dao.GetRoutineInstanceByID(id)
+	res, err := c.service.GetRoutineInstanceByID(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "routine instance not found"})
 		return
@@ -177,7 +177,7 @@ func (c *RoutineController) DeleteRoutineInstance(ctx *gin.Context) {
 		return
 	}
 
-	err = c.dao.DeleteRoutineInstance(id)
+	err = c.service.DeleteRoutineInstance(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

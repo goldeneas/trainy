@@ -10,6 +10,7 @@ import (
 
 	"github.com/goldeneas/trainy/controller"
 	"github.com/goldeneas/trainy/dao"
+	"github.com/goldeneas/trainy/service"
 )
 
 func main() {
@@ -31,10 +32,13 @@ func main() {
 	exerciseDAO := dao.NewSQLiteExerciseDAO(db)
 	routineDAO := dao.NewSQLiteRoutineDAO(db)
 
+	exerciseService := service.NewExerciseService(db, exerciseDAO)
+	routineService := service.NewRoutineService(db, routineDAO)
+
 	r := gin.Default()
 
-	controller.EnableExerciseController(r, exerciseDAO)
-	controller.EnableRoutineController(r, routineDAO)
+	controller.EnableExerciseController(r, exerciseService)
+	controller.EnableRoutineController(r, routineService)
 
 	r.Run()
 }

@@ -9,6 +9,10 @@ import (
 
 type SQLiteRoutineDAO struct{}
 
+func NewSQLiteRoutineDAO(db *sql.DB) *SQLiteRoutineDAO {
+	return &SQLiteRoutineDAO{}
+}
+
 func (d *SQLiteRoutineDAO) InsertRoutine(dbtx sqlw.DBTX, m *model.Routine) (int64, error) {
 	res, err := dbtx.Exec("INSERT INTO Routine(name, description, image_id) VALUES (?, ?, ?)",
 		m.Name, m.Description, m.ImageID)

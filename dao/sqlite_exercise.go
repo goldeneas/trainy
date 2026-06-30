@@ -9,6 +9,10 @@ import (
 
 type SQLiteExerciseDAO struct{}
 
+func NewSQLiteExerciseDAO(db *sql.DB) *SQLiteExerciseDAO {
+	return &SQLiteExerciseDAO{}
+}
+
 func (d *SQLiteExerciseDAO) InsertExercise(dbtx sqlw.DBTX, m *model.Exercise) (int64, error) {
 	res, err := dbtx.Exec(`INSERT INTO Exercise(name, notes, instructions, image_id)
 		VALUES (?, ?, ?, ?)`, m.Name, m.Notes, m.Instructions, m.ImageID)

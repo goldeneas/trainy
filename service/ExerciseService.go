@@ -12,41 +12,44 @@ type ExerciseService struct {
 	exerciseDAO dao.ExerciseDAO
 }
 
-func NewExerciseService(db *sql.DB, routineDAO dao.RoutineDAO) *RoutineService {
-	return &RoutineService{
-		db:         db,
-		routineDAO: routineDAO,
+func NewExerciseService(db *sql.DB, exerciseDAO dao.ExerciseDAO) *ExerciseService {
+	return &ExerciseService{
+		db:          db,
+		exerciseDAO: exerciseDAO,
 	}
 }
 
-func (s *ExerciseService) RegisterExercise(e *model.Exercise) error {
-	_, err := s.exerciseDAO.InsertExercise(s.db, e)
-	return err
+func (s *ExerciseService) RegisterExercise(e *model.Exercise) (int64, error) {
+	return s.exerciseDAO.InsertExercise(s.db, e)
 }
 
-func (s *ExerciseService) RegisterPlannedExercise(e *model.PlannedExercise, infos []model.SetInfo) error {
+func (s *ExerciseService) RegisterPlannedExercise(e *model.PlannedExercise, infos []model.SetInfo) (int64, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer tx.Rollback()
 
-	id, err := s.exerciseDAO.InsertPlannedExercise(s.db, e)
+	id, err := s.exerciseDAO.InsertPlannedExercise(tx, e)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	for _, info := range infos {
-		info.ID = id
+		info.PlannedExerciseID = id
 		_, err = s.exerciseDAO.InsertSetInfo(tx, &info)
 
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
 
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
 func (s *ExerciseService) GetExerciseByID(id int64) (*model.Exercise, error) {
@@ -62,6 +65,7 @@ func (s *ExerciseService) GetSetInfoByID(id int64) (*model.SetInfo, error) {
 }
 
 func (s *ExerciseService) GetAllSetInfoByPlannedExerciseID(id int64) ([]model.SetInfo, error) {
+	return s.exerciseDAO.GetAllSetInfoByPlannedExerciseID(s.db, id)
 }
 
 func (s *ExerciseService) GetAllExercises() ([]model.Exercise, error) {

@@ -5,18 +5,18 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/goldeneas/trainy/dao"
 	dto_request "github.com/goldeneas/trainy/dto/request"
 	"github.com/goldeneas/trainy/model"
+	"github.com/goldeneas/trainy/service"
 )
 
 type ExerciseController struct {
-	dao dao.ExerciseDAO
+	service *service.ExerciseService
 }
 
-func EnableExerciseController(router *gin.Engine, exerciseDAO dao.ExerciseDAO) {
+func EnableExerciseController(router *gin.Engine, exerciseService *service.ExerciseService) {
 	c := &ExerciseController{
-		dao: exerciseDAO,
+		service: exerciseService,
 	}
 
 	v1 := router.Group("/v1/exercise")
@@ -44,14 +44,14 @@ func (c *ExerciseController) CreateExercise(ctx *gin.Context) {
 		return
 	}
 
-	model := model.Exercise{
+	ex := model.Exercise{
 		Name:         m.Name,
 		Notes:        m.Notes,
 		ImageID:      m.ImageID,
 		Instructions: m.Instructions,
 	}
 
-	id, err := c.dao.InsertExercise(&model)
+	id, err := c.service.RegisterExercise(&ex)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -61,7 +61,7 @@ func (c *ExerciseController) CreateExercise(ctx *gin.Context) {
 }
 
 func (c *ExerciseController) GetAllExercises(ctx *gin.Context) {
-	res, err := c.dao.GetAllExercises()
+	res, err := c.service.GetAllExercises()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -82,7 +82,7 @@ func (c *ExerciseController) GetExerciseByID(ctx *gin.Context) {
 		return
 	}
 
-	res, err := c.dao.GetExerciseByID(id)
+	res, err := c.service.GetExerciseByID(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "exercise not found"})
 		return
@@ -99,7 +99,7 @@ func (c *ExerciseController) DeleteExercise(ctx *gin.Context) {
 		return
 	}
 
-	err = c.dao.DeleteExercise(id)
+	err = c.service.DeleteExercise(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -117,14 +117,24 @@ func (c *ExerciseController) RegisterPlannedExercise(ctx *gin.Context) {
 		return
 	}
 
-	model := model.PlannedExercise{
+	pe := model.PlannedExercise{
 		RestTime:   m.RestTime,
 		TimeUnitID: m.TimeUnitID,
 		ExerciseID: m.ExerciseID,
 		RoutineID:  m.RoutineID,
 	}
 
-	id, err := c.dao.InsertPlannedExercise(&model)
+	infos := make([]model.SetInfo, len(m.SetInfos))
+	for i, info := range m.SetInfos {
+		infos[i] = model.SetInfo{
+			Ord:               info.Ord,
+			PlannedExerciseID: info.PlannedExerciseID,
+			Reps:              info.Reps,
+			Notes:             info.Notes,
+		}
+	}
+
+	id, err := c.service.RegisterPlannedExercise(&pe, infos)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -134,7 +144,7 @@ func (c *ExerciseController) RegisterPlannedExercise(ctx *gin.Context) {
 }
 
 func (c *ExerciseController) GetAllPlannedExercises(ctx *gin.Context) {
-	res, err := c.dao.GetAllPlannedExercises()
+	res, err := c.service.GetAllPlannedExercises()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -154,7 +164,7 @@ func (c *ExerciseController) GetPlannedExerciseByID(ctx *gin.Context) {
 		return
 	}
 
-	res, err := c.dao.GetPlannedExerciseByID(id)
+	res, err := c.service.GetPlannedExerciseByID(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "exercise instance not found"})
 		return
@@ -171,7 +181,7 @@ func (c *ExerciseController) DeletePlannedExercise(ctx *gin.Context) {
 		return
 	}
 
-	err = c.dao.DeletePlannedExercise(id)
+	err = c.service.DeletePlannedExercise(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

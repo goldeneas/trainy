@@ -19,39 +19,41 @@ func NewRoutineService(db *sql.DB, routineDAO dao.RoutineDAO) *RoutineService {
 	}
 }
 
-func (s *RoutineService) RegisterRoutine(r *model.Routine) error {
-	_, err := s.routineDAO.InsertRoutine(s.db, r)
-	return err
+func (s *RoutineService) RegisterRoutine(r *model.Routine) (int64, error) {
+	return s.routineDAO.InsertRoutine(s.db, r)
 }
 
-func (s *RoutineService) RegisterRoutineInstance(r *model.RoutineInstance, infos []model.WeightInfo) error {
+func (s *RoutineService) RegisterRoutineInstance(r *model.RoutineInstance, infos []model.WeightInfo) (int64, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer tx.Rollback()
 
 	id, err := s.routineDAO.InsertRoutineInstance(tx, r)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	for _, info := range infos {
-		info.ID = id
+		info.RoutineInstanceID = id
 		_, err = s.routineDAO.InsertWeightInfo(tx, &info)
 
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
 
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
-func (s *RoutineService) RegisterWeightInfo(i *model.WeightInfo) error {
-	_, err := s.routineDAO.InsertWeightInfo(s.db, i)
-	return err
+func (s *RoutineService) RegisterWeightInfo(i *model.WeightInfo) (int64, error) {
+	return s.routineDAO.InsertWeightInfo(s.db, i)
 }
 
 func (s *RoutineService) GetRoutineByID(id int64) (*model.Routine, error) {
