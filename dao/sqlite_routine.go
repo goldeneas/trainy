@@ -27,8 +27,22 @@ func (d *SQLiteRoutineDAO) InsertRoutine(m *model.Routine) (int64, error) {
 	return res.LastInsertId()
 }
 
-func (d *SQLiteRoutineDAO) RegisterRoutineInstance(r *model.Routine, i []model.WeightInfo) {
-	return id, nil
+func (d *SQLiteRoutineDAO) RegisterRoutineInstance(r *model.Routine, i []model.WeightInfo) (int64, error) {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	defer tx.Rollback()
+
+	res, err := tx.Exec("INSERT INTO RoutineInstance(finish_timestamp, routine_id) VALUES (?, ?)")
+	if err != nil {
+		return 0, err
+	}
+
+	instanceID := res.LastInsertId()
+
+	return instanceID, nil
 }
 
 func (d *SQLiteRoutineDAO) GetRoutineByID(id int64) (*model.Routine, error) {
