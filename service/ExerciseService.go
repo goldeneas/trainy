@@ -24,7 +24,37 @@ func (s *ExerciseService) RegisterExercise(e *model.Exercise) error {
 	return err
 }
 
-func (s *ExerciseService) RegisterPlannedExercise(e *model.PlannedExercise) error {
+func (s *ExerciseService) RegisterPlannedExercise(e *model.PlannedExercise, infos []model.SetInfo) error {
 	_, err := s.exerciseDAO.InsertPlannedExercise(s.db, e)
-	return err
+}
+
+func (s *ExerciseService) GetExerciseByID(id int64) (*model.Exercise, error) {
+	return s.exerciseDAO.GetExerciseByID(s.db, id)
+}
+
+func (s *ExerciseService) GetPlannedExerciseByID(id int64) (*model.PlannedExercise, error) {
+	return s.exerciseDAO.GetPlannedExerciseByID(s.db, id)
+}
+
+func (s *ExerciseService) GetSetInfoByID(id int64) (*model.SetInfo, error) {
+	return s.exerciseDAO.GetSetInfoByID(s.db, id)
+}
+
+func (s *ExerciseService) GetAllSetInfoByPlannedExerciseID(id int64) ([]model.SetInfo, error) {
+}
+
+func (s *ExerciseService) GetAllExercises() ([]model.Exercise, error) {
+	return s.exerciseDAO.GetAllExercises(s.db)
+}
+
+func (s *ExerciseService) GetAllPlannedExercises() ([]model.PlannedExercise, error) {
+	return s.exerciseDAO.GetAllPlannedExercises(s.db)
+}
+
+func (s *ExerciseService) DeleteExercise(id int64) error {
+	return s.exerciseDAO.DeleteExercise(s.db, id)
+}
+
+func (s *ExerciseService) DeletePlannedExercise(id int64) error {
+	return s.exerciseDAO.DeletePlannedExercise(s.db, id)
 }
