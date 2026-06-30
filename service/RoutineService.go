@@ -67,6 +67,7 @@ func (s *RoutineService) GetWeightInfoByID(id int64) (*model.WeightInfo, error) 
 }
 
 func (s *RoutineService) GetAllWeightInfoByRoutineInstanceID(id int64) ([]model.WeightInfo, error) {
+	return s.routineDAO.GetAllWeightInfoByRoutineInstanceID(s.db, id)
 }
 
 func (s *RoutineService) GetAllRoutines() ([]model.Routine, error) {

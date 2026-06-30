@@ -14,6 +14,7 @@ type RoutineDAO interface {
 	GetRoutineInstanceByID(dbtx sqlw.DBTX, id int64) (*model.RoutineInstance, error)
 	GetWeightInfoByID(dbtx sqlw.DBTX, id int64) (*model.WeightInfo, error)
 
+	GetAllWeightInfoByRoutineInstanceID(dbtx sqlw.DBTX, id int64) ([]model.WeightInfo, error)
 	GetAllRoutines(dbtx sqlw.DBTX) ([]model.Routine, error)
 	GetAllRoutineInstances(dbtx sqlw.DBTX) ([]model.RoutineInstance, error)
 

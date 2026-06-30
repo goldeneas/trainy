@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"database/sql"
+
 	"github.com/goldeneas/trainy/model"
 	"github.com/goldeneas/trainy/sqlw"
 )
@@ -30,7 +32,7 @@ func (d *SQLiteExerciseDAO) InsertPlannedExercise(dbtx sqlw.DBTX, m *model.Plann
 }
 
 func (d *SQLiteExerciseDAO) InsertSetInfo(dbtx sqlw.DBTX, m *model.SetInfo) (int64, error) {
-	res, err := dbtx.Exec(`INSERT INTO SetInfo (ord, exercise_inst_id, reps, notes)
+	res, err := dbtx.Exec(`INSERT INTO SetInfo (ord, planned_exercise_id, reps, notes)
 		VALUES (?, ?, ?, ?)`, m.Ord, m.PlannedExerciseID, m.Reps, m.Notes)
 
 	if err != nil {
@@ -68,7 +70,7 @@ func (d *SQLiteExerciseDAO) GetPlannedExerciseByID(dbtx sqlw.DBTX, id int64) (*m
 
 func (d *SQLiteExerciseDAO) GetSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.SetInfo, error) {
 	var m model.SetInfo
-	row := dbtx.QueryRow(`SELECT id, ord, exercise_inst_id, reps, notes FROM SetInfo WHERE id = ?`, id)
+	row := dbtx.QueryRow(`SELECT id, ord, planned_exercise_id, reps, notes FROM SetInfo WHERE id = ?`, id)
 	err := row.Scan(&m.ID, &m.Ord, &m.PlannedExerciseID, &m.Reps, &m.Notes)
 
 	if err != nil {
@@ -78,56 +80,25 @@ func (d *SQLiteExerciseDAO) GetSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.Set
 	return &m, nil
 }
 
+func (s *SQLiteExerciseDAO) GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id int64) ([]model.SetInfo, error) {
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.SetInfo) error {
+		return rows.Scan(t.ID, t.Ord, t.PlannedExerciseID, t.Reps, t.Notes)
+	}, `SELECT id, ord, planned_exercise_id, reps, notes
+		FROM SetInfo
+		WHERE planned_exercise_id = ?`, id)
+}
+
 func (d *SQLiteExerciseDAO) GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, error) {
-	rows, err := dbtx.Query("SELECT id, name, notes, instructions, image_id FROM Exercise")
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []model.Exercise
-	for rows.Next() {
-		var m model.Exercise
-		if err := rows.Scan(&m.ID, &m.Name, &m.Notes, &m.Instructions, &m.ImageID); err != nil {
-			return nil, err
-		}
-
-		list = append(list, m)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return list, nil
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.Exercise) error {
+		return rows.Scan(t.ID, t.Name, t.Notes, t.Instructions, t.ImageID)
+	}, "SELECT id, name, notes, instructions, image_id FROM Exercise")
 }
 
 func (d *SQLiteExerciseDAO) GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error) {
-	rows, err := dbtx.Query(`SELECT id, rest_time, time_unit_id, exercise_id, routine_id
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.PlannedExercise) error {
+		return rows.Scan(t.ID, t.RestTime, t.TimeUnitID, t.ExerciseID, t.RoutineID)
+	}, `SELECT id, rest_time, time_unit_id, exercise_id, routine_id
 		FROM PlannedExercise`)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []model.PlannedExercise
-	for rows.Next() {
-		var m model.PlannedExercise
-
-		err := rows.Scan(&m.ID, &m.RestTime, &m.TimeUnitID, &m.ExerciseID, &m.RoutineID)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, m)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return list, nil
 }
 
 func (d *SQLiteExerciseDAO) DeleteExercise(dbtx sqlw.DBTX, id int64) error {

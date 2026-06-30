@@ -19,7 +19,7 @@ type PlannedExercise struct {
 type SetInfo struct {
 	ID                int64  `json:"id"`
 	Ord               int    `json:"ord"`
-	PlannedExerciseID int64  `json:"exercise_inst_id"`
+	PlannedExerciseID int64  `json:"planned_exercise_id"`
 	Reps              int    `json:"reps"`
 	Notes             string `json:"notes"`
 }

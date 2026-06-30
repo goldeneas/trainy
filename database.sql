@@ -39,11 +39,11 @@ CREATE TABLE IF NOT EXISTS PlannedExercise (
 CREATE TABLE IF NOT EXISTS SetInfo (
     id INTEGER PRIMARY KEY,
     ord INTEGER NOT NULL,
-    exercise_inst_id INTEGER NOT NULL,
+    planned_exercise_id INTEGER NOT NULL,
     reps INTEGER NOT NULL,
     notes TEXT,
 
-    FOREIGN KEY (exercise_inst_id) REFERENCES PlannedExercise(id)
+    FOREIGN KEY (planned_exercise_id) REFERENCES PlannedExercise(id)
         ON DELETE CASCADE
 );
 

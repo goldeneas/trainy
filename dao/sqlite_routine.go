@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"database/sql"
+
 	"github.com/goldeneas/trainy/model"
 	"github.com/goldeneas/trainy/sqlw"
 )
@@ -78,52 +80,24 @@ func (d *SQLiteRoutineDAO) GetWeightInfoByID(dbtx sqlw.DBTX, id int64) (*model.W
 	return &m, nil
 }
 
+func (d *SQLiteRoutineDAO) GetAllWeightInfoByRoutineInstanceID(dbtx sqlw.DBTX, id int64) ([]model.WeightInfo, error) {
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.WeightInfo) error {
+		return rows.Scan(t.ID, t.Weight, t.RoutineInstanceID, t.SetInfoID)
+	}, `SELECT id, weight, routine_inst_id, set_info_id
+		FROM RoutineInstance
+		WHERE routine_inst_id = ?`, id)
+}
+
 func (d *SQLiteRoutineDAO) GetAllRoutines(dbtx sqlw.DBTX) ([]model.Routine, error) {
-	rows, err := dbtx.Query("SELECT id, name, description, image_id FROM Routine")
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []model.Routine
-	for rows.Next() {
-		var m model.Routine
-		if err := rows.Scan(&m.ID, &m.Name, &m.Description, &m.ImageID); err != nil {
-			return nil, err
-		}
-
-		list = append(list, m)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return list, nil
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.Routine) error {
+		return rows.Scan(t.ID, t.Name, t.Description, t.ImageID)
+	}, "SELECT id, name, description, image_id FROM Routine")
 }
 
 func (d *SQLiteRoutineDAO) GetAllRoutineInstances(dbtx sqlw.DBTX) ([]model.RoutineInstance, error) {
-	rows, err := dbtx.Query("SELECT id, finish_timestamp, routine_id FROM RoutineInstance")
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-	var list []model.RoutineInstance
-	for rows.Next() {
-		var m model.RoutineInstance
-		if err := rows.Scan(&m.ID, &m.FinishTimestamp, &m.RoutineID); err != nil {
-			return nil, err
-		}
-
-		list = append(list, m)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return list, nil
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.RoutineInstance) error {
+		return rows.Scan(t.ID, t.FinishTimestamp, t.RoutineID)
+	}, "SELECT id, finish_timestamp, routine_id FROM RoutineInstance")
 }
 
 func (d *SQLiteRoutineDAO) DeleteRoutine(dbtx sqlw.DBTX, id int64) error {

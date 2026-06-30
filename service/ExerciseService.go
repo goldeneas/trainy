@@ -25,7 +25,28 @@ func (s *ExerciseService) RegisterExercise(e *model.Exercise) error {
 }
 
 func (s *ExerciseService) RegisterPlannedExercise(e *model.PlannedExercise, infos []model.SetInfo) error {
-	_, err := s.exerciseDAO.InsertPlannedExercise(s.db, e)
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	id, err := s.exerciseDAO.InsertPlannedExercise(s.db, e)
+	if err != nil {
+		return err
+	}
+
+	for _, info := range infos {
+		info.ID = id
+		_, err = s.exerciseDAO.InsertSetInfo(tx, &info)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (s *ExerciseService) GetExerciseByID(id int64) (*model.Exercise, error) {
