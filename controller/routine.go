@@ -122,11 +122,12 @@ func (c *RoutineController) RegisterRoutineInstance(ctx *gin.Context) {
 		FinishTimestamp: time.Now().Unix(),
 	}
 
-	infos := make([]model.WeightInfo, len(request.WeightInfo))
-	for i, info := range request.WeightInfo {
-		infos[i] = model.WeightInfo{
-			Weight:    info.Weight,
-			SetInfoID: info.SetInfoID,
+	infos := make([]model.ActualSetInfo, len(request.ActualSetInfos))
+	for i, info := range request.ActualSetInfos {
+		infos[i] = model.ActualSetInfo{
+			Weight:           info.Weight,
+			PlannedSetInfoID: info.PlannedSetInfoID,
+			ActualReps:       info.ActualReps,
 		}
 	}
 

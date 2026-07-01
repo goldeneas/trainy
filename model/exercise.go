@@ -1,25 +1,25 @@
 package model
 
 type Exercise struct {
-	ID           int64  `json:"id"`
-	Name         string `json:"name"`
-	Notes        string `json:"notes"`
-	Instructions string `json:"instructions"`
-	ImageID      *int64 `json:"image_id"`
+	ID           int64
+	Name         string
+	Notes        string
+	Instructions string
+	ImageID      *int64
 }
 
 type PlannedExercise struct {
-	ID         int64  `json:"id"`
-	RestTime   *int   `json:"rest_time"`
-	TimeUnitID *int64 `json:"time_unit_id"`
-	ExerciseID int64  `json:"exercise_id"`
-	RoutineID  int64  `json:"routine_id"`
+	ID         int64
+	RestTime   *int
+	TimeUnitID *int64
+	ExerciseID int64
+	RoutineID  int64
 }
 
-type SetInfo struct {
-	ID                int64  `json:"id"`
-	Ord               int    `json:"ord"`
-	PlannedExerciseID int64  `json:"planned_exercise_id"`
-	Reps              int    `json:"reps"`
-	Notes             string `json:"notes"`
+type PlannedSetInfo struct {
+	ID                int64
+	Ord               int
+	PlannedExerciseID int64
+	Reps              int
+	Notes             string
 }

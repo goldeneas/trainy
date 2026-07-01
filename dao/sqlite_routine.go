@@ -35,9 +35,9 @@ func (d *SQLiteRoutineDAO) InsertRoutineInstance(dbtx sqlw.DBTX, m *model.Routin
 	return res.LastInsertId()
 }
 
-func (d *SQLiteRoutineDAO) InsertWeightInfo(dbtx sqlw.DBTX, i *model.WeightInfo) (int64, error) {
-	res, err := dbtx.Exec("INSERT INTO WeightInfo (weight, routine_inst_id, set_info_id) VALUES (?, ?, ?)",
-		i.Weight, i.RoutineInstanceID, i.SetInfoID)
+func (d *SQLiteRoutineDAO) InsertActualSetInfo(dbtx sqlw.DBTX, i *model.ActualSetInfo) (int64, error) {
+	res, err := dbtx.Exec("INSERT INTO ActualSetInfo (weight, routine_inst_id, set_info_id, actual_reps) VALUES (?, ?, ?, ?)",
+		i.Weight, i.RoutineInstanceID, i.PlannedSetInfoID, i.ActualReps)
 
 	if err != nil {
 		return 0, err
@@ -72,10 +72,10 @@ func (d *SQLiteRoutineDAO) GetRoutineInstanceByID(dbtx sqlw.DBTX, id int64) (*mo
 	return &m, nil
 }
 
-func (d *SQLiteRoutineDAO) GetWeightInfoByID(dbtx sqlw.DBTX, id int64) (*model.WeightInfo, error) {
-	var m model.WeightInfo
-	row := dbtx.QueryRow(`SELECT id, weight, routine_inst_id, set_info_id FROM WeightInfo WHERE id = ?`, id)
-	err := row.Scan(&m.ID, &m.Weight, &m.RoutineInstanceID, &m.SetInfoID)
+func (d *SQLiteRoutineDAO) GetActualSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.ActualSetInfo, error) {
+	var m model.ActualSetInfo
+	row := dbtx.QueryRow(`SELECT id, weight, routine_inst_id, set_info_id FROM ActualSetInfo WHERE id = ?`, id)
+	err := row.Scan(&m.ID, &m.Weight, &m.RoutineInstanceID, &m.PlannedSetInfoID)
 
 	if err != nil {
 		return nil, err
@@ -84,9 +84,9 @@ func (d *SQLiteRoutineDAO) GetWeightInfoByID(dbtx sqlw.DBTX, id int64) (*model.W
 	return &m, nil
 }
 
-func (d *SQLiteRoutineDAO) GetAllWeightInfoByRoutineInstanceID(dbtx sqlw.DBTX, id int64) ([]model.WeightInfo, error) {
-	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.WeightInfo) error {
-		return rows.Scan(t.ID, t.Weight, t.RoutineInstanceID, t.SetInfoID)
+func (d *SQLiteRoutineDAO) GetAllActualSetInfoByRoutineInstanceID(dbtx sqlw.DBTX, id int64) ([]model.ActualSetInfo, error) {
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.ActualSetInfo) error {
+		return rows.Scan(t.ID, t.Weight, t.RoutineInstanceID, t.PlannedSetInfoID)
 	}, `SELECT id, weight, routine_inst_id, set_info_id
 		FROM RoutineInstance
 		WHERE routine_inst_id = ?`, id)
@@ -114,7 +114,7 @@ func (d *SQLiteRoutineDAO) DeleteRoutineInstance(dbtx sqlw.DBTX, id int64) error
 	return err
 }
 
-func (d *SQLiteRoutineDAO) DeleteWeightInfo(dbtx sqlw.DBTX, id int64) error {
-	_, err := dbtx.Exec("DELETE FROM WeightInfo WHERE id = ?", id)
+func (d *SQLiteRoutineDAO) DeleteActualSetInfo(dbtx sqlw.DBTX, id int64) error {
+	_, err := dbtx.Exec("DELETE FROM ActualSetInfo WHERE id = ?", id)
 	return err
 }

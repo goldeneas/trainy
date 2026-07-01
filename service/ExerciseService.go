@@ -23,7 +23,7 @@ func (s *ExerciseService) RegisterExercise(e *model.Exercise) (int64, error) {
 	return s.exerciseDAO.InsertExercise(s.db, e)
 }
 
-func (s *ExerciseService) RegisterPlannedExercise(e *model.PlannedExercise, infos []model.SetInfo) (int64, error) {
+func (s *ExerciseService) RegisterPlannedExercise(e *model.PlannedExercise, infos []model.PlannedSetInfo) (int64, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return 0, err
@@ -60,11 +60,11 @@ func (s *ExerciseService) GetPlannedExerciseByID(id int64) (*model.PlannedExerci
 	return s.exerciseDAO.GetPlannedExerciseByID(s.db, id)
 }
 
-func (s *ExerciseService) GetSetInfoByID(id int64) (*model.SetInfo, error) {
+func (s *ExerciseService) GetSetInfoByID(id int64) (*model.PlannedSetInfo, error) {
 	return s.exerciseDAO.GetSetInfoByID(s.db, id)
 }
 
-func (s *ExerciseService) GetAllSetInfoByPlannedExerciseID(id int64) ([]model.SetInfo, error) {
+func (s *ExerciseService) GetAllSetInfoByPlannedExerciseID(id int64) ([]model.PlannedSetInfo, error) {
 	return s.exerciseDAO.GetAllSetInfoByPlannedExerciseID(s.db, id)
 }
 

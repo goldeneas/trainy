@@ -7,11 +7,12 @@ type CreateRoutine struct {
 }
 
 type RegisterRoutineInstance struct {
-	RoutineID  int64        `json:"routine_id"`
-	WeightInfo []WeightInfo `json:"weight_infos"`
+	RoutineID      int64           `json:"routine_id"`
+	ActualSetInfos []ActualSetInfo `json:"actual_set_infos"`
 }
 
-type WeightInfo struct {
-	Weight    float64 `json:"weight"`
-	SetInfoID int64   `json:"set_info_id"`
+type ActualSetInfo struct {
+	Weight           float64 `json:"weight"`
+	PlannedSetInfoID int64   `json:"planned_set_info_id"`
+	ActualReps       int64   `json:"actual_reps"`
 }

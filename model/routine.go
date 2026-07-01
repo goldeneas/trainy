@@ -1,21 +1,22 @@
 package model
 
 type Routine struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	ImageID     *int64 `json:"image_id"`
+	ID          int64
+	Name        string
+	Description string
+	ImageID     *int64
 }
 
 type RoutineInstance struct {
-	ID              int64 `json:"id"`
-	FinishTimestamp int64 `json:"finish_timestamp"`
-	RoutineID       int64 `json:"routine_id"`
+	ID              int64
+	FinishTimestamp int64
+	RoutineID       int64
 }
 
-type WeightInfo struct {
-	ID                int64   `json:"id"`
-	Weight            float64 `json:"weight"`
-	RoutineInstanceID int64   `json:"routine_inst_id"`
-	SetInfoID         int64   `json:"set_info_id"`
+type ActualSetInfo struct {
+	ID                int64
+	Weight            float64
+	RoutineInstanceID int64
+	PlannedSetInfoID  int64
+	ActualReps        int64
 }

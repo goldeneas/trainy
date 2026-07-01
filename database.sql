@@ -36,12 +36,14 @@ CREATE TABLE IF NOT EXISTS PlannedExercise (
         ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS SetInfo (
+CREATE TABLE IF NOT EXISTS PlannedSetInfo (
     id INTEGER PRIMARY KEY,
     ord INTEGER NOT NULL,
     planned_exercise_id INTEGER NOT NULL,
     reps INTEGER NOT NULL,
     notes TEXT,
+
+    UNIQUE(ord, planned_exercise_id),
 
     FOREIGN KEY (planned_exercise_id) REFERENCES PlannedExercise(id)
         ON DELETE CASCADE
@@ -66,14 +68,15 @@ CREATE TABLE IF NOT EXISTS RoutineInstance (
         ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS WeightInfo (
+CREATE TABLE IF NOT EXISTS ActualSetInfo (
     id INTEGER PRIMARY KEY,
     weight REAL NOT NULL,
     routine_inst_id INTEGER NOT NULL,
     set_info_id INTEGER NOT NULL,
+    actual_reps INTEGER NOT NULL,
 
     FOREIGN KEY (routine_inst_id) REFERENCES RoutineInstance(id)
         ON DELETE CASCADE,
-    FOREIGN KEY (set_info_id) REFERENCES SetInfo(id)
-        ON DELETE RESTRICT
+    FOREIGN KEY (set_info_id) REFERENCES PlannedSetInfo(id)
+        ON DELETE CASCADE
 );

@@ -8,14 +8,14 @@ type CreateExercise struct {
 }
 
 type RegisterPlannedExercise struct {
-	RestTime   *int      `json:"rest_time"`
-	TimeUnitID *int64    `json:"time_unit_id"`
-	ExerciseID int64     `json:"exercise_id"`
-	RoutineID  int64     `json:"routine_id"`
-	SetInfos   []SetInfo `json:"set_infos"`
+	RestTime        *int             `json:"rest_time"`
+	TimeUnitID      *int64           `json:"time_unit_id"`
+	ExerciseID      int64            `json:"exercise_id"`
+	RoutineID       int64            `json:"routine_id"`
+	PlannedSetInfos []PlannedSetInfo `json:"planned_set_infos"`
 }
 
-type SetInfo struct {
+type PlannedSetInfo struct {
 	Ord               int    `json:"ord"`
 	PlannedExerciseID int64  `json:"planned_exercise_id"`
 	Reps              int    `json:"reps"`
