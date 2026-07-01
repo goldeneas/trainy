@@ -9,7 +9,7 @@ import (
 
 type SQLiteExerciseDAO struct{}
 
-func NewSQLiteExerciseDAO(db *sql.DB) *SQLiteExerciseDAO {
+func NewSQLiteExerciseDAO() *SQLiteExerciseDAO {
 	return &SQLiteExerciseDAO{}
 }
 

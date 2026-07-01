@@ -252,25 +252,34 @@ export const api = {
       this.getExercises(),
     ]);
 
-    const fullRoutines: FullRoutine[] = [];
-    for (const r of routines) {
+    const plannedSetsList = await Promise.all(
+      allPlanned.map(pe => 
+        this.getPlannedExerciseSets(pe.ID)
+          .then(sets => ({ peId: pe.ID, sets }))
+          .catch(() => ({ peId: pe.ID, sets: [] as PlannedSetInfo[] }))
+      )
+    );
+
+    const plannedSetsMap = new Map<number, PlannedSetInfo[]>(
+      plannedSetsList.map(item => [item.peId, item.sets])
+    );
+
+    const fullRoutines: FullRoutine[] = routines.map(r => {
       const routinePlanned = allPlanned.filter(pe => pe.RoutineID === r.ID);
-      const plannedExercises: FullPlannedExercise[] = await Promise.all(
-        routinePlanned.map(async pe => {
-          const exercise = allExercises.find(e => e.ID === pe.ExerciseID);
-          const sets = await this.getPlannedExerciseSets(pe.ID).catch(() => [] as PlannedSetInfo[]);
-          return {
-            ...pe,
-            exercise,
-            sets: sets.sort((a, b) => a.Ord - b.Ord),
-          };
-        })
-      );
-      fullRoutines.push({
+      const plannedExercises: FullPlannedExercise[] = routinePlanned.map(pe => {
+        const exercise = allExercises.find(e => e.ID === pe.ExerciseID);
+        const sets = plannedSetsMap.get(pe.ID) || [];
+        return {
+          ...pe,
+          exercise,
+          sets: sets.slice().sort((a, b) => a.Ord - b.Ord),
+        };
+      });
+      return {
         ...r,
         plannedExercises,
-      });
-    }
+      };
+    });
 
     return fullRoutines;
   },
@@ -283,7 +292,29 @@ export const api = {
       this.getPlannedExercises(),
     ]);
 
-    // Fetch sets for each instance in parallel
+    // Parallel-fetch sets for all planned exercises once
+    const plannedSetsList = await Promise.all(
+      plannedExercises.map(pe => 
+        this.getPlannedExerciseSets(pe.ID)
+          .then(sets => ({ peId: pe.ID, sets }))
+          .catch(() => ({ peId: pe.ID, sets: [] as PlannedSetInfo[] }))
+      )
+    );
+
+    // Build a map of planned set info ID -> exerciseName & PlannedSetInfo object
+    const plannedSetMap: { [setId: number]: { exerciseName: string; set: PlannedSetInfo } } = {};
+    plannedSetsList.forEach(({ peId, sets }) => {
+      const pe = plannedExercises.find(p => p.ID === peId);
+      if (!pe) return;
+      const ex = exercises.find(e => e.ID === pe.ExerciseID);
+      const exerciseName = ex ? ex.Name : 'Exercise';
+
+      sets.forEach(s => {
+        plannedSetMap[s.ID] = { exerciseName, set: s };
+      });
+    });
+
+    // Fetch actual sets for all routine instances in parallel
     const fullInstances = await Promise.all(
       instances.map(async inst => {
         const routine = routines.find(r => r.ID === inst.RoutineID);
@@ -292,25 +323,24 @@ export const api = {
 
         const actualSets: FullActualSetInfo[] = [];
 
-        // For each actual set, retrieve exercise info and planned set info
+        // Direct O(1) lookup on normalized set data
         for (const set of actualSetsRaw) {
-          let plannedSet: PlannedSetInfo | undefined;
-          let exerciseName = 'Exercise';
+          const id = set.ID ?? (set as any).id;
+          const weight = set.Weight ?? (set as any).weight ?? 0;
+          const routineInstanceId = set.RoutineInstanceID ?? (set as any).routine_instance_id ?? (set as any).routine_inst_id ?? 0;
+          const plannedSetInfoId = (set as any).PlannedSetInfoID ?? (set as any).planned_set_info_id ?? (set as any).set_info_id ?? (set as any).PlannedSetInfoId ?? 0;
+          const actualReps = set.ActualReps ?? (set as any).actual_reps ?? 0;
 
-          const routinePlanned = plannedExercises.filter(pe => pe.RoutineID === inst.RoutineID);
-          for (const pe of routinePlanned) {
-            const sets = await this.getPlannedExerciseSets(pe.ID).catch(() => [] as PlannedSetInfo[]);
-            const foundSet = sets.find(s => s.ID === set.PlannedSetInfoID);
-            if (foundSet) {
-              plannedSet = foundSet;
-              const ex = exercises.find(e => e.ID === pe.ExerciseID);
-              exerciseName = ex ? ex.Name : 'Exercise';
-              break;
-            }
-          }
+          const match = plannedSetMap[plannedSetInfoId];
+          const exerciseName = match ? match.exerciseName : 'Exercise';
+          const plannedSet = match ? match.set : undefined;
 
           actualSets.push({
-            ...set,
+            ID: id,
+            Weight: weight,
+            RoutineInstanceID: routineInstanceId,
+            PlannedSetInfoID: plannedSetInfoId,
+            ActualReps: actualReps,
             plannedSetInfo: plannedSet,
             exerciseName,
           });

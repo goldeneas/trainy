@@ -23,7 +23,7 @@ func (s *RoutineService) RegisterRoutine(r *model.Routine) (int64, error) {
 	return s.routineDAO.InsertRoutine(s.db, r)
 }
 
-func (s *RoutineService) RegisterRoutineInstance(r *model.RoutineInstance, infos []model.ActualSetInfo) (int64, error) {
+func (s *RoutineService) RegisterActualRoutine(r *model.ActualRoutine, infos []model.ActualSetInfo) (int64, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return 0, err
@@ -31,13 +31,13 @@ func (s *RoutineService) RegisterRoutineInstance(r *model.RoutineInstance, infos
 
 	defer tx.Rollback()
 
-	id, err := s.routineDAO.InsertRoutineInstance(tx, r)
+	id, err := s.routineDAO.InsertActualRoutine(tx, r)
 	if err != nil {
 		return 0, err
 	}
 
 	for _, info := range infos {
-		info.RoutineInstanceID = id
+		info.ActualRoutineID = id
 		_, err = s.routineDAO.InsertActualSetInfo(tx, &info)
 
 		if err != nil {
@@ -60,30 +60,30 @@ func (s *RoutineService) GetRoutineByID(id int64) (*model.Routine, error) {
 	return s.routineDAO.GetRoutineByID(s.db, id)
 }
 
-func (s *RoutineService) GetRoutineInstanceByID(id int64) (*model.RoutineInstance, error) {
-	return s.routineDAO.GetRoutineInstanceByID(s.db, id)
+func (s *RoutineService) GetActualRoutineByID(id int64) (*model.ActualRoutine, error) {
+	return s.routineDAO.GetActualRoutineByID(s.db, id)
 }
 
 func (s *RoutineService) GetActualSetInfoByID(id int64) (*model.ActualSetInfo, error) {
 	return s.routineDAO.GetActualSetInfoByID(s.db, id)
 }
 
-func (s *RoutineService) GetAllActualSetInfoByRoutineInstanceID(id int64) ([]model.ActualSetInfo, error) {
-	return s.routineDAO.GetAllActualSetInfoByRoutineInstanceID(s.db, id)
+func (s *RoutineService) GetAllActualSetInfoByActualRoutineID(id int64) ([]model.ActualSetInfo, error) {
+	return s.routineDAO.GetAllActualSetInfoByActualRoutineID(s.db, id)
 }
 
 func (s *RoutineService) GetAllRoutines() ([]model.Routine, error) {
 	return s.routineDAO.GetAllRoutines(s.db)
 }
 
-func (s *RoutineService) GetAllRoutineInstances() ([]model.RoutineInstance, error) {
-	return s.routineDAO.GetAllRoutineInstances(s.db)
+func (s *RoutineService) GetAllActualRoutines() ([]model.ActualRoutine, error) {
+	return s.routineDAO.GetAllActualRoutines(s.db)
 }
 
 func (s *RoutineService) DeleteRoutine(id int64) error {
 	return s.routineDAO.DeleteRoutine(s.db, id)
 }
 
-func (s *RoutineService) DeleteRoutineInstance(id int64) error {
-	return s.routineDAO.DeleteRoutineInstance(s.db, id)
+func (s *RoutineService) DeleteActualRoutine(id int64) error {
+	return s.routineDAO.DeleteActualRoutine(s.db, id)
 }

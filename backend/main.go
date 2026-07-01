@@ -29,11 +29,13 @@ func main() {
 		log.Printf("Warning: failed to execute schema: %v", err)
 	}
 
-	exerciseDAO := dao.NewSQLiteExerciseDAO(db)
-	routineDAO := dao.NewSQLiteRoutineDAO(db)
+	exerciseDAO := dao.NewSQLiteExerciseDAO()
+	routineDAO := dao.NewSQLiteRoutineDAO()
+	statsDAO := dao.NewSQLiteStatsDAO()
 
 	exerciseService := service.NewExerciseService(db, exerciseDAO)
 	routineService := service.NewRoutineService(db, routineDAO)
+	statsService := service.NewStatsService(db, statsDAO)
 
 	r := gin.Default()
 

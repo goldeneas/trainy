@@ -6,7 +6,7 @@ type CreateRoutine struct {
 	ImageID     *int64 `json:"image_id"`
 }
 
-type RegisterRoutineInstance struct {
+type RegisterActualRoutine struct {
 	RoutineID      int64           `json:"routine_id"`
 	ActualSetInfos []ActualSetInfo `json:"actual_set_infos"`
 }

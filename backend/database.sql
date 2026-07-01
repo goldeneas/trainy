@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS Routine (
         ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS RoutineInstance (
+CREATE TABLE IF NOT EXISTS ActualRoutine (
     id INTEGER PRIMARY KEY,
     finish_timestamp INTEGER NOT NULL,
     routine_id INTEGER NOT NULL,
@@ -71,11 +71,11 @@ CREATE TABLE IF NOT EXISTS RoutineInstance (
 CREATE TABLE IF NOT EXISTS ActualSetInfo (
     id INTEGER PRIMARY KEY,
     weight REAL NOT NULL,
-    routine_inst_id INTEGER NOT NULL,
+    actual_routine_id INTEGER NOT NULL,
     set_info_id INTEGER NOT NULL,
     actual_reps INTEGER NOT NULL,
 
-    FOREIGN KEY (routine_inst_id) REFERENCES RoutineInstance(id)
+    FOREIGN KEY (actual_routine_id) REFERENCES ActualRoutine(id)
         ON DELETE CASCADE,
     FOREIGN KEY (set_info_id) REFERENCES PlannedSetInfo(id)
         ON DELETE CASCADE

@@ -28,12 +28,12 @@ func EnableRoutineController(router *gin.Engine, routineService *service.Routine
 		v1.GET("/:id", c.GetRoutineByID)
 		v1.DELETE("/:id", c.DeleteRoutine)
 
-		// RoutineInstance routes
-		v1.POST("/instance", c.RegisterRoutineInstance)
-		v1.GET("/instance", c.GetAllRoutineInstances)
-		v1.GET("/instance/:id", c.GetRoutineInstanceByID)
-		v1.GET("/instance/:id/set_info", c.GetActualSetInfosByRoutineInstanceID)
-		v1.DELETE("/instance/:id", c.DeleteRoutineInstance)
+		// ActualRoutine routes
+		v1.POST("/instance", c.RegisterActualRoutine)
+		v1.GET("/instance", c.GetAllActualRoutines)
+		v1.GET("/instance/:id", c.GetActualRoutineByID)
+		v1.GET("/instance/:id/set_info", c.GetActualSetInfosByActualRoutineID)
+		v1.DELETE("/instance/:id", c.DeleteActualRoutine)
 	}
 }
 
@@ -109,16 +109,16 @@ func (c *RoutineController) DeleteRoutine(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "routine deleted"})
 }
 
-// RoutineInstance Handlers
+// ActualRoutine Handlers
 
-func (c *RoutineController) RegisterRoutineInstance(ctx *gin.Context) {
-	var request dto_request.RegisterRoutineInstance
+func (c *RoutineController) RegisterActualRoutine(ctx *gin.Context) {
+	var request dto_request.RegisterActualRoutine
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	r := model.RoutineInstance{
+	r := model.ActualRoutine{
 		RoutineID:       request.RoutineID,
 		FinishTimestamp: time.Now().Unix(),
 	}
@@ -132,7 +132,7 @@ func (c *RoutineController) RegisterRoutineInstance(ctx *gin.Context) {
 		}
 	}
 
-	id, err := c.service.RegisterRoutineInstance(&r, infos)
+	id, err := c.service.RegisterActualRoutine(&r, infos)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -141,20 +141,20 @@ func (c *RoutineController) RegisterRoutineInstance(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, id)
 }
 
-func (c *RoutineController) GetAllRoutineInstances(ctx *gin.Context) {
-	res, err := c.service.GetAllRoutineInstances()
+func (c *RoutineController) GetAllActualRoutines(ctx *gin.Context) {
+	res, err := c.service.GetAllActualRoutines()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if res == nil {
-		res = []model.RoutineInstance{}
+		res = []model.ActualRoutine{}
 	}
 	ctx.JSON(http.StatusOK, res)
 }
 
-func (c *RoutineController) GetRoutineInstanceByID(ctx *gin.Context) {
+func (c *RoutineController) GetActualRoutineByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -162,7 +162,7 @@ func (c *RoutineController) GetRoutineInstanceByID(ctx *gin.Context) {
 		return
 	}
 
-	res, err := c.service.GetRoutineInstanceByID(id)
+	res, err := c.service.GetActualRoutineByID(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "routine instance not found"})
 		return
@@ -171,7 +171,7 @@ func (c *RoutineController) GetRoutineInstanceByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-func (c *RoutineController) DeleteRoutineInstance(ctx *gin.Context) {
+func (c *RoutineController) DeleteActualRoutine(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -179,7 +179,7 @@ func (c *RoutineController) DeleteRoutineInstance(ctx *gin.Context) {
 		return
 	}
 
-	err = c.service.DeleteRoutineInstance(id)
+	err = c.service.DeleteActualRoutine(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -188,7 +188,7 @@ func (c *RoutineController) DeleteRoutineInstance(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "routine instance deleted"})
 }
 
-func (c *RoutineController) GetActualSetInfosByRoutineInstanceID(ctx *gin.Context) {
+func (c *RoutineController) GetActualSetInfosByActualRoutineID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -196,7 +196,7 @@ func (c *RoutineController) GetActualSetInfosByRoutineInstanceID(ctx *gin.Contex
 		return
 	}
 
-	res, err := c.service.GetAllActualSetInfoByRoutineInstanceID(id)
+	res, err := c.service.GetAllActualSetInfoByActualRoutineID(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

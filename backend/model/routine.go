@@ -7,16 +7,16 @@ type Routine struct {
 	ImageID     *int64
 }
 
-type RoutineInstance struct {
+type ActualRoutine struct {
 	ID              int64
 	FinishTimestamp int64
 	RoutineID       int64
 }
 
 type ActualSetInfo struct {
-	ID                int64
-	Weight            float64
-	RoutineInstanceID int64
-	PlannedSetInfoID  int64
-	ActualReps        int64
+	ID               int64
+	Weight           float64
+	ActualRoutineID  int64
+	PlannedSetInfoID int64
+	ActualReps       int64
 }
