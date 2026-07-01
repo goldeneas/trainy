@@ -32,6 +32,7 @@ func EnableRoutineController(router *gin.Engine, routineService *service.Routine
 		v1.POST("/instance", c.RegisterRoutineInstance)
 		v1.GET("/instance", c.GetAllRoutineInstances)
 		v1.GET("/instance/:id", c.GetRoutineInstanceByID)
+		v1.GET("/instance/:id/set_info", c.GetActualSetInfosByRoutineInstanceID)
 		v1.DELETE("/instance/:id", c.DeleteRoutineInstance)
 	}
 }
@@ -185,4 +186,25 @@ func (c *RoutineController) DeleteRoutineInstance(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "routine instance deleted"})
+}
+
+func (c *RoutineController) GetActualSetInfosByRoutineInstanceID(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
+		return
+	}
+
+	res, err := c.service.GetAllActualSetInfoByRoutineInstanceID(id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if res == nil {
+		res = []model.ActualSetInfo{}
+	}
+
+	ctx.JSON(http.StatusOK, res)
 }

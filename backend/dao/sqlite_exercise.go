@@ -86,7 +86,7 @@ func (d *SQLiteExerciseDAO) GetSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.Pla
 
 func (s *SQLiteExerciseDAO) GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id int64) ([]model.PlannedSetInfo, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.PlannedSetInfo) error {
-		return rows.Scan(t.ID, t.Ord, t.PlannedExerciseID, t.Reps, t.Notes)
+		return rows.Scan(&t.ID, &t.Ord, &t.PlannedExerciseID, &t.Reps, &t.Notes)
 	}, `SELECT id, ord, planned_exercise_id, reps, notes
 		FROM SetInfo
 		WHERE planned_exercise_id = ?`, id)
@@ -94,13 +94,13 @@ func (s *SQLiteExerciseDAO) GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id 
 
 func (d *SQLiteExerciseDAO) GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.Exercise) error {
-		return rows.Scan(t.ID, t.Name, t.Notes, t.Instructions, t.ImageID)
+		return rows.Scan(&t.ID, &t.Name, &t.Notes, &t.Instructions, &t.ImageID)
 	}, "SELECT id, name, notes, instructions, image_id FROM Exercise")
 }
 
 func (d *SQLiteExerciseDAO) GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.PlannedExercise) error {
-		return rows.Scan(t.ID, t.RestTime, t.TimeUnitID, t.ExerciseID, t.RoutineID)
+		return rows.Scan(&t.ID, &t.RestTime, &t.TimeUnitID, &t.ExerciseID, &t.RoutineID)
 	}, `SELECT id, rest_time, time_unit_id, exercise_id, routine_id
 		FROM PlannedExercise`)
 }

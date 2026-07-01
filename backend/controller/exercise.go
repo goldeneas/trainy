@@ -31,6 +31,7 @@ func EnableExerciseController(router *gin.Engine, exerciseService *service.Exerc
 		v1.POST("/instance", c.RegisterPlannedExercise)
 		v1.GET("/instance", c.GetAllPlannedExercises)
 		v1.GET("/instance/:id", c.GetPlannedExerciseByID)
+		v1.GET("/instance/:id/set_info", c.GetSetInfosByPlannedExerciseID)
 		v1.DELETE("/instance/:id", c.DeletePlannedExercise)
 	}
 }
@@ -188,4 +189,25 @@ func (c *ExerciseController) DeletePlannedExercise(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "exercise instance deleted"})
+}
+
+func (c *ExerciseController) GetSetInfosByPlannedExerciseID(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
+		return
+	}
+
+	res, err := c.service.GetAllSetInfoByPlannedExerciseID(id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if res == nil {
+		res = []model.PlannedSetInfo{}
+	}
+
+	ctx.JSON(http.StatusOK, res)
 }

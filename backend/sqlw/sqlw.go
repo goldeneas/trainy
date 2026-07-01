@@ -19,7 +19,7 @@ type DBTX interface {
 func QueryAll[T any](dbtx DBTX, scanner func(*sql.Rows, *T) error, query string,
 	args ...any) ([]T, error) {
 
-	rows, err := dbtx.Query(query, args)
+	rows, err := dbtx.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

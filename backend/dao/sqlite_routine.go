@@ -74,8 +74,8 @@ func (d *SQLiteRoutineDAO) GetRoutineInstanceByID(dbtx sqlw.DBTX, id int64) (*mo
 
 func (d *SQLiteRoutineDAO) GetActualSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.ActualSetInfo, error) {
 	var m model.ActualSetInfo
-	row := dbtx.QueryRow(`SELECT id, weight, routine_inst_id, set_info_id FROM ActualSetInfo WHERE id = ?`, id)
-	err := row.Scan(&m.ID, &m.Weight, &m.RoutineInstanceID, &m.PlannedSetInfoID)
+	row := dbtx.QueryRow(`SELECT id, weight, routine_inst_id, set_info_id, actual_reps FROM ActualSetInfo WHERE id = ?`, id)
+	err := row.Scan(&m.ID, &m.Weight, &m.RoutineInstanceID, &m.PlannedSetInfoID, &m.ActualReps)
 
 	if err != nil {
 		return nil, err
@@ -86,21 +86,21 @@ func (d *SQLiteRoutineDAO) GetActualSetInfoByID(dbtx sqlw.DBTX, id int64) (*mode
 
 func (d *SQLiteRoutineDAO) GetAllActualSetInfoByRoutineInstanceID(dbtx sqlw.DBTX, id int64) ([]model.ActualSetInfo, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.ActualSetInfo) error {
-		return rows.Scan(t.ID, t.Weight, t.RoutineInstanceID, t.PlannedSetInfoID)
-	}, `SELECT id, weight, routine_inst_id, set_info_id
-		FROM RoutineInstance
+		return rows.Scan(&t.ID, &t.Weight, &t.RoutineInstanceID, &t.PlannedSetInfoID, &t.ActualReps)
+	}, `SELECT id, weight, routine_inst_id, set_info_id, actual_reps
+		FROM ActualSetInfo
 		WHERE routine_inst_id = ?`, id)
 }
 
 func (d *SQLiteRoutineDAO) GetAllRoutines(dbtx sqlw.DBTX) ([]model.Routine, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.Routine) error {
-		return rows.Scan(t.ID, t.Name, t.Description, t.ImageID)
+		return rows.Scan(&t.ID, &t.Name, &t.Description, &t.ImageID)
 	}, "SELECT id, name, description, image_id FROM Routine")
 }
 
 func (d *SQLiteRoutineDAO) GetAllRoutineInstances(dbtx sqlw.DBTX) ([]model.RoutineInstance, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.RoutineInstance) error {
-		return rows.Scan(t.ID, t.FinishTimestamp, t.RoutineID)
+		return rows.Scan(&t.ID, &t.FinishTimestamp, &t.RoutineID)
 	}, "SELECT id, finish_timestamp, routine_id FROM RoutineInstance")
 }
 

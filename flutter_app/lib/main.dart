@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'api_service.dart';
+import 'models.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/routines_screen.dart';
+import 'screens/exercises_screen.dart';
+import 'screens/history_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,115 +13,252 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Trainy Workout Tracker',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0F0F1A),
+        colorScheme: const ColorScheme.dark(
+          primary: Colors.tealAccent,
+          secondary: Colors.tealAccent,
+          surface: Color(0xFF1E1E2F),
+          onPrimary: Colors.black,
+        ),
+        useMaterial3: true,
+        fontFamily: 'Roboto',
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const WorkoutMainScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class WorkoutMainScreen extends StatefulWidget {
+  const WorkoutMainScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<WorkoutMainScreen> createState() => _WorkoutMainScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _WorkoutMainScreenState extends State<WorkoutMainScreen> {
+  int _currentTab = 0;
 
-  void _incrementCounter() {
+  // API Client
+  late ApiService _apiService;
+  String _baseUrl = ApiService.defaultBaseUrl;
+
+  // Data State
+  List<Routine> _routines = [];
+  List<Exercise> _exercises = [];
+  List<RoutineInstance> _history = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = ApiService(baseUrl: _baseUrl);
+    _loadAllData();
+  }
+
+  Future<void> _loadAllData() async {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _isLoading = true;
     });
+
+    try {
+      final exercises = await _apiService.getExercises();
+      final routines = await _apiService.getFullRoutines();
+      final history = await _apiService.getFullRoutineInstances();
+
+      setState(() {
+        _exercises = exercises;
+        _routines = routines;
+        _history = history;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Show snackbar or visual alert
+      debugPrint('Error loading data from backend: $e');
+    }
+  }
+
+  void _updateBaseUrl(String newUrl) {
+    if (newUrl.trim().isEmpty) return;
+    setState(() {
+      _baseUrl = newUrl.trim();
+      _apiService = ApiService(baseUrl: _baseUrl);
+    });
+    _loadAllData();
+  }
+
+  void _showSettingsDialog() {
+    final controller = TextEditingController(text: _baseUrl);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E2F),
+        title: const Row(
+          children: [
+            Icon(Icons.settings, color: Colors.tealAccent),
+            SizedBox(width: 8),
+            Text('Server Connection', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Specify your Trainy backend URL. For local computer, use localhost. For Android emulator, use 10.0.2.2.',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Backend Base URL',
+                labelStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.tealAccent)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _updateBaseUrl(controller.text);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Connected to: ${controller.text}'),
+                  backgroundColor: Colors.teal,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.tealAccent),
+            child: const Text('Connect', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final List<Widget> screens = [
+      DashboardScreen(
+        routines: _routines,
+        history: _history,
+        exercises: _exercises,
+        isLoading: _isLoading,
+        onRefresh: _loadAllData,
+        apiService: _apiService,
+        onTabChange: (tabIdx) {
+          setState(() {
+            _currentTab = tabIdx;
+          });
+        },
+      ),
+      RoutinesScreen(
+        routines: _routines,
+        exercises: _exercises,
+        isLoading: _isLoading,
+        onRefresh: _loadAllData,
+        apiService: _apiService,
+      ),
+      ExercisesScreen(
+        exercises: _exercises,
+        isLoading: _isLoading,
+        onRefresh: _loadAllData,
+        apiService: _apiService,
+      ),
+      HistoryScreen(
+        history: _history,
+        isLoading: _isLoading,
+        onRefresh: _loadAllData,
+        apiService: _apiService,
+      ),
+    ];
+
+    final titles = ['Dashboard', 'Routines', 'Exercises', 'Workout Logs'];
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+        backgroundColor: const Color(0xFF1E1E2F),
+        title: Text(
+          titles[_currentTab],
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
         ),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white70),
+            onPressed: _showSettingsDialog,
+            tooltip: 'Server Settings',
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white70),
+            onPressed: _loadAllData,
+            tooltip: 'Sync Data',
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0F0F1A), Color(0xFF1E1E2F)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: screens[_currentTab],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentTab,
+        onTap: (index) {
+          setState(() {
+            _currentTab = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color(0xFF1E1E2F),
+        selectedItemColor: Colors.tealAccent,
+        unselectedItemColor: Colors.white38,
+        showUnselectedLabels: true,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        unselectedLabelStyle: const TextStyle(fontSize: 11),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard, color: Colors.tealAccent),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.fitness_center_outlined),
+            activeIcon: Icon(Icons.fitness_center, color: Colors.tealAccent),
+            label: 'Routines',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt_outlined),
+            activeIcon: Icon(Icons.list_alt, color: Colors.tealAccent),
+            label: 'Exercises',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history_outlined),
+            activeIcon: Icon(Icons.history, color: Colors.tealAccent),
+            label: 'Logs',
+          ),
+        ],
       ),
     );
   }
