@@ -41,6 +41,7 @@ func main() {
 
 	controller.EnableExerciseController(r, exerciseService)
 	controller.EnableRoutineController(r, routineService)
+	controller.EnableStatsController(r, statsService)
 
 	r.Run()
 }

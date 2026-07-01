@@ -5,7 +5,6 @@ import (
 
 	"github.com/goldeneas/trainy/dao"
 	"github.com/goldeneas/trainy/model"
-	"github.com/goldeneas/trainy/sqlw"
 )
 
 type StatsService struct {
@@ -20,14 +19,14 @@ func NewStatsService(db *sql.DB, statsDAO dao.StatsDao) *StatsService {
 	}
 }
 
-func (s *StatsService) GetActualRoutinesThisMonth(dbtx sqlw.DBTX) ([]model.ActualRoutine, error) {
-	return s.statsDAO.GetActualRoutinesThisMonth(dbtx)
+func (s *StatsService) GetActualRoutinesThisMonth() ([]model.ActualRoutine, error) {
+	return s.statsDAO.GetActualRoutinesThisMonth(s.db)
 }
 
-func (s *StatsService) GetFrequencyThisWeek(dbtx sqlw.DBTX) int {
-	return s.statsDAO.GetFrequencyThisWeek(dbtx)
+func (s *StatsService) GetFrequencyThisWeek() int {
+	return s.statsDAO.GetFrequencyThisWeek(s.db)
 }
 
-func (s *StatsService) GetTotalWorkouts(dbtx sqlw.DBTX) int {
-	return s.statsDAO.GetTotalWorkouts(dbtx)
+func (s *StatsService) GetTotalWorkouts() int {
+	return s.statsDAO.GetTotalWorkouts(s.db)
 }
