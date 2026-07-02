@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -57,11 +58,11 @@ export default function ExercisesScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    Promise.resolve().then(() => {
+  useFocusEffect(
+    useCallback(() => {
       fetchExercises();
-    });
-  }, [fetchExercises]);
+    }, [fetchExercises])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

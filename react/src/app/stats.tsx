@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -56,18 +57,18 @@ export default function StatsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    Promise.resolve().then(() => {
+  useFocusEffect(
+    useCallback(() => {
       fetchData(true);
-    });
-  }, [fetchData]);
+    }, [fetchData])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
   };
 
-  // Resolve monthly routines completed with their name and date
+  // Resolve monthly routines completed with their name and date (limited to 5 most recent)
   const resolvedMonthlyLogs = useMemo(() => {
     return monthlyRoutines
       .map((item) => {
@@ -86,8 +87,36 @@ export default function StatsScreen() {
           timestamp: item.FinishTimestamp,
         };
       })
-      .sort((a, b) => b.timestamp - a.timestamp);
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 5);
   }, [monthlyRoutines, routines]);
+
+  // Set of calendar days this month that had a completed workout
+  const completedDays = useMemo(() => {
+    const days = new Set<number>();
+    monthlyRoutines.forEach((item) => {
+      const date = new Date(item.FinishTimestamp * 1000);
+      days.add(date.getDate());
+    });
+    return days;
+  }, [monthlyRoutines]);
+
+  // Days list for the current month
+  const heatmapDays = useMemo(() => {
+    const now = new Date(getNow());
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysCount = new Date(year, month + 1, 0).getDate();
+
+    const daysList = [];
+    for (let d = 1; d <= daysCount; d++) {
+      daysList.push({
+        dayNum: d,
+        hasWorkout: completedDays.has(d),
+      });
+    }
+    return daysList;
+  }, [completedDays]);
 
   // Current month name
   const currentMonthName = useMemo(() => {
@@ -115,7 +144,7 @@ export default function StatsScreen() {
           {/* Key Metrics Grid */}
           <View style={styles.grid}>
             <ThemedView type="backgroundElement" style={styles.gridCard}>
-              <SymbolView tintColor="#0A84FF" name="flame.fill" size={18} style={styles.cardIcon} />
+              <SymbolView tintColor="#FF3B30" name="flame.fill" size={18} style={styles.cardIcon} />
               <ThemedText type="small" themeColor="textSecondary">Total Workouts</ThemedText>
               <ThemedText type="subtitle" style={{ fontWeight: 'bold', marginTop: Spacing.half }}>
                 {totalWorkouts}
@@ -129,6 +158,43 @@ export default function StatsScreen() {
               </ThemedText>
             </ThemedView>
           </View>
+
+          {/* Activity Heatmap Header */}
+
+          {/*
+          <View style={styles.sectionHeader}>
+            <ThemedText type="smallBold" themeColor="textSecondary">
+              ACTIVITY HEATMAP
+            </ThemedText>
+          </View>
+            */}
+
+          {/* Activity Heatmap Card */}
+          <ThemedView type="backgroundElement" style={styles.heatmapCard}>
+            <View style={styles.heatmapGrid}>
+              {heatmapDays.map((item) => (
+                <View
+                  key={item.dayNum}
+                  style={[
+                    styles.heatmapSquare,
+                    {
+                      backgroundColor: item.hasWorkout
+                        ? '#0A84FF'
+                        : theme.backgroundSelected,
+                    },
+                  ]}>
+                  <ThemedText
+                    type="smallBold"
+                    style={[
+                      styles.heatmapSquareText,
+                      { color: item.hasWorkout ? '#FFFFFF' : theme.textSecondary },
+                    ]}>
+                    {item.dayNum}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          </ThemedView>
 
 
 
@@ -208,6 +274,29 @@ const styles = StyleSheet.create({
   },
   cardIcon: {
     marginBottom: Spacing.one,
+  },
+  heatmapCard: {
+    marginHorizontal: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: 12,
+    marginBottom: Spacing.three,
+  },
+
+  heatmapGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  heatmapSquare: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heatmapSquareText: {
+    fontSize: 10,
   },
 
   sectionHeader: {

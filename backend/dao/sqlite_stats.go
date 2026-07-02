@@ -20,7 +20,7 @@ func (d *SQLiteStatsDAO) GetActualRoutinesThisMonth(dbtx sqlw.DBTX) ([]model.Act
 	beginTimestamp := timew.BeginningOfMonth(now).Unix()
 
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.ActualRoutine) error {
-		return rows.Scan(t.ID, t.FinishTimestamp, t.RoutineID)
+		return rows.Scan(&t.ID, &t.FinishTimestamp, &t.RoutineID)
 	}, `SELECT id, finish_timestamp, routine_id FROM ActualRoutine
 		WHERE finish_timestamp > ?`, beginTimestamp)
 }

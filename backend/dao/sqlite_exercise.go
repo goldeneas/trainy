@@ -36,7 +36,7 @@ func (d *SQLiteExerciseDAO) InsertPlannedExercise(dbtx sqlw.DBTX, m *model.Plann
 }
 
 func (d *SQLiteExerciseDAO) InsertSetInfo(dbtx sqlw.DBTX, m *model.PlannedSetInfo) (int64, error) {
-	res, err := dbtx.Exec(`INSERT INTO SetInfo (ord, planned_exercise_id, reps, notes)
+	res, err := dbtx.Exec(`INSERT INTO PlannedSetInfo (ord, planned_exercise_id, reps, notes)
 		VALUES (?, ?, ?, ?)`, m.Ord, m.PlannedExerciseID, m.Reps, m.Notes)
 
 	if err != nil {
@@ -74,7 +74,7 @@ func (d *SQLiteExerciseDAO) GetPlannedExerciseByID(dbtx sqlw.DBTX, id int64) (*m
 
 func (d *SQLiteExerciseDAO) GetSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.PlannedSetInfo, error) {
 	var m model.PlannedSetInfo
-	row := dbtx.QueryRow(`SELECT id, ord, planned_exercise_id, reps, notes FROM SetInfo WHERE id = ?`, id)
+	row := dbtx.QueryRow(`SELECT id, ord, planned_exercise_id, reps, notes FROM PlannedSetInfo WHERE id = ?`, id)
 	err := row.Scan(&m.ID, &m.Ord, &m.PlannedExerciseID, &m.Reps, &m.Notes)
 
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *SQLiteExerciseDAO) GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id 
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.PlannedSetInfo) error {
 		return rows.Scan(&t.ID, &t.Ord, &t.PlannedExerciseID, &t.Reps, &t.Notes)
 	}, `SELECT id, ord, planned_exercise_id, reps, notes
-		FROM SetInfo
+		FROM PlannedSetInfo
 		WHERE planned_exercise_id = ?`, id)
 }
 
@@ -116,6 +116,6 @@ func (d *SQLiteExerciseDAO) DeletePlannedExercise(dbtx sqlw.DBTX, id int64) erro
 }
 
 func (d *SQLiteExerciseDAO) DeleteSetInfo(dbtx sqlw.DBTX, id int64) error {
-	_, err := dbtx.Exec("DELETE FROM SetInfo WHERE id = ?", id)
+	_, err := dbtx.Exec("DELETE FROM PlannedSetInfo WHERE id = ?", id)
 	return err
 }
