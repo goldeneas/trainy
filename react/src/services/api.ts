@@ -51,7 +51,7 @@ export interface Routine {
   ImageID: number | null;
 }
 
-export interface RoutineInstance {
+export interface ActualRoutine {
   ID: number;
   FinishTimestamp: number; // Unix timestamp in seconds
   RoutineID: number;
@@ -60,7 +60,7 @@ export interface RoutineInstance {
 export interface ActualSetInfo {
   ID: number;
   Weight: number;
-  RoutineInstanceID: number;
+  ActualRoutineID: number;
   PlannedSetInfoID: number;
   ActualReps: number;
 }
@@ -99,7 +99,7 @@ export interface ActualSetInfoCreate {
   actual_reps: number;
 }
 
-export interface RegisterRoutineInstanceDto {
+export interface RegisterActualRoutineDto {
   routine_id: number;
   actual_set_infos: ActualSetInfoCreate[];
 }
@@ -119,7 +119,7 @@ export interface FullActualSetInfo extends ActualSetInfo {
   exerciseName: string;
 }
 
-export interface FullRoutineInstance extends RoutineInstance {
+export interface FullActualRoutine extends ActualRoutine {
   routineName: string;
   actualSets: FullActualSetInfo[];
 }
@@ -203,19 +203,24 @@ export const api = {
       method: 'DELETE',
     }),
 
-  // Routine Instance Endpoints
-  getRoutineInstances: () => request<RoutineInstance[]>('/v1/routine/instance'),
-  getRoutineInstanceById: (id: number) => request<RoutineInstance>(`/v1/routine/instance/${id}`),
-  getRoutineInstanceSets: (id: number) => request<ActualSetInfo[]>(`/v1/routine/instance/${id}/set_info`),
-  registerRoutineInstance: (data: RegisterRoutineInstanceDto) => 
+  // Actual Routine Endpoints
+  getActualRoutines: () => request<ActualRoutine[]>('/v1/routine/instance'),
+  getActualRoutineById: (id: number) => request<ActualRoutine>(`/v1/routine/instance/${id}`),
+  getActualRoutineSets: (id: number) => request<ActualSetInfo[]>(`/v1/routine/instance/${id}/set_info`),
+  registerActualRoutine: (data: RegisterActualRoutineDto) => 
     request<number>('/v1/routine/instance', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  deleteRoutineInstance: (id: number) => 
+  deleteActualRoutine: (id: number) => 
     request<{ message: string }>(`/v1/routine/instance/${id}`, {
       method: 'DELETE',
     }),
+
+  // Stats Endpoints
+  getStatsMonthlyRoutines: () => request<ActualRoutine[]>('/v1/stats/routines/monthly'),
+  getStatsWeeklyFrequency: () => request<number>('/v1/stats/frequency/week'),
+  getStatsTotalWorkouts: () => request<number>('/v1/stats/workouts'),
 
   // Composite helpers for easier UI integration
   async getFullRoutine(routineId: number): Promise<FullRoutine> {
@@ -284,9 +289,9 @@ export const api = {
     return fullRoutines;
   },
 
-  async getFullRoutineInstances(): Promise<FullRoutineInstance[]> {
-    const [instances, routines, exercises, plannedExercises] = await Promise.all([
-      this.getRoutineInstances(),
+  async getFullActualRoutines(): Promise<FullActualRoutine[]> {
+    const [actualRoutines, routines, exercises, plannedExercises] = await Promise.all([
+      this.getActualRoutines(),
       this.getRoutines(),
       this.getExercises(),
       this.getPlannedExercises(),
@@ -314,12 +319,12 @@ export const api = {
       });
     });
 
-    // Fetch actual sets for all routine instances in parallel
+    // Fetch actual sets for all actual routines in parallel
     const fullInstances = await Promise.all(
-      instances.map(async inst => {
+      actualRoutines.map(async inst => {
         const routine = routines.find(r => r.ID === inst.RoutineID);
         const routineName = routine ? routine.Name : `Routine #${inst.RoutineID}`;
-        const actualSetsRaw = await this.getRoutineInstanceSets(inst.ID).catch(() => [] as ActualSetInfo[]);
+        const actualSetsRaw = await this.getActualRoutineSets(inst.ID).catch(() => [] as ActualSetInfo[]);
 
         const actualSets: FullActualSetInfo[] = [];
 
@@ -327,7 +332,7 @@ export const api = {
         for (const set of actualSetsRaw) {
           const id = set.ID ?? (set as any).id;
           const weight = set.Weight ?? (set as any).weight ?? 0;
-          const routineInstanceId = set.RoutineInstanceID ?? (set as any).routine_instance_id ?? (set as any).routine_inst_id ?? 0;
+          const actualRoutineId = set.ActualRoutineID ?? (set as any).actual_routine_id ?? (set as any).routine_instance_id ?? (set as any).routine_inst_id ?? 0;
           const plannedSetInfoId = (set as any).PlannedSetInfoID ?? (set as any).planned_set_info_id ?? (set as any).set_info_id ?? (set as any).PlannedSetInfoId ?? 0;
           const actualReps = set.ActualReps ?? (set as any).actual_reps ?? 0;
 
@@ -338,7 +343,7 @@ export const api = {
           actualSets.push({
             ID: id,
             Weight: weight,
-            RoutineInstanceID: routineInstanceId,
+            ActualRoutineID: actualRoutineId,
             PlannedSetInfoID: plannedSetInfoId,
             ActualReps: actualReps,
             plannedSetInfo: plannedSet,

@@ -25,7 +25,7 @@ import { useTheme } from '@/hooks/use-theme';
 import {
   api,
   FullRoutine,
-  FullRoutineInstance,
+  FullActualRoutine,
   Exercise,
 } from '@/services/api';
 
@@ -41,7 +41,7 @@ export default function WorkoutsScreen() {
 
   // Data states
   const [routines, setRoutines] = useState<FullRoutine[]>([]);
-  const [history, setHistory] = useState<FullRoutineInstance[]>([]);
+  const [history, setHistory] = useState<FullActualRoutine[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -55,7 +55,7 @@ export default function WorkoutsScreen() {
 
   // Selected entities
   const [selectedRoutineId, setSelectedRoutineId] = useState<number | null>(null);
-  const [selectedHistory, setSelectedHistory] = useState<FullRoutineInstance | null>(null);
+  const [selectedHistory, setSelectedHistory] = useState<FullActualRoutine | null>(null);
 
   // Derive selectedRoutine dynamically from routines
   const selectedRoutine = useMemo(() => {
@@ -89,7 +89,7 @@ export default function WorkoutsScreen() {
     try {
       const [routinesData, historyData, exercisesData] = await Promise.all([
         api.getFullRoutines(),
-        api.getFullRoutineInstances(),
+        api.getFullActualRoutines(),
         api.getExercises(),
       ]);
       setRoutines(routinesData || []);
@@ -346,7 +346,7 @@ export default function WorkoutsScreen() {
     }
 
     try {
-      await api.registerRoutineInstance({
+      await api.registerActualRoutine({
         routine_id: selectedRoutine.ID,
         actual_set_infos: actualSetInfos,
       });
@@ -392,7 +392,7 @@ export default function WorkoutsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await api.deleteRoutineInstance(logId);
+              await api.deleteActualRoutine(logId);
               setIsHistoryDetailVisible(false);
               setSelectedHistory(null);
               fetchData();
@@ -479,7 +479,7 @@ export default function WorkoutsScreen() {
   };
 
   // Render completed workout history items
-  const renderHistoryItem = ({ item }: { item: FullRoutineInstance }) => {
+  const renderHistoryItem = ({ item }: { item: FullActualRoutine }) => {
     const formattedDate = new Date(item.FinishTimestamp * 1000).toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',

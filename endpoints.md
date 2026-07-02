@@ -20,7 +20,8 @@ This document defines the REST API endpoints, routing, and data models of the **
 2. [Planned Exercise Endpoints](#2-planned-exercise-endpoints)
 3. [Routine Endpoints](#3-routine-endpoints)
 4. [Routine Instance Endpoints](#4-routine-instance-endpoints)
-5. [Data Type Definitions (DTOs & Models)](#5-data-type-definitions-dtos--models)
+5. [Stats Endpoints](#5-stats-endpoints)
+6. [Data Type Definitions (DTOs & Models)](#6-data-type-definitions-dtos--models)
 
 ---
 
@@ -275,7 +276,7 @@ Source Handler: [RoutineController](file:///Users/nicola/Workspace/trainy/backen
 ### Register Routine Instance
 * **Method & Path**: `POST /v1/routine/instance`
 * **Description**: Logs a completed routine workout, recording the actual weights lifted and repetitions achieved. The backend automatically records the current timestamp as the completion time.
-* **Request Body**: [dto_request.RegisterRoutineInstance](file:///Users/nicola/Workspace/trainy/backend/dto/request/routine.go#L9-L12)
+* **Request Body**: [dto_request.RegisterActualRoutine](file:///Users/nicola/Workspace/trainy/backend/dto/request/routine.go#L9-L12)
   ```json
   {
     "routine_id": 1,               // Required. The routine template ID.
@@ -300,7 +301,7 @@ Source Handler: [RoutineController](file:///Users/nicola/Workspace/trainy/backen
 * **Method & Path**: `GET /v1/routine/instance`
 * **Description**: Returns all routine instances (workout logs).
 * **Response**: `200 OK`
-  * **Body**: Array of [model.RoutineInstance](file:///Users/nicola/Workspace/trainy/backend/model/routine.go#L10-L14)
+  * **Body**: Array of [model.ActualRoutine](file:///Users/nicola/Workspace/trainy/backend/model/routine.go#L10-L14)
     ```json
     [
       {
@@ -320,7 +321,7 @@ Source Handler: [RoutineController](file:///Users/nicola/Workspace/trainy/backen
 * **Path Parameters**:
   * `id` (integer): ID of the routine instance.
 * **Responses**:
-  * **`200 OK`**: Returns [model.RoutineInstance](file:///Users/nicola/Workspace/trainy/backend/model/routine.go#L10-L14)
+  * **`200 OK`**: Returns [model.ActualRoutine](file:///Users/nicola/Workspace/trainy/backend/model/routine.go#L10-L14)
     ```json
     {
       "ID": 8,
@@ -348,7 +349,48 @@ Source Handler: [RoutineController](file:///Users/nicola/Workspace/trainy/backen
 
 ---
 
-## 5. Data Type Definitions (DTOs & Models)
+## 5. Stats Endpoints
+Provides statistical analysis and insights about routines and workouts.
+Source Handler: [StatsController](file:///Users/nicola/Workspace/trainy/backend/controller/stats.go#L11)
+
+### Get Actual Routines This Month
+* **Method & Path**: `GET /v1/stats/routines/monthly`
+* **Description**: Returns all actual routines completed in the current month.
+* **Responses**:
+  * **`200 OK`**: Array of [model.ActualRoutine](file:///Users/nicola/Workspace/trainy/backend/model/routine.go#L10-L14)
+    ```json
+    [
+      {
+        "ID": 8,
+        "FinishTimestamp": 1782346790,
+        "RoutineID": 1
+      }
+    ]
+    ```
+    *Note: Returns `[]` if no routines have been completed this month.*
+  * **`500 Internal Server Error`**: Database error.
+
+### Get Frequency This Week
+* **Method & Path**: `GET /v1/stats/frequency/week`
+* **Description**: Returns the frequency (number of workouts completed) for the current week.
+* **Responses**:
+  * **`200 OK`**: Returns the count as an integer.
+    ```json
+    3
+    ```
+
+### Get Total Workouts
+* **Method & Path**: `GET /v1/stats/workouts`
+* **Description**: Returns the total number of workouts completed.
+* **Responses**:
+  * **`200 OK`**: Returns the count as an integer.
+    ```json
+    42
+    ```
+
+---
+
+## 6. Data Type Definitions (DTOs & Models)
 
 Below are the exact Go structures representing requests and responses. Note that for JSON serialization, default fields capitalization is used when Go struct tags are not specified on the `model` structs, whereas explicit lowercase `json` struct tags are used on request `dto` structures.
 
@@ -395,9 +437,9 @@ type CreateRoutine struct {
 }
 ```
 
-#### RegisterRoutineInstance
+#### RegisterActualRoutine
 ```go
-type RegisterRoutineInstance struct {
+type RegisterActualRoutine struct {
 	RoutineID      int64           `json:"routine_id"`
 	ActualSetInfos []ActualSetInfo `json:"actual_set_infos"`
 }
@@ -460,9 +502,9 @@ type Routine struct {
 }
 ```
 
-#### RoutineInstance
+#### ActualRoutine
 ```go
-type RoutineInstance struct {
+type ActualRoutine struct {
 	ID              int64
 	FinishTimestamp int64
 	RoutineID       int64
@@ -472,11 +514,11 @@ type RoutineInstance struct {
 #### ActualSetInfo (Model)
 ```go
 type ActualSetInfo struct {
-	ID                int64
-	Weight            float64
-	RoutineInstanceID int64
-	PlannedSetInfoID  int64
-	ActualReps        int64
+	ID               int64
+	Weight           float64
+	ActualRoutineID  int64
+	PlannedSetInfoID int64
+	ActualReps       int64
 }
 ```
 
