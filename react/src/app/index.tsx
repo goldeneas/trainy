@@ -19,6 +19,8 @@ import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import { useFocusEffect } from 'expo-router';
+import { useAudioPlayer } from 'expo-audio';
+import * as Notifications from 'expo-notifications';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -30,6 +32,16 @@ import {
   FullActualRoutine,
   Exercise,
 } from '@/services/api';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 const getNow = () => Date.now();
 
@@ -83,8 +95,22 @@ export default function WorkoutsScreen() {
   }>({});
   const [restTimerSeconds, setRestTimerSeconds] = useState(0);
   const [restTimerActive, setRestTimerActive] = useState(false);
+  // Audio player and notifications setup
+  const player = useAudioPlayer('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
 
-
+  useEffect(() => {
+    async function requestPermissions() {
+      try {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status !== 'granted') {
+          await Notifications.requestPermissionsAsync();
+        }
+      } catch (err) {
+        console.warn('Notifications permission request failed:', err);
+      }
+    }
+    requestPermissions();
+  }, []);
   // Fetch all data
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -130,19 +156,41 @@ export default function WorkoutsScreen() {
     };
   }, [isWorkoutActive, workoutStartTime]);
 
+  const triggerRestTimerEndEffects = useCallback(() => {
+    try {
+      Vibration.vibrate([0, 500, 100, 500]);
+    } catch {}
+
+    try {
+      player.seekTo(0);
+      player.play();
+    } catch (err) {
+      console.warn('Audio play failed:', err);
+    }
+
+    try {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Rest Over!',
+          body: 'Keep going, king!',
+          sound: true,
+        },
+        trigger: null,
+      });
+    } catch (err) {
+      console.warn('Notification failed:', err);
+    }
+  }, [player]);
+
   // Rest Timer ticking
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
-    if (restTimerActive && restTimerSeconds > 0) {
+    if (restTimerActive) {
       interval = setInterval(() => {
         setRestTimerSeconds((prev) => {
           if (prev <= 1) {
             setRestTimerActive(false);
-            try {
-              Vibration.vibrate([0, 500, 100, 500]);
-            } catch {
-              // Ignore vibration failures on platforms without vibrator (e.g. web)
-            }
+            triggerRestTimerEndEffects();
             return 0;
           }
           return prev - 1;
@@ -152,8 +200,7 @@ export default function WorkoutsScreen() {
     return () => {
       if (interval) clearInterval(interval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restTimerActive]);
+  }, [restTimerActive, triggerRestTimerEndEffects]);
 
 
 
@@ -375,7 +422,7 @@ export default function WorkoutsScreen() {
           text: 'Discard',
           style: 'destructive',
           onPress: () => {
-             setIsWorkoutActive(false);
+            setIsWorkoutActive(false);
           },
         },
       ]
