@@ -94,8 +94,8 @@ func (s *SQLiteExerciseDAO) GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id 
 
 func (d *SQLiteExerciseDAO) GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.Exercise) error {
-		return rows.Scan(&t.ID, &t.Name, &t.Notes, &t.Instructions, &t.ImageID)
-	}, "SELECT id, name, notes, instructions, image_id FROM Exercise")
+		return rows.Scan(&t.ID, &t.Name, &t.Notes, &t.Instructions, &t.ImageID, &t.MuscleGroupID)
+	}, "SELECT id, name, notes, instructions, image_id, muscle_group_id FROM Exercise")
 }
 
 func (d *SQLiteExerciseDAO) GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error) {

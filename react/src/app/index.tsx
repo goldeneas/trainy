@@ -33,6 +33,16 @@ import {
   Exercise,
 } from '@/services/api';
 
+const MUSCLE_GROUPS = [
+  { id: 1, name: 'Chest' },
+  { id: 2, name: 'Back' },
+  { id: 3, name: 'Legs' },
+  { id: 4, name: 'Shoulders' },
+  { id: 5, name: 'Arms' },
+  { id: 6, name: 'Core' },
+  { id: 7, name: 'Other' },
+];
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -865,7 +875,16 @@ export default function WorkoutsScreen() {
                                 <View style={styles.peCardTop}>
                                   <View style={{ flex: 1 }}>
                                     <ThemedText type="smallBold">{pe.exercise?.Name || 'Exercise'}</ThemedText>
-                                    <ThemedText type="small" themeColor="textSecondary">
+                                    {(() => {
+                                      const mgId = pe.exercise?.MuscleGroupID ?? (pe.exercise as any)?.muscle_group_id;
+                                      const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
+                                      return mg ? (
+                                        <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
+                                          {mg.name}
+                                        </ThemedText>
+                                      ) : null;
+                                    })()}
+                                    <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
                                       Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
                                     </ThemedText>
                                   </View>
@@ -947,6 +966,15 @@ export default function WorkoutsScreen() {
                                   ],
                                 ]}>
                                 <ThemedText type="smallBold">{ex.Name}</ThemedText>
+                                {(() => {
+                                  const mgId = ex.MuscleGroupID ?? (ex as any).muscle_group_id;
+                                  const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
+                                  return mg ? (
+                                    <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
+                                      {mg.name}
+                                    </ThemedText>
+                                  ) : null;
+                                })()}
                               </Pressable>
                             ))}
                           </View>
@@ -1099,6 +1127,15 @@ export default function WorkoutsScreen() {
                   <ThemedText type="default" style={{ fontWeight: 'bold', marginBottom: Spacing.one }}>
                     {pe.exercise?.Name}
                   </ThemedText>
+                  {(() => {
+                    const mgId = pe.exercise?.MuscleGroupID ?? (pe.exercise as any)?.muscle_group_id;
+                    const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
+                    return mg ? (
+                      <ThemedText type="small" style={{ color: '#0A84FF', marginBottom: Spacing.one }}>
+                        {mg.name}
+                      </ThemedText>
+                    ) : null;
+                  })()}
                   <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
                     Planned Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
                   </ThemedText>
@@ -1523,7 +1560,7 @@ const styles = StyleSheet.create({
   },
   floatingTimerPill: {
     position: 'absolute',
-    bottom: 160,
+    bottom: 170,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',

@@ -33,6 +33,25 @@ const MUSCLE_GROUPS = [
   { id: 7, name: 'Other' },
 ];
 
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
 export default function ExercisesScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -45,6 +64,7 @@ export default function ExercisesScreen() {
 
   // Modals state
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isImportModalVisible, setIsImportModalVisible] = useState(false);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
@@ -53,6 +73,10 @@ export default function ExercisesScreen() {
   const [newNotes, setNewNotes] = useState('');
   const [newInstructions, setNewInstructions] = useState('');
   const [selectedMuscleGroupId, setSelectedMuscleGroupId] = useState<number | null>(null);
+  
+  // CSV Import state
+  const [csvInput, setCsvInput] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch exercises
@@ -122,6 +146,62 @@ export default function ExercisesScreen() {
     }
   };
 
+  // Handle CSV Import
+  const handleImportCSV = async () => {
+    if (!csvInput.trim()) {
+      Alert.alert('Error', 'Please enter some CSV text');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const lines = csvInput.split('\n');
+      let successCount = 0;
+      let startIdx = 0;
+
+      if (lines.length > 0) {
+        const firstRow = parseCSVLine(lines[0]);
+        if (firstRow[0]?.toLowerCase() === 'name') {
+          startIdx = 1;
+        }
+      }
+
+      for (let i = startIdx; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const row = parseCSVLine(line);
+        if (row.length === 0 || !row[0]) continue;
+
+        const name = row[0];
+        const notes = row[1] || '';
+        const instructions = row[2] || '';
+        const muscleGroupIdVal = row[3] ? parseInt(row[3].trim(), 10) : null;
+        const muscleGroupId = (muscleGroupIdVal && !isNaN(muscleGroupIdVal)) ? muscleGroupIdVal : null;
+        const imageIdVal = row[4] ? parseInt(row[4].trim(), 10) : null;
+        const imageId = (imageIdVal && !isNaN(imageIdVal)) ? imageIdVal : null;
+
+        await api.createExercise({
+          name,
+          notes,
+          instructions,
+          muscle_group_id: muscleGroupId,
+          image_id: imageId,
+        });
+        successCount++;
+      }
+
+      setCsvInput('');
+      setIsImportModalVisible(false);
+      fetchExercises();
+      Alert.alert('Success', `Successfully imported ${successCount} exercises!`);
+    } catch (error: any) {
+      Alert.alert('Import Error', error.message || 'An error occurred during import.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   // Handle delete
   const handleDeleteExercise = (id: number, name: string) => {
     Alert.alert(
@@ -166,11 +246,15 @@ export default function ExercisesScreen() {
             <ThemedText type="smallBold" style={styles.exerciseName}>
               {item.Name}
             </ThemedText>
-            {item.MuscleGroupID ? (
-              <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
-                {MUSCLE_GROUPS.find(g => g.id === item.MuscleGroupID)?.name}
-              </ThemedText>
-            ) : null}
+            {(() => {
+              const mgId = item.MuscleGroupID ?? (item as any).muscle_group_id;
+              const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
+              return mg ? (
+                <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
+                  {mg.name}
+                </ThemedText>
+              ) : null;
+            })()}
           </View>
           <SymbolView
             tintColor={theme.textSecondary}
@@ -194,15 +278,26 @@ export default function ExercisesScreen() {
         <ThemedText type="subtitle" style={styles.headerTitle}>
           Exercises
         </ThemedText>
-        <Pressable
-          onPress={() => setIsAddModalVisible(true)}
-          style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-          <SymbolView
-            tintColor="#0A84FF" // Apple active blue
-            name="plus.circle.fill"
-            size={28}
-          />
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+          <Pressable
+            onPress={() => setIsImportModalVisible(true)}
+            style={({ pressed }) => [styles.importButton, styles.addButton, pressed && styles.pressed]}>
+            <SymbolView
+              tintColor="#8E8E93"
+              name="square.and.arrow.up.fill"
+              size={28}
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => setIsAddModalVisible(true)}
+            style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+            <SymbolView
+              tintColor="#0A84FF" // Apple active blue
+              name="plus.circle.fill"
+              size={28}
+            />
+          </Pressable>
+        </View>
       </View>
 
       {/* Search Input */}
@@ -304,18 +399,22 @@ export default function ExercisesScreen() {
                   {selectedExercise.Name}
                 </ThemedText>
 
-                {selectedExercise.MuscleGroupID ? (
-                  <View style={styles.detailSection}>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
-                      MUSCLE GROUP
-                    </ThemedText>
-                    <ThemedView type="backgroundSelected" style={[styles.detailTextBox, { alignSelf: 'flex-start', paddingVertical: Spacing.half, paddingHorizontal: Spacing.two }]}>
-                      <ThemedText type="smallBold" style={{ color: '#0A84FF' }}>
-                        {MUSCLE_GROUPS.find(g => g.id === selectedExercise.MuscleGroupID)?.name || 'Unknown'}
+                {(() => {
+                  const mgId = selectedExercise.MuscleGroupID ?? (selectedExercise as any).muscle_group_id;
+                  const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
+                  return mg ? (
+                    <View style={styles.detailSection}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                        MUSCLE GROUP
                       </ThemedText>
-                    </ThemedView>
-                  </View>
-                ) : null}
+                      <ThemedView type="backgroundSelected" style={[styles.detailTextBox, { alignSelf: 'flex-start', paddingVertical: Spacing.half, paddingHorizontal: Spacing.two }]}>
+                        <ThemedText type="smallBold" style={{ color: '#0A84FF' }}>
+                          {mg.name}
+                        </ThemedText>
+                      </ThemedView>
+                    </View>
+                  ) : null;
+                })()}
 
                 {selectedExercise.Notes ? (
                   <View style={styles.detailSection}>
@@ -485,6 +584,68 @@ export default function ExercisesScreen() {
           </ThemedView>
         </View>
       </Modal>
+
+      {/* CSV Import Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isImportModalVisible}
+        onRequestClose={() => setIsImportModalVisible(false)}>
+        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+          <ThemedView type="background" style={[styles.modalContent, { height: '80%' }]}>
+            <View style={styles.modalHeader}>
+              <Pressable
+                onPress={() => {
+                  setCsvInput('');
+                  setIsImportModalVisible(false);
+                }}
+                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+              </Pressable>
+              <ThemedText type="smallBold" style={styles.modalTitle}>
+                Import CSV
+              </ThemedText>
+              <Pressable
+                onPress={handleImportCSV}
+                disabled={isImporting}
+                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                {isImporting ? (
+                  <ActivityIndicator size="small" color="#0A84FF" />
+                ) : (
+                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Import</ThemedText>
+                )}
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.modalFormBody}>
+              <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
+                CSV format: name,notes,instructions,muscle_group_id,image_id
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
+                Example:{"\n"}
+                Bench Press,Chest builder,Keep bar straight,1,null
+              </ThemedText>
+
+              <TextInput
+                placeholder="Paste CSV text here..."
+                placeholderTextColor={theme.textSecondary}
+                value={csvInput}
+                onChangeText={setCsvInput}
+                multiline
+                style={[
+                  styles.inputField,
+                  styles.importCsvInput,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    color: theme.text,
+                    borderColor: theme.backgroundSelected,
+                  },
+                ]}
+              />
+            </ScrollView>
+          </ThemedView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -513,6 +674,9 @@ const styles = StyleSheet.create({
   },
   addButton: {
     padding: Spacing.one,
+  },
+  importButton: {
+      paddingBottom: Spacing.two,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -687,5 +851,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     borderRadius: 16,
     borderWidth: 1,
+  },
+  importCsvInput: {
+    height: 300,
+    textAlignVertical: 'top',
+    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' }),
   },
 });
