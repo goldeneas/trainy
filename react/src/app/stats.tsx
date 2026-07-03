@@ -16,7 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { api, ActualRoutine, Routine, MuscleGroupDistribution } from '@/services/api';
+import { api, ActualRoutine, MuscleGroupDistribution } from '@/services/api';
 
 const getNow = () => Date.now();
 
@@ -29,7 +29,6 @@ export default function StatsScreen() {
   const [totalWorkouts, setTotalWorkouts] = useState<number>(0);
   const [weeklyFrequency, setWeeklyFrequency] = useState<number>(0);
   const [monthlyRoutines, setMonthlyRoutines] = useState<ActualRoutine[]>([]);
-  const [routines, setRoutines] = useState<Routine[]>([]);
   const [muscleDistribution, setMuscleDistribution] = useState<MuscleGroupDistribution[]>([]);
   
   const [loading, setLoading] = useState(true);
@@ -38,18 +37,16 @@ export default function StatsScreen() {
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const [workoutsCount, frequencyCount, monthlyData, routinesData, distributionData] = await Promise.all([
+      const [workoutsCount, frequencyCount, monthlyData, distributionData] = await Promise.all([
         api.getStatsTotalWorkouts(),
         api.getStatsWeeklyFrequency(),
         api.getStatsMonthlyRoutines(),
-        api.getRoutines(),
         api.getStatsMuscleDistribution(),
       ]);
 
       setTotalWorkouts(workoutsCount ?? 0);
       setWeeklyFrequency(frequencyCount ?? 0);
       setMonthlyRoutines(monthlyData || []);
-      setRoutines(routinesData || []);
       setMuscleDistribution(distributionData || []);
     } catch (error: any) {
       console.error(error);
@@ -70,29 +67,6 @@ export default function StatsScreen() {
     setRefreshing(true);
     fetchData();
   };
-
-  // Resolve monthly routines completed with their name and date (limited to 5 most recent)
-  const resolvedMonthlyLogs = useMemo(() => {
-    return monthlyRoutines
-      .map((item) => {
-        const routine = routines.find((r) => r.ID === item.RoutineID);
-        const name = routine ? routine.Name : `Routine #${item.RoutineID}`;
-        const dateStr = new Date(item.FinishTimestamp * 1000).toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        return {
-          id: item.ID,
-          name,
-          dateStr,
-          timestamp: item.FinishTimestamp,
-        };
-      })
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 5);
-  }, [monthlyRoutines, routines]);
 
   // Set of calendar days this month that had a completed workout
   const completedDays = useMemo(() => {
@@ -121,10 +95,10 @@ export default function StatsScreen() {
     return daysList;
   }, [completedDays]);
 
-  // Current month name
-  const currentMonthName = useMemo(() => {
-    return new Date(getNow()).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-  }, []);
+  // Sort muscle group focus by most active (descending)
+  const sortedMuscleDistribution = useMemo(() => {
+    return [...muscleDistribution].sort((a, b) => b.distribution - a.distribution);
+  }, [muscleDistribution]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -164,13 +138,11 @@ export default function StatsScreen() {
 
           {/* Activity Heatmap Header */}
 
-          {/*
           <View style={styles.sectionHeader}>
             <ThemedText type="smallBold" themeColor="textSecondary">
               ACTIVITY HEATMAP
             </ThemedText>
           </View>
-            */}
 
           {/* Activity Heatmap Card */}
           <ThemedView type="backgroundElement" style={styles.heatmapCard}>
@@ -208,7 +180,7 @@ export default function StatsScreen() {
 
           {/* Muscle Group Focus Card */}
           <ThemedView type="backgroundElement" style={styles.distributionCard}>
-            {muscleDistribution.length === 0 ? (
+            {sortedMuscleDistribution.length === 0 ? (
               <View style={{ alignItems: 'center', paddingVertical: Spacing.two }}>
 
                 <SymbolView
@@ -222,17 +194,17 @@ export default function StatsScreen() {
                 </ThemedText>
               </View>
             ) : (
-              muscleDistribution.map((item, idx) => (
+              sortedMuscleDistribution.map((item, idx) => (
                 <View
                   key={item.name}
                   style={[
                     styles.distributionRow,
-                    idx < muscleDistribution.length - 1 && { marginBottom: Spacing.three },
+                    idx < sortedMuscleDistribution.length - 1 && { marginBottom: Spacing.three },
                   ]}>
                   <View style={styles.distributionLabelRow}>
                     <ThemedText type="smallBold">{item.name}</ThemedText>
                     <ThemedText type="smallBold" themeColor="textSecondary">
-                      {item.distribution.toFixed(1)}%
+                      {(item.distribution * 100).toFixed(1)}%
                     </ThemedText>
                   </View>
                   <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundSelected }]}>
@@ -240,7 +212,7 @@ export default function StatsScreen() {
                       style={[
                         styles.progressBarFill,
                         {
-                          width: `${Math.min(100, Math.max(0, item.distribution))}%`,
+                          width: `${Math.min(100, Math.max(0, item.distribution * 100))}%`,
                           backgroundColor: '#0A84FF',
                         },
                       ]}
@@ -250,42 +222,6 @@ export default function StatsScreen() {
               ))
             )}
           </ThemedView>
-
-          {/* Monthly Activity List */}
-          <View style={styles.sectionHeader}>
-            <ThemedText type="smallBold" themeColor="textSecondary">
-              COMPLETED IN {currentMonthName.toUpperCase()}
-            </ThemedText>
-          </View>
-
-          {resolvedMonthlyLogs.length === 0 ? (
-            <ThemedView type="backgroundElement" style={styles.emptyCard}>
-              <SymbolView
-                tintColor={theme.textSecondary}
-                name="info.circle"
-                size={24}
-                style={{ marginBottom: Spacing.one, opacity: 0.6 }}
-              />
-              <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-                No workouts completed yet this month.
-              </ThemedText>
-            </ThemedView>
-          ) : (
-            resolvedMonthlyLogs.map((log) => (
-              <ThemedView key={log.id} type="backgroundElement" style={styles.logCard}>
-                <View style={styles.logCardInner}>
-                  <View style={styles.logTextContainer}>
-                    <ThemedText type="smallBold">{log.name}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.half }}>
-                      {log.dateStr}
-                    </ThemedText>
-                  </View>
-                  <SymbolView tintColor="#30D158" name="checkmark.seal.fill" size={20} />
-                </View>
-              </ThemedView>
-            ))
-          )}
-
         </ScrollView>
       )}
     </SafeAreaView>
@@ -324,6 +260,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.three,
     borderRadius: 12,
+    marginBottom: Spacing.one,
   },
   cardIcon: {
     marginBottom: Spacing.one,

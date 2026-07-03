@@ -15,11 +15,9 @@ func BeginningOfWeek(date time.Time) time.Time {
 }
 
 func BeginningOfMonth(date time.Time) time.Time {
-	y, m, _ := date.AddDate(0, 0, -date.Day()+1).Date()
-	return time.Date(y, m, 0, 0, 0, 0, 0, date.Location())
+	return time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, date.Location())
 }
 
 func EndOfMonth(date time.Time) time.Time {
-	y, m, _ := date.AddDate(0, 1, -date.Day()).Date()
-	return time.Date(y, m, 0, 0, 0, 0, 0, date.Location())
+	return time.Date(date.Year(), date.Month()+1, 0, 0, 0, 0, 0, date.Location())
 }
