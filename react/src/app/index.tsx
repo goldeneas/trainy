@@ -31,6 +31,8 @@ import {
   FullRoutine,
   FullActualRoutine,
   Exercise,
+  getApiBaseUrl,
+  setApiBaseUrl,
 } from '@/services/api';
 
 const MUSCLE_GROUPS = [
@@ -105,6 +107,9 @@ export default function WorkoutsScreen() {
   }>({});
   const [restTimerSeconds, setRestTimerSeconds] = useState(0);
   const [restTimerActive, setRestTimerActive] = useState(false);
+  // Settings Modal State
+  const [isSettingsVisible, setIsSettingsVisible] = useState(false);
+  const [tempServerUrl, setTempServerUrl] = useState('');
   // Audio player and notifications setup
   const player = useAudioPlayer('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
 
@@ -600,17 +605,29 @@ export default function WorkoutsScreen() {
           <ThemedText type="subtitle" style={styles.headerTitle}>
             Workouts
           </ThemedText>
-          {activeSegment === 'routines' && (
-            <Pressable
-              onPress={() => setIsAddRoutineVisible(true)}
-              style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-              <SymbolView
-                tintColor="#0A84FF"
-                name="plus.circle.fill"
-                size={28}
-              />
-            </Pressable>
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+              <Pressable
+                onPress={() => {
+                  setTempServerUrl(getApiBaseUrl());
+                  setIsSettingsVisible(true);
+                }}
+                style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+                <SymbolView
+                  tintColor={theme.textSecondary}
+                  name="gearshape.fill"
+                  size={28}
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => setIsAddRoutineVisible(true)}
+                style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+                <SymbolView
+                  tintColor="#0A84FF"
+                  name="plus.circle.fill"
+                  size={28}
+                />
+              </Pressable>
+          </View>
         </View>
 
         {/* Custom iOS-style Segmented Control */}
@@ -1365,6 +1382,72 @@ export default function WorkoutsScreen() {
                 </View>
               </ScrollView>
             )}
+          </ThemedView>
+        </View>
+      </Modal>
+
+      {/* Settings Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isSettingsVisible}
+        onRequestClose={() => setIsSettingsVisible(false)}>
+        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+          <ThemedView type="background" style={[styles.modalContent, { maxHeight: '60%' }]}>
+            <View style={styles.modalHeader}>
+              <Pressable
+                onPress={() => {
+                  setTempServerUrl('');
+                  setIsSettingsVisible(false);
+                }}
+                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+              </Pressable>
+              <ThemedText type="smallBold" style={styles.modalTitle}>
+                Settings
+              </ThemedText>
+              <Pressable
+                onPress={async () => {
+                  if (!tempServerUrl.trim()) {
+                    Alert.alert('Error', 'Server address is required');
+                    return;
+                  }
+                  setApiBaseUrl(tempServerUrl.trim());
+                  setIsSettingsVisible(false);
+                  fetchData(true);
+                  Alert.alert('Success', 'Server API URL updated successfully!');
+                }}
+                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.modalFormBody}>
+              <View style={styles.formGroup}>
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                  SERVER API BASE URL
+                </ThemedText>
+                <TextInput
+                  placeholder="e.g. http://localhost:8080"
+                  placeholderTextColor={theme.textSecondary}
+                  value={tempServerUrl}
+                  onChangeText={setTempServerUrl}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[
+                    styles.inputField,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      color: theme.text,
+                      borderColor: theme.backgroundSelected,
+                    },
+                  ]}
+                />
+                <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two, lineHeight: 18 }}>
+                  Change the connection address of the backend service. Default is http://localhost:8080.
+                </ThemedText>
+              </View>
+            </ScrollView>
           </ThemedView>
         </View>
       </Modal>

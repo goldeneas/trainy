@@ -283,7 +283,7 @@ export default function ExercisesScreen() {
             onPress={() => setIsImportModalVisible(true)}
             style={({ pressed }) => [styles.importButton, styles.addButton, pressed && styles.pressed]}>
             <SymbolView
-              tintColor="#8E8E93"
+              tintColor={theme.textSecondary}
               name="square.and.arrow.up.fill"
               size={28}
             />
