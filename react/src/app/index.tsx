@@ -578,7 +578,7 @@ export default function WorkoutsScreen() {
         </View>
         <View style={styles.cardFooter}>
           <SymbolView
-            tintColor="#30D158"
+            tintColor="#0A84FF"
             name="checkmark.circle.fill"
             size={14}
             style={{ marginRight: Spacing.one }}
@@ -925,7 +925,7 @@ export default function WorkoutsScreen() {
                           onPress={() => handleStartWorkout(selectedRoutine)}
                           style={({ pressed }) => [
                             styles.primaryActionButton,
-                            { backgroundColor: '#30D158' },
+                            { backgroundColor: '#0A84FF' },
                             pressed && styles.pressed,
                           ]}>
                           <SymbolView
