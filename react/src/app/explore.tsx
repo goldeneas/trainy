@@ -4,6 +4,7 @@ import {
   Alert,
   FlatList,
   Modal,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   RefreshControl,
@@ -453,136 +454,140 @@ export default function ExercisesScreen() {
         transparent={true}
         visible={isAddModalVisible}
         onRequestClose={() => setIsAddModalVisible(false)}>
-        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <ThemedView type="background" style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Pressable
-                onPress={() => {
-                  setNewName('');
-                  setNewNotes('');
-                  setNewInstructions('');
-                  setSelectedMuscleGroupId(null);
-                  setIsAddModalVisible(false);
-                }}
-                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-              </Pressable>
-              <ThemedText type="smallBold" style={styles.modalTitle}>
-                New Exercise
-              </ThemedText>
-              <Pressable
-                onPress={handleCreateExercise}
-                disabled={isSubmitting}
-                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                {isSubmitting ? (
-                  <ActivityIndicator size="small" color="#0A84FF" />
-                ) : (
-                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                )}
-              </Pressable>
-            </View>
-
-            <ScrollView style={styles.modalFormBody}>
-              <View style={styles.formGroup}>
-                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                  NAME *
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
+          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+            <ThemedView type="background" style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Pressable
+                  onPress={() => {
+                    setNewName('');
+                    setNewNotes('');
+                    setNewInstructions('');
+                    setSelectedMuscleGroupId(null);
+                    setIsAddModalVisible(false);
+                  }}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                </Pressable>
+                <ThemedText type="smallBold" style={styles.modalTitle}>
+                  New Exercise
                 </ThemedText>
-                <TextInput
-                  placeholder="e.g. Bench Press"
-                  placeholderTextColor={theme.textSecondary}
-                  value={newName}
-                  onChangeText={setNewName}
-                  style={[
-                    styles.inputField,
-                    {
-                      backgroundColor: theme.backgroundElement,
-                      color: theme.text,
-                      borderColor: theme.backgroundSelected,
-                    },
-                  ]}
-                />
+                <Pressable
+                  onPress={handleCreateExercise}
+                  disabled={isSubmitting}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="#0A84FF" />
+                  ) : (
+                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                  )}
+                </Pressable>
               </View>
 
-              <View style={styles.formGroup}>
-                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                  MUSCLE GROUP
-                </ThemedText>
-                <View style={styles.chipsContainer}>
-                  {MUSCLE_GROUPS.map((group) => {
-                    const isSelected = selectedMuscleGroupId === group.id;
-                    return (
-                      <Pressable
-                        key={group.id}
-                        onPress={() => setSelectedMuscleGroupId(isSelected ? null : group.id)}
-                        style={[
-                          styles.chip,
-                          {
-                            backgroundColor: isSelected ? '#0A84FF' : theme.backgroundElement,
-                            borderColor: theme.backgroundSelected,
-                          },
-                        ]}>
-                        <ThemedText
-                          type="smallBold"
-                          style={{
-                            color: isSelected ? '#FFFFFF' : theme.text,
-                            fontSize: 12,
-                          }}>
-                          {group.name}
-                        </ThemedText>
-                      </Pressable>
-                    );
-                  })}
+              <ScrollView style={styles.modalFormBody}>
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    NAME *
+                  </ThemedText>
+                  <TextInput
+                    placeholder="e.g. Bench Press"
+                    placeholderTextColor={theme.textSecondary}
+                    value={newName}
+                    onChangeText={setNewName}
+                    style={[
+                      styles.inputField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
                 </View>
-              </View>
 
-              <View style={styles.formGroup}>
-                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                  NOTES
-                </ThemedText>
-                <TextInput
-                  placeholder="Short description..."
-                  placeholderTextColor={theme.textSecondary}
-                  value={newNotes}
-                  onChangeText={setNewNotes}
-                  style={[
-                    styles.inputField,
-                    styles.textAreaField,
-                    {
-                      backgroundColor: theme.backgroundElement,
-                      color: theme.text,
-                      borderColor: theme.backgroundSelected,
-                    },
-                  ]}
-                  multiline
-                  numberOfLines={2}
-                />
-              </View>
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    MUSCLE GROUP
+                  </ThemedText>
+                  <View style={styles.chipsContainer}>
+                    {MUSCLE_GROUPS.map((group) => {
+                      const isSelected = selectedMuscleGroupId === group.id;
+                      return (
+                        <Pressable
+                          key={group.id}
+                          onPress={() => setSelectedMuscleGroupId(isSelected ? null : group.id)}
+                          style={[
+                            styles.chip,
+                            {
+                              backgroundColor: isSelected ? '#0A84FF' : theme.backgroundElement,
+                              borderColor: theme.backgroundSelected,
+                            },
+                          ]}>
+                          <ThemedText
+                            type="smallBold"
+                            style={{
+                              color: isSelected ? '#FFFFFF' : theme.text,
+                              fontSize: 12,
+                            }}>
+                            {group.name}
+                          </ThemedText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
 
-              <View style={styles.formGroup}>
-                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                  INSTRUCTIONS
-                </ThemedText>
-                <TextInput
-                  placeholder="Step-by-step instructions on form..."
-                  placeholderTextColor={theme.textSecondary}
-                  value={newInstructions}
-                  onChangeText={setNewInstructions}
-                  style={[
-                    styles.inputField,
-                    styles.largeTextAreaField,
-                    {
-                      backgroundColor: theme.backgroundElement,
-                      color: theme.text,
-                      borderColor: theme.backgroundSelected,
-                    },
-                  ]}
-                  multiline
-                  numberOfLines={4}
-                />
-              </View>
-            </ScrollView>
-          </ThemedView>
-        </View>
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    NOTES
+                  </ThemedText>
+                  <TextInput
+                    placeholder="Short description..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={newNotes}
+                    onChangeText={setNewNotes}
+                    style={[
+                      styles.inputField,
+                      styles.textAreaField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                    multiline
+                    numberOfLines={2}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    INSTRUCTIONS
+                  </ThemedText>
+                  <TextInput
+                    placeholder="Step-by-step instructions on form..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={newInstructions}
+                    onChangeText={setNewInstructions}
+                    style={[
+                      styles.inputField,
+                      styles.largeTextAreaField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                    multiline
+                    numberOfLines={4}
+                  />
+                </View>
+              </ScrollView>
+            </ThemedView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* CSV Import Modal */}
@@ -591,60 +596,64 @@ export default function ExercisesScreen() {
         transparent={true}
         visible={isImportModalVisible}
         onRequestClose={() => setIsImportModalVisible(false)}>
-        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <ThemedView type="background" style={[styles.modalContent, { height: '80%' }]}>
-            <View style={styles.modalHeader}>
-              <Pressable
-                onPress={() => {
-                  setCsvInput('');
-                  setIsImportModalVisible(false);
-                }}
-                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-              </Pressable>
-              <ThemedText type="smallBold" style={styles.modalTitle}>
-                Import CSV
-              </ThemedText>
-              <Pressable
-                onPress={handleImportCSV}
-                disabled={isImporting}
-                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                {isImporting ? (
-                  <ActivityIndicator size="small" color="#0A84FF" />
-                ) : (
-                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Import</ThemedText>
-                )}
-              </Pressable>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
+          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+            <ThemedView type="background" style={[styles.modalContent, { height: '80%' }]}>
+              <View style={styles.modalHeader}>
+                <Pressable
+                  onPress={() => {
+                    setCsvInput('');
+                    setIsImportModalVisible(false);
+                  }}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                </Pressable>
+                <ThemedText type="smallBold" style={styles.modalTitle}>
+                  Import CSV
+                </ThemedText>
+                <Pressable
+                  onPress={handleImportCSV}
+                  disabled={isImporting}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  {isImporting ? (
+                    <ActivityIndicator size="small" color="#0A84FF" />
+                  ) : (
+                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Import</ThemedText>
+                  )}
+                </Pressable>
+              </View>
 
-            <ScrollView style={styles.modalFormBody}>
-              <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
-                CSV format: name,notes,instructions,muscle_group_id,image_id
-              </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
-                Example:{"\n"}
-                Bench Press,Chest builder,Keep bar straight,1,null
-              </ThemedText>
+              <ScrollView style={styles.modalFormBody}>
+                <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
+                  CSV format: name,notes,instructions,muscle_group_id,image_id
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
+                  Example:{"\n"}
+                  Bench Press,Chest builder,Keep bar straight,1,null
+                </ThemedText>
 
-              <TextInput
-                placeholder="Paste CSV text here..."
-                placeholderTextColor={theme.textSecondary}
-                value={csvInput}
-                onChangeText={setCsvInput}
-                multiline
-                style={[
-                  styles.inputField,
-                  styles.importCsvInput,
-                  {
-                    backgroundColor: theme.backgroundElement,
-                    color: theme.text,
-                    borderColor: theme.backgroundSelected,
-                  },
-                ]}
-              />
-            </ScrollView>
-          </ThemedView>
-        </View>
+                <TextInput
+                  placeholder="Paste CSV text here..."
+                  placeholderTextColor={theme.textSecondary}
+                  value={csvInput}
+                  onChangeText={setCsvInput}
+                  multiline
+                  style={[
+                    styles.inputField,
+                    styles.importCsvInput,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      color: theme.text,
+                      borderColor: theme.backgroundSelected,
+                    },
+                  ]}
+                />
+              </ScrollView>
+            </ThemedView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

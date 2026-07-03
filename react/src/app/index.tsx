@@ -1392,64 +1392,69 @@ export default function WorkoutsScreen() {
         transparent={true}
         visible={isSettingsVisible}
         onRequestClose={() => setIsSettingsVisible(false)}>
-        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <ThemedView type="background" style={[styles.modalContent, { maxHeight: '60%' }]}>
-            <View style={styles.modalHeader}>
-              <Pressable
-                onPress={() => {
-                  setTempServerUrl('');
-                  setIsSettingsVisible(false);
-                }}
-                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-              </Pressable>
-              <ThemedText type="smallBold" style={styles.modalTitle}>
-                Settings
-              </ThemedText>
-              <Pressable
-                onPress={async () => {
-                  if (!tempServerUrl.trim()) {
-                    Alert.alert('Error', 'Server address is required');
-                    return;
-                  }
-                  setApiBaseUrl(tempServerUrl.trim());
-                  setIsSettingsVisible(false);
-                  fetchData(true);
-                  Alert.alert('Success', 'Server API URL updated successfully!');
-                }}
-                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-              </Pressable>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsSettingsVisible(false)} />
+            <ThemedView type="background" style={[styles.modalContent, { maxHeight: '60%' }]}>
+              <View style={styles.modalHeader}>
+                <Pressable
+                  onPress={() => {
+                    setTempServerUrl('');
+                    setIsSettingsVisible(false);
+                  }}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                </Pressable>
+                <ThemedText type="smallBold" style={styles.modalTitle}>
+                  Settings
+                </ThemedText>
+                <Pressable
+                  onPress={async () => {
+                    if (!tempServerUrl.trim()) {
+                      Alert.alert('Error', 'Server address is required');
+                      return;
+                    }
 
-            <ScrollView style={styles.modalFormBody}>
-              <View style={styles.formGroup}>
-                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                  SERVER API BASE URL
-                </ThemedText>
-                <TextInput
-                  placeholder="e.g. http://localhost:8080"
-                  placeholderTextColor={theme.textSecondary}
-                  value={tempServerUrl}
-                  onChangeText={setTempServerUrl}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={[
-                    styles.inputField,
-                    {
-                      backgroundColor: theme.backgroundElement,
-                      color: theme.text,
-                      borderColor: theme.backgroundSelected,
-                    },
-                  ]}
-                />
-                <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two, lineHeight: 18 }}>
-                  Change the connection address of the backend service. Default is http://localhost:8080.
-                </ThemedText>
+                    setApiBaseUrl(tempServerUrl.trim());
+                    setIsSettingsVisible(false);
+                    fetchData(true);
+                  }}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                </Pressable>
               </View>
-            </ScrollView>
-          </ThemedView>
-        </View>
+
+              <ScrollView style={styles.modalFormBody}>
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    SERVER API BASE URL
+                  </ThemedText>
+                  <TextInput
+                    placeholder="e.g. http://localhost:8080"
+                    placeholderTextColor={theme.textSecondary}
+                    value={tempServerUrl}
+                    onChangeText={setTempServerUrl}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={[
+                      styles.inputField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
+                  <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two, lineHeight: 18 }}>
+                    Change the connection address of the backend service. Default is http://localhost:8080.
+                  </ThemedText>
+                </View>
+              </ScrollView>
+            </ThemedView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
     </GestureHandlerRootView>
