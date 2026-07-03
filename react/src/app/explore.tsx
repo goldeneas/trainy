@@ -23,6 +23,16 @@ import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, Exercise } from '@/services/api';
 
+const MUSCLE_GROUPS = [
+  { id: 1, name: 'Chest' },
+  { id: 2, name: 'Back' },
+  { id: 3, name: 'Legs' },
+  { id: 4, name: 'Shoulders' },
+  { id: 5, name: 'Arms' },
+  { id: 6, name: 'Core' },
+  { id: 7, name: 'Other' },
+];
+
 export default function ExercisesScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -42,6 +52,7 @@ export default function ExercisesScreen() {
   const [newName, setNewName] = useState('');
   const [newNotes, setNewNotes] = useState('');
   const [newInstructions, setNewInstructions] = useState('');
+  const [selectedMuscleGroupId, setSelectedMuscleGroupId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch exercises
@@ -91,12 +102,14 @@ export default function ExercisesScreen() {
         name: newName.trim(),
         notes: newNotes.trim(),
         instructions: newInstructions.trim(),
+        muscle_group_id: selectedMuscleGroupId,
       });
       
       // Reset form
       setNewName('');
       setNewNotes('');
       setNewInstructions('');
+      setSelectedMuscleGroupId(null);
       setIsAddModalVisible(false);
       
       // Refresh
@@ -149,9 +162,16 @@ export default function ExercisesScreen() {
           pressed && styles.cardPressed,
         ]}>
         <View style={styles.exerciseCardHeader}>
-          <ThemedText type="smallBold" style={styles.exerciseName}>
-            {item.Name}
-          </ThemedText>
+          <View style={{ flex: 1 }}>
+            <ThemedText type="smallBold" style={styles.exerciseName}>
+              {item.Name}
+            </ThemedText>
+            {item.MuscleGroupID ? (
+              <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
+                {MUSCLE_GROUPS.find(g => g.id === item.MuscleGroupID)?.name}
+              </ThemedText>
+            ) : null}
+          </View>
           <SymbolView
             tintColor={theme.textSecondary}
             name="chevron.right"
@@ -284,6 +304,19 @@ export default function ExercisesScreen() {
                   {selectedExercise.Name}
                 </ThemedText>
 
+                {selectedExercise.MuscleGroupID ? (
+                  <View style={styles.detailSection}>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                      MUSCLE GROUP
+                    </ThemedText>
+                    <ThemedView type="backgroundSelected" style={[styles.detailTextBox, { alignSelf: 'flex-start', paddingVertical: Spacing.half, paddingHorizontal: Spacing.two }]}>
+                      <ThemedText type="smallBold" style={{ color: '#0A84FF' }}>
+                        {MUSCLE_GROUPS.find(g => g.id === selectedExercise.MuscleGroupID)?.name || 'Unknown'}
+                      </ThemedText>
+                    </ThemedView>
+                  </View>
+                ) : null}
+
                 {selectedExercise.Notes ? (
                   <View style={styles.detailSection}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
@@ -329,6 +362,7 @@ export default function ExercisesScreen() {
                   setNewName('');
                   setNewNotes('');
                   setNewInstructions('');
+                  setSelectedMuscleGroupId(null);
                   setIsAddModalVisible(false);
                 }}
                 style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
@@ -368,6 +402,38 @@ export default function ExercisesScreen() {
                     },
                   ]}
                 />
+              </View>
+
+              <View style={styles.formGroup}>
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                  MUSCLE GROUP
+                </ThemedText>
+                <View style={styles.chipsContainer}>
+                  {MUSCLE_GROUPS.map((group) => {
+                    const isSelected = selectedMuscleGroupId === group.id;
+                    return (
+                      <Pressable
+                        key={group.id}
+                        onPress={() => setSelectedMuscleGroupId(isSelected ? null : group.id)}
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: isSelected ? '#0A84FF' : theme.backgroundElement,
+                            borderColor: theme.backgroundSelected,
+                          },
+                        ]}>
+                        <ThemedText
+                          type="smallBold"
+                          style={{
+                            color: isSelected ? '#FFFFFF' : theme.text,
+                            fontSize: 12,
+                          }}>
+                          {group.name}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </View>
 
               <View style={styles.formGroup}>
@@ -609,5 +675,17 @@ const styles = StyleSheet.create({
   largeTextAreaField: {
     height: 140,
     textAlignVertical: 'top',
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: Spacing.one,
+  },
+  chip: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 16,
+    borderWidth: 1,
   },
 });

@@ -26,6 +26,7 @@ export interface Exercise {
   Notes: string;
   Instructions: string;
   ImageID: number | null;
+  MuscleGroupID?: number | null;
 }
 
 export interface PlannedExercise {
@@ -76,6 +77,7 @@ export interface CreateExerciseDto {
   notes: string;
   instructions: string;
   image_id?: number | null;
+  muscle_group_id?: number | null;
 }
 
 export interface PlannedSetInfoCreate {

@@ -88,3 +88,11 @@ CREATE TABLE IF NOT EXISTS ActualSetInfo (
     FOREIGN KEY (set_info_id) REFERENCES PlannedSetInfo(id)
         ON DELETE CASCADE
 );
+
+INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (1, 'Chest');
+INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (2, 'Back');
+INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (3, 'Legs');
+INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (4, 'Shoulders');
+INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (5, 'Arms');
+INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (6, 'Core');
+INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (7, 'Other');
