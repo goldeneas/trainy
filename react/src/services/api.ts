@@ -65,6 +65,11 @@ export interface ActualSetInfo {
   ActualReps: number;
 }
 
+export interface MuscleGroupDistribution {
+  name: string;
+  distribution: number;
+}
+
 // Request payloads
 export interface CreateExerciseDto {
   name: string;
@@ -221,6 +226,7 @@ export const api = {
   getStatsMonthlyRoutines: () => request<ActualRoutine[]>('/v1/stats/routines/monthly'),
   getStatsWeeklyFrequency: () => request<number>('/v1/stats/frequency/week'),
   getStatsTotalWorkouts: () => request<number>('/v1/stats/workouts'),
+  getStatsMuscleDistribution: () => request<MuscleGroupDistribution[]>('/v1/stats/distribution/monthly'),
 
   // Composite helpers for easier UI integration
   async getFullRoutine(routineId: number): Promise<FullRoutine> {

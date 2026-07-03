@@ -402,6 +402,8 @@ export default function WorkoutsScreen() {
 
       setIsWorkoutActive(false);
       setSelectedRoutineId(null);
+      setRestTimerActive(false);
+      setRestTimerSeconds(0);
       
       // Refresh database
       fetchData();
@@ -423,6 +425,8 @@ export default function WorkoutsScreen() {
           style: 'destructive',
           onPress: () => {
             setIsWorkoutActive(false);
+            setRestTimerActive(false);
+            setRestTimerSeconds(0);
           },
         },
       ]

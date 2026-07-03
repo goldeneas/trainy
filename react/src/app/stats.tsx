@@ -16,7 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { api, ActualRoutine, Routine } from '@/services/api';
+import { api, ActualRoutine, Routine, MuscleGroupDistribution } from '@/services/api';
 
 const getNow = () => Date.now();
 
@@ -30,6 +30,7 @@ export default function StatsScreen() {
   const [weeklyFrequency, setWeeklyFrequency] = useState<number>(0);
   const [monthlyRoutines, setMonthlyRoutines] = useState<ActualRoutine[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
+  const [muscleDistribution, setMuscleDistribution] = useState<MuscleGroupDistribution[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,17 +38,19 @@ export default function StatsScreen() {
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const [workoutsCount, frequencyCount, monthlyData, routinesData] = await Promise.all([
+      const [workoutsCount, frequencyCount, monthlyData, routinesData, distributionData] = await Promise.all([
         api.getStatsTotalWorkouts(),
         api.getStatsWeeklyFrequency(),
         api.getStatsMonthlyRoutines(),
         api.getRoutines(),
+        api.getStatsMuscleDistribution(),
       ]);
 
       setTotalWorkouts(workoutsCount ?? 0);
       setWeeklyFrequency(frequencyCount ?? 0);
       setMonthlyRoutines(monthlyData || []);
       setRoutines(routinesData || []);
+      setMuscleDistribution(distributionData || []);
     } catch (error: any) {
       console.error(error);
       Alert.alert('Error', error.message || 'Failed to sync stats with server');
@@ -196,7 +199,57 @@ export default function StatsScreen() {
             </View>
           </ThemedView>
 
+          {/* Muscle Group Focus Header */}
+          <View style={styles.sectionHeader}>
+            <ThemedText type="smallBold" themeColor="textSecondary">
+              MUSCLE GROUP FOCUS
+            </ThemedText>
+          </View>
 
+          {/* Muscle Group Focus Card */}
+          <ThemedView type="backgroundElement" style={styles.distributionCard}>
+            {muscleDistribution.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: Spacing.two }}>
+
+                <SymbolView
+                  tintColor={theme.textSecondary}
+                  name="info.circle"
+                  size={24}
+                  style={{ marginBottom: Spacing.one, opacity: 0.6 }}
+                />
+                <ThemedText type="small" themeColor="textSecondary">
+                  No muscle focus data yet this month.
+                </ThemedText>
+              </View>
+            ) : (
+              muscleDistribution.map((item, idx) => (
+                <View
+                  key={item.name}
+                  style={[
+                    styles.distributionRow,
+                    idx < muscleDistribution.length - 1 && { marginBottom: Spacing.three },
+                  ]}>
+                  <View style={styles.distributionLabelRow}>
+                    <ThemedText type="smallBold">{item.name}</ThemedText>
+                    <ThemedText type="smallBold" themeColor="textSecondary">
+                      {item.distribution.toFixed(1)}%
+                    </ThemedText>
+                  </View>
+                  <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundSelected }]}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${Math.min(100, Math.max(0, item.distribution))}%`,
+                          backgroundColor: '#0A84FF',
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+              ))
+            )}
+          </ThemedView>
 
           {/* Monthly Activity List */}
           <View style={styles.sectionHeader}>
@@ -214,7 +267,7 @@ export default function StatsScreen() {
                 style={{ marginBottom: Spacing.one, opacity: 0.6 }}
               />
               <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-                No workouts completed yet this month. Click the Workouts tab to start!
+                No workouts completed yet this month.
               </ThemedText>
             </ThemedView>
           ) : (
@@ -297,6 +350,30 @@ const styles = StyleSheet.create({
   },
   heatmapSquareText: {
     fontSize: 10,
+  },
+  distributionCard: {
+    marginHorizontal: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: 12,
+    marginBottom: Spacing.three,
+  },
+  distributionRow: {
+    width: '100%',
+  },
+  distributionLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.one,
+  },
+  progressBarBg: {
+    height: 8,
+    borderRadius: 4,
+    width: '100%',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
   },
 
   sectionHeader: {

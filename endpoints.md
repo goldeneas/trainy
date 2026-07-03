@@ -32,13 +32,14 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
 ### Create Exercise
 * **Method & Path**: `POST /v1/exercise`
 * **Description**: Adds a new exercise definition to the library.
-* **Request Body**: [dto_request.CreateExercise](file:///Users/nicola/Workspace/trainy/backend/dto/request/exercise.go#L3-L8)
+* **Request Body**: [dto_request.CreateExercise](file:///Users/nicola/Workspace/trainy/backend/dto/request/exercise.go#L3-L9)
   ```json
   {
-    "name": "string",          // Required. Name of the exercise.
-    "notes": "string",         // Optional. Additional description or details.
-    "instructions": "string",  // Optional. Text instructions on how to perform the exercise.
-    "image_id": 1              // Optional/Nullable. Integer ID of the associated image.
+    "name": "string",            // Required. Name of the exercise.
+    "notes": "string",           // Optional. Additional description or details.
+    "instructions": "string",    // Optional. Text instructions on how to perform the exercise.
+    "muscle_group_id": 1,        // Optional/Nullable. ID of the associated muscle group.
+    "image_id": 1                // Optional/Nullable. Integer ID of the associated image.
   }
   ```
 * **Responses**:
@@ -53,7 +54,7 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
 * **Method & Path**: `GET /v1/exercise`
 * **Description**: Returns all exercises in the library.
 * **Response**: `200 OK`
-  * **Body**: Array of [model.Exercise](file:///Users/nicola/Workspace/trainy/backend/model/exercise.go#L3-L9)
+  * **Body**: Array of [model.Exercise](file:///Users/nicola/Workspace/trainy/backend/model/exercise.go#L3-L10)
     ```json
     [
       {
@@ -61,7 +62,8 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
         "Name": "Pushups",
         "Notes": "Standard pushups",
         "Instructions": "Keep core tight, lower your chest until it almost touches the floor.",
-        "ImageID": null
+        "ImageID": null,
+        "MuscleGroupID": null
       }
     ]
     ```
@@ -75,14 +77,15 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
 * **Path Parameters**:
   * `id` (integer): ID of the exercise.
 * **Responses**:
-  * **`200 OK`**: Returns [model.Exercise](file:///Users/nicola/Workspace/trainy/backend/model/exercise.go#L3-L9)
+  * **`200 OK`**: Returns [model.Exercise](file:///Users/nicola/Workspace/trainy/backend/model/exercise.go#L3-L10)
     ```json
     {
       "ID": 1,
       "Name": "Pushups",
       "Notes": "Standard pushups",
       "Instructions": "Keep core tight...",
-      "ImageID": null
+      "ImageID": null,
+      "MuscleGroupID": null
     }
     ```
   * **`400 Bad Request`**: `"invalid ID format"`
@@ -187,6 +190,28 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
       "message": "exercise instance deleted"
     }
     ```
+  * **`400 Bad Request`**: `"invalid ID format"`
+  * **`500 Internal Server Error`**: Database error.
+
+### Get Planned Set Infos By Planned Exercise ID
+* **Method & Path**: `GET /v1/exercise/instance/:id/set_info`
+* **Description**: Returns all planned set configurations for a specific planned exercise.
+* **Path Parameters**:
+  * `id` (integer): ID of the planned exercise template.
+* **Responses**:
+  * **`200 OK`**: Array of [model.PlannedSetInfo](file:///Users/nicola/Workspace/trainy/backend/model/exercise.go#L20-L26)
+    ```json
+    [
+      {
+        "ID": 1,
+        "Ord": 1,
+        "PlannedExerciseID": 1,
+        "Reps": 10,
+        "Notes": "Go heavy"
+      }
+    ]
+    ```
+    *Note: Returns `[]` if no planned sets exist.*
   * **`400 Bad Request`**: `"invalid ID format"`
   * **`500 Internal Server Error`**: Database error.
 
@@ -347,6 +372,28 @@ Source Handler: [RoutineController](file:///Users/nicola/Workspace/trainy/backen
   * **`400 Bad Request`**: `"invalid ID format"`
   * **`500 Internal Server Error`**: Database error.
 
+### Get Actual Set Infos By Actual Routine ID
+* **Method & Path**: `GET /v1/routine/instance/:id/set_info`
+* **Description**: Returns all actual sets logged for a specific routine instance.
+* **Path Parameters**:
+  * `id` (integer): ID of the routine instance (actual routine).
+* **Responses**:
+  * **`200 OK`**: Array of [model.ActualSetInfo](file:///Users/nicola/Workspace/trainy/backend/model/routine.go#L16-L22)
+    ```json
+    [
+      {
+        "ID": 1,
+        "Weight": 22.5,
+        "ActualRoutineID": 8,
+        "PlannedSetInfoID": 1,
+        "ActualReps": 10
+      }
+    ]
+    ```
+    *Note: Returns `[]` if no actual sets exist.*
+  * **`400 Bad Request`**: `"invalid ID format"`
+  * **`500 Internal Server Error`**: Database error.
+
 ---
 
 ## 5. Stats Endpoints
@@ -388,6 +435,26 @@ Source Handler: [StatsController](file:///Users/nicola/Workspace/trainy/backend/
     42
     ```
 
+### Get Muscle Group Distribution This Month
+* **Method & Path**: `GET /v1/stats/distribution/monthly`
+* **Description**: Returns the distribution percentage of workouts per muscle group for the current month.
+* **Responses**:
+  * **`200 OK`**: Array of [dto_response.MuscleGroupDistribution](file:///Users/nicola/Workspace/trainy/backend/dto/response/stats.go#L3-L6)
+    ```json
+    [
+      {
+        "name": "Chest",
+        "distribution": 35.5
+      },
+      {
+        "name": "Back",
+        "distribution": 25.0
+      }
+    ]
+    ```
+    *Note: Returns `[]` if no workouts have been completed this month.*
+  * **`500 Internal Server Error`**: Database error.
+
 ---
 
 ## 6. Data Type Definitions (DTOs & Models)
@@ -400,10 +467,11 @@ Defined in [dto/request](file:///Users/nicola/Workspace/trainy/backend/dto/reque
 #### CreateExercise
 ```go
 type CreateExercise struct {
-	Name         string `json:"name"`
-	Notes        string `json:"notes"`
-	Instructions string `json:"instructions"`
-	ImageID      *int64 `json:"image_id"`
+	Name          string `json:"name"`
+	Notes         string `json:"notes"`
+	Instructions  string `json:"instructions"`
+	MuscleGroupID *int64 `json:"muscle_group_id"`
+	ImageID       *int64 `json:"image_id"`
 }
 ```
 
@@ -462,11 +530,12 @@ Defined in [model](file:///Users/nicola/Workspace/trainy/backend/model):
 #### Exercise
 ```go
 type Exercise struct {
-	ID           int64
-	Name         string
-	Notes        string
-	Instructions string
-	ImageID      *int64
+	ID            int64
+	Name          string
+	Notes         string
+	Instructions  string
+	ImageID       *int64
+	MuscleGroupID *int64
 }
 ```
 
@@ -535,5 +604,18 @@ type Image struct {
 type TimeUnit struct {
 	ID   int64
 	Name string
+}
+```
+
+---
+
+### Response DTOs
+Defined in [dto/response](file:///Users/nicola/Workspace/trainy/backend/dto/response):
+
+#### MuscleGroupDistribution
+```go
+type MuscleGroupDistribution struct {
+	Name         string  `json:"name"`
+	Distribution float64 `json:"distribution"`
 }
 ```
