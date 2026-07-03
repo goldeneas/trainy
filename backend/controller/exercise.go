@@ -46,10 +46,11 @@ func (c *ExerciseController) CreateExercise(ctx *gin.Context) {
 	}
 
 	ex := model.Exercise{
-		Name:         m.Name,
-		Notes:        m.Notes,
-		ImageID:      m.ImageID,
-		Instructions: m.Instructions,
+		Name:          m.Name,
+		Notes:         m.Notes,
+		ImageID:       m.ImageID,
+		Instructions:  m.Instructions,
+		MuscleGroupID: m.MuscleGroupID,
 	}
 
 	id, err := c.service.RegisterExercise(&ex)

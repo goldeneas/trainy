@@ -14,8 +14,8 @@ func NewSQLiteExerciseDAO() *SQLiteExerciseDAO {
 }
 
 func (d *SQLiteExerciseDAO) InsertExercise(dbtx sqlw.DBTX, m *model.Exercise) (int64, error) {
-	res, err := dbtx.Exec(`INSERT INTO Exercise(name, notes, instructions, image_id)
-		VALUES (?, ?, ?, ?)`, m.Name, m.Notes, m.Instructions, m.ImageID)
+	res, err := dbtx.Exec(`INSERT INTO Exercise(name, notes, instructions, image_id, muscle_group_id)
+		VALUES (?, ?, ?, ?, ?)`, m.Name, m.Notes, m.Instructions, m.ImageID, m.MuscleGroupID)
 
 	if err != nil {
 		return 0, err
@@ -48,9 +48,9 @@ func (d *SQLiteExerciseDAO) InsertSetInfo(dbtx sqlw.DBTX, m *model.PlannedSetInf
 
 func (d *SQLiteExerciseDAO) GetExerciseByID(dbtx sqlw.DBTX, id int64) (*model.Exercise, error) {
 	var m model.Exercise
-	row := dbtx.QueryRow(`SELECT id, name, notes, instructions, image_id
+	row := dbtx.QueryRow(`SELECT id, name, notes, instructions, image_id, muscle_group_id
 		FROM Exercise WHERE id = ?`, id)
-	err := row.Scan(&m.ID, &m.Name, &m.Notes, &m.Instructions, &m.ImageID)
+	err := row.Scan(&m.ID, &m.Name, &m.Notes, &m.Instructions, &m.ImageID, &m.MuscleGroupID)
 
 	if err != nil {
 		return nil, err

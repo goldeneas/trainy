@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/goldeneas/trainy/dao"
+	dto_response "github.com/goldeneas/trainy/dto/response"
 	"github.com/goldeneas/trainy/model"
 )
 
@@ -29,4 +30,8 @@ func (s *StatsService) GetFrequencyThisWeek() int {
 
 func (s *StatsService) GetTotalWorkouts() int {
 	return s.statsDAO.GetTotalWorkouts(s.db)
+}
+
+func (s *StatsService) GetMuscleGroupDistributionThisMonth() ([]dto_response.MuscleGroupDistribution, error) {
+	return s.statsDAO.GetMuscleGroupDistributionThisMonth(s.db)
 }

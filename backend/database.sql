@@ -5,13 +5,21 @@ CREATE TABLE IF NOT EXISTS Image (
     path TEXT
 );
 
+CREATE TABLE IF NOT EXISTS MuscleGroup (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS Exercise (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     notes TEXT,
     instructions TEXT,
+    muscle_group_id INTEGER,
     image_id INTEGER,
 
+    FOREIGN KEY (muscle_group_id) REFERENCES MuscleGroup(id)
+        ON DELETE RESTRICT,
     FOREIGN KEY (image_id) REFERENCES Image(id)
         ON DELETE SET NULL
 );

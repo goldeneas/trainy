@@ -1,10 +1,11 @@
 package dto_request
 
 type CreateExercise struct {
-	Name         string `json:"name"`
-	Notes        string `json:"notes"`
-	Instructions string `json:"instructions"`
-	ImageID      *int64 `json:"image_id"`
+	Name          string `json:"name"`
+	Notes         string `json:"notes"`
+	Instructions  string `json:"instructions"`
+	MuscleGroupID *int64 `json:"muscle_group_id"`
+	ImageID       *int64 `json:"image_id"`
 }
 
 type RegisterPlannedExercise struct {
