@@ -31,8 +31,8 @@ export default function AppTabs() {
       <NativeTabs.Trigger name="stats">
         <NativeTabs.Trigger.Label>Stats</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/stats.png')}
-          renderingMode="template"
+          sf="chart.bar.fill"
+          md="bar_chart"
         />
       </NativeTabs.Trigger>
     </NativeTabs>
