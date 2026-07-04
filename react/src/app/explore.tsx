@@ -73,7 +73,7 @@ export default function ExercisesScreen() {
   const [newName, setNewName] = useState('');
   const [newNotes, setNewNotes] = useState('');
   const [newInstructions, setNewInstructions] = useState('');
-  const [selectedMuscleGroupId, setSelectedMuscleGroupId] = useState<number | null>(null);
+  const [selectedMuscleGroupIds, setSelectedMuscleGroupIds] = useState<number[]>([]);
   
   // CSV Import state
   const [csvInput, setCsvInput] = useState('');
@@ -127,14 +127,14 @@ export default function ExercisesScreen() {
         name: newName.trim(),
         notes: newNotes.trim(),
         instructions: newInstructions.trim(),
-        muscle_group_id: selectedMuscleGroupId,
+        muscle_group_ids: selectedMuscleGroupIds,
       });
       
       // Reset form
       setNewName('');
       setNewNotes('');
       setNewInstructions('');
-      setSelectedMuscleGroupId(null);
+      setSelectedMuscleGroupIds([]);
       setIsAddModalVisible(false);
       
       // Refresh
@@ -186,7 +186,7 @@ export default function ExercisesScreen() {
           name,
           notes,
           instructions,
-          muscle_group_id: muscleGroupId,
+          muscle_group_ids: muscleGroupId ? [muscleGroupId] : [],
           image_id: imageId,
         });
         successCount++;
@@ -248,13 +248,16 @@ export default function ExercisesScreen() {
               {item.Name}
             </ThemedText>
             {(() => {
-              const mgId = item.MuscleGroupID ?? (item as any).muscle_group_id;
-              const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
-              return mg ? (
-                <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
-                  {mg.name}
-                </ThemedText>
-              ) : null;
+              const mgIds = item.MuscleGroupIDs ?? (item as any).muscle_group_ids;
+              if (mgIds && mgIds.length > 0) {
+                const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                return names ? (
+                  <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
+                    {names}
+                  </ThemedText>
+                ) : null;
+              }
+              return null;
             })()}
           </View>
           <SymbolView
@@ -401,20 +404,39 @@ export default function ExercisesScreen() {
                 </ThemedText>
 
                 {(() => {
-                  const mgId = selectedExercise.MuscleGroupID ?? (selectedExercise as any).muscle_group_id;
-                  const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
-                  return mg ? (
-                    <View style={styles.detailSection}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
-                        MUSCLE GROUP
-                      </ThemedText>
-                      <ThemedView type="backgroundSelected" style={[styles.detailTextBox, { alignSelf: 'flex-start', paddingVertical: Spacing.half, paddingHorizontal: Spacing.two }]}>
-                        <ThemedText type="smallBold" style={{ color: '#0A84FF' }}>
-                          {mg.name}
-                        </ThemedText>
-                      </ThemedView>
-                    </View>
-                  ) : null;
+                  const mgIds = selectedExercise.MuscleGroupIDs ?? (selectedExercise as any).muscle_group_ids;
+                  if (mgIds && mgIds.length > 0) {
+                    const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean);
+                    if (names.length > 0) {
+                      return (
+                        <View style={styles.detailSection}>
+                          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                            MUSCLE GROUPS
+                          </ThemedText>
+                          <View style={styles.chipsContainer}>
+                            {names.map((name: string, index: number) => (
+                              <ThemedView
+                                key={index}
+                                type="backgroundSelected"
+                                style={[
+                                  styles.chip,
+                                  {
+                                    borderColor: theme.backgroundSelected,
+                                    alignSelf: 'flex-start',
+                                  },
+                                ]}
+                              >
+                                <ThemedText type="smallBold" style={{ color: '#0A84FF', fontSize: 12 }}>
+                                  {name}
+                                </ThemedText>
+                              </ThemedView>
+                            ))}
+                          </View>
+                        </View>
+                      );
+                    }
+                  }
+                  return null;
                 })()}
 
                 {selectedExercise.Notes ? (
@@ -465,7 +487,7 @@ export default function ExercisesScreen() {
                     setNewName('');
                     setNewNotes('');
                     setNewInstructions('');
-                    setSelectedMuscleGroupId(null);
+                    setSelectedMuscleGroupIds([]);
                     setIsAddModalVisible(false);
                   }}
                   style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
@@ -513,11 +535,17 @@ export default function ExercisesScreen() {
                   </ThemedText>
                   <View style={styles.chipsContainer}>
                     {MUSCLE_GROUPS.map((group) => {
-                      const isSelected = selectedMuscleGroupId === group.id;
+                      const isSelected = selectedMuscleGroupIds.includes(group.id);
                       return (
                         <Pressable
                           key={group.id}
-                          onPress={() => setSelectedMuscleGroupId(isSelected ? null : group.id)}
+                          onPress={() => {
+                            if (isSelected) {
+                              setSelectedMuscleGroupIds(selectedMuscleGroupIds.filter(id => id !== group.id));
+                            } else {
+                              setSelectedMuscleGroupIds([...selectedMuscleGroupIds, group.id]);
+                            }
+                          }}
                           style={[
                             styles.chip,
                             {

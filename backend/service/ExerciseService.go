@@ -138,7 +138,7 @@ func (s *ExerciseService) GetAllExercises() ([]dto_response.Exercise, error) {
 		return nil, err
 	}
 
-	exercises := make([]dto_response.Exercise, len(exs))
+	exercises := make([]dto_response.Exercise, 0, len(exs))
 	for _, exercise := range exs {
 		muscleGroupIDs, err := s.exerciseDAO.GetAllExerciseMuscleGroupIDs(tx, exercise.ID)
 		if err != nil {

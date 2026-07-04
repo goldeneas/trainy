@@ -123,7 +123,7 @@ func (c *RoutineController) RegisterActualRoutine(ctx *gin.Context) {
 		FinishTimestamp: time.Now().Unix(),
 	}
 
-	infos := make([]model.ActualSetInfo, len(request.ActualSetInfos))
+	infos := make([]model.ActualSetInfo, 0, len(request.ActualSetInfos))
 	for i, info := range request.ActualSetInfos {
 		infos[i] = model.ActualSetInfo{
 			Weight:           info.Weight,

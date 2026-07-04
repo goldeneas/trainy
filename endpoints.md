@@ -38,7 +38,7 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
     "name": "string",            // Required. Name of the exercise.
     "notes": "string",           // Optional. Additional description or details.
     "instructions": "string",    // Optional. Text instructions on how to perform the exercise.
-    "muscle_group_id": 1,        // Optional/Nullable. ID of the associated muscle group.
+    "muscle_group_ids": [1, 2],  // Optional. Array of associated muscle group IDs.
     "image_id": 1                // Optional/Nullable. Integer ID of the associated image.
   }
   ```
@@ -54,7 +54,7 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
 * **Method & Path**: `GET /v1/exercise`
 * **Description**: Returns all exercises in the library.
 * **Response**: `200 OK`
-  * **Body**: Array of [model.Exercise](file:///Users/nicola/Workspace/trainy/backend/model/exercise.go#L3-L10)
+  * **Body**: Array of [dto_response.Exercise](file:///Users/nicola/Workspace/trainy/backend/dto/response/exercise.go#L3-L10)
     ```json
     [
       {
@@ -63,7 +63,7 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
         "Notes": "Standard pushups",
         "Instructions": "Keep core tight, lower your chest until it almost touches the floor.",
         "ImageID": null,
-        "MuscleGroupID": null
+        "MuscleGroupIDs": [1, 2]
       }
     ]
     ```
@@ -77,7 +77,7 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
 * **Path Parameters**:
   * `id` (integer): ID of the exercise.
 * **Responses**:
-  * **`200 OK`**: Returns [model.Exercise](file:///Users/nicola/Workspace/trainy/backend/model/exercise.go#L3-L10)
+  * **`200 OK`**: Returns [dto_response.Exercise](file:///Users/nicola/Workspace/trainy/backend/dto/response/exercise.go#L3-L10)
     ```json
     {
       "ID": 1,
@@ -85,7 +85,7 @@ Source Handler: [ExerciseController](file:///Users/nicola/Workspace/trainy/backe
       "Notes": "Standard pushups",
       "Instructions": "Keep core tight...",
       "ImageID": null,
-      "MuscleGroupID": null
+      "MuscleGroupIDs": [1, 2]
     }
     ```
   * **`400 Bad Request`**: `"invalid ID format"`
@@ -467,11 +467,11 @@ Defined in [dto/request](file:///Users/nicola/Workspace/trainy/backend/dto/reque
 #### CreateExercise
 ```go
 type CreateExercise struct {
-	Name          string `json:"name"`
-	Notes         string `json:"notes"`
-	Instructions  string `json:"instructions"`
-	MuscleGroupID *int64 `json:"muscle_group_id"`
-	ImageID       *int64 `json:"image_id"`
+	Name           string  `json:"name"`
+	Notes          string  `json:"notes"`
+	Instructions   string  `json:"instructions"`
+	ImageID        *int64  `json:"image_id"`
+	MuscleGroupIDs []int64 `json:"muscle_group_ids"`
 }
 ```
 
@@ -530,12 +530,20 @@ Defined in [model](file:///Users/nicola/Workspace/trainy/backend/model):
 #### Exercise
 ```go
 type Exercise struct {
+	ID           int64
+	Name         string
+	Notes        string
+	Instructions string
+	ImageID      *int64
+}
+```
+
+#### ExerciseMuscleGroup
+```go
+type ExerciseMuscleGroup struct {
 	ID            int64
-	Name          string
-	Notes         string
-	Instructions  string
-	ImageID       *int64
-	MuscleGroupID *int64
+	ExerciseID    int64
+	MuscleGroupID int64
 }
 ```
 
@@ -611,6 +619,18 @@ type TimeUnit struct {
 
 ### Response DTOs
 Defined in [dto/response](file:///Users/nicola/Workspace/trainy/backend/dto/response):
+
+#### Exercise (Response)
+```go
+type Exercise struct {
+	ID             int64
+	Name           string
+	Notes          string
+	Instructions   string
+	ImageID        *int64
+	MuscleGroupIDs []int64
+}
+```
 
 #### MuscleGroupDistribution
 ```go

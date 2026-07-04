@@ -126,7 +126,7 @@ func (c *ExerciseController) RegisterPlannedExercise(ctx *gin.Context) {
 		RoutineID:  m.RoutineID,
 	}
 
-	infos := make([]model.PlannedSetInfo, len(m.PlannedSetInfos))
+	infos := make([]model.PlannedSetInfo, 0, len(m.PlannedSetInfos))
 	for i, info := range m.PlannedSetInfos {
 		infos[i] = model.PlannedSetInfo{
 			Ord:               info.Ord,

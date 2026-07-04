@@ -893,13 +893,16 @@ export default function WorkoutsScreen() {
                                   <View style={{ flex: 1 }}>
                                     <ThemedText type="smallBold">{pe.exercise?.Name || 'Exercise'}</ThemedText>
                                     {(() => {
-                                      const mgId = pe.exercise?.MuscleGroupID ?? (pe.exercise as any)?.muscle_group_id;
-                                      const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
-                                      return mg ? (
-                                        <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
-                                          {mg.name}
-                                        </ThemedText>
-                                      ) : null;
+                                      const mgIds = pe.exercise?.MuscleGroupIDs ?? (pe.exercise as any)?.muscle_group_ids;
+                                      if (mgIds && mgIds.length > 0) {
+                                        const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                                        return names ? (
+                                          <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
+                                            {names}
+                                          </ThemedText>
+                                        ) : null;
+                                      }
+                                      return null;
                                     })()}
                                     <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
                                       Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
@@ -984,13 +987,16 @@ export default function WorkoutsScreen() {
                                 ]}>
                                 <ThemedText type="smallBold">{ex.Name}</ThemedText>
                                 {(() => {
-                                  const mgId = ex.MuscleGroupID ?? (ex as any).muscle_group_id;
-                                  const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
-                                  return mg ? (
-                                    <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
-                                      {mg.name}
-                                    </ThemedText>
-                                  ) : null;
+                                  const mgIds = ex.MuscleGroupIDs ?? (ex as any).muscle_group_ids;
+                                  if (mgIds && mgIds.length > 0) {
+                                    const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                                    return names ? (
+                                      <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
+                                        {names}
+                                      </ThemedText>
+                                    ) : null;
+                                  }
+                                  return null;
                                 })()}
                               </Pressable>
                             ))}
@@ -1145,13 +1151,16 @@ export default function WorkoutsScreen() {
                     {pe.exercise?.Name}
                   </ThemedText>
                   {(() => {
-                    const mgId = pe.exercise?.MuscleGroupID ?? (pe.exercise as any)?.muscle_group_id;
-                    const mg = MUSCLE_GROUPS.find(g => g.id === mgId);
-                    return mg ? (
-                      <ThemedText type="small" style={{ color: '#0A84FF', marginBottom: Spacing.one }}>
-                        {mg.name}
-                      </ThemedText>
-                    ) : null;
+                    const mgIds = pe.exercise?.MuscleGroupIDs ?? (pe.exercise as any)?.muscle_group_ids;
+                    if (mgIds && mgIds.length > 0) {
+                      const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                      return names ? (
+                        <ThemedText type="small" style={{ color: '#0A84FF', marginBottom: Spacing.one }}>
+                          {names}
+                        </ThemedText>
+                      ) : null;
+                    }
+                    return null;
                   })()}
                   <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
                     Planned Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
