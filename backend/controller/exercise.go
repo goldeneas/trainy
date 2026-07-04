@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	dto_request "github.com/goldeneas/trainy/dto/request"
+	dto_response "github.com/goldeneas/trainy/dto/response"
 	"github.com/goldeneas/trainy/model"
 	"github.com/goldeneas/trainy/service"
 )
@@ -46,14 +47,13 @@ func (c *ExerciseController) CreateExercise(ctx *gin.Context) {
 	}
 
 	ex := model.Exercise{
-		Name:          m.Name,
-		Notes:         m.Notes,
-		ImageID:       m.ImageID,
-		Instructions:  m.Instructions,
-		MuscleGroupID: m.MuscleGroupID,
+		Name:         m.Name,
+		Notes:        m.Notes,
+		ImageID:      m.ImageID,
+		Instructions: m.Instructions,
 	}
 
-	id, err := c.service.RegisterExercise(&ex)
+	id, err := c.service.RegisterExercise(&ex, m.MuscleGroupIDs)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -70,7 +70,7 @@ func (c *ExerciseController) GetAllExercises(ctx *gin.Context) {
 	}
 
 	if res == nil {
-		res = []model.Exercise{}
+		res = []dto_response.Exercise{}
 	}
 
 	ctx.JSON(http.StatusOK, res)

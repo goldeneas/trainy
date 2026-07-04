@@ -15,13 +15,21 @@ CREATE TABLE IF NOT EXISTS Exercise (
     name TEXT NOT NULL,
     notes TEXT,
     instructions TEXT,
-    muscle_group_id INTEGER,
     image_id INTEGER,
 
-    FOREIGN KEY (muscle_group_id) REFERENCES MuscleGroup(id)
-        ON DELETE RESTRICT,
     FOREIGN KEY (image_id) REFERENCES Image(id)
         ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS ExerciseMuscleGroup (
+    id INTEGER PRIMARY KEY,
+    exercise_id INTEGER,
+    muscle_group_id INTEGER,
+
+    FOREIGN KEY (exercise_id) REFERENCES Exercise(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (muscle_group_id) REFERENCES MuscleGroup(id)
+        ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS TimeUnit (

@@ -61,7 +61,8 @@ func (d *SQLiteStatsDAO) GetMuscleGroupDistributionThisMonth(
 	JOIN PlannedExercise PE ON (PSI.planned_exercise_id = PE.id)
 	JOIN Exercise EX ON (EX.id = PE.exercise_id)
 	JOIN Routine RO ON (PE.routine_id = RO.id)
-	JOIN MuscleGroup MG ON (MG.id = EX.muscle_group_id)
+	JOIN ExerciseMuscleGroup EMG ON (EMG.exercise_id = EX.id)
+	JOIN MuscleGroup MG ON (MG.id = EMG.muscle_group_id)
 	WHERE AR.finish_timestamp > ?
 	GROUP BY MG.name`, beginTimestamp)
 }

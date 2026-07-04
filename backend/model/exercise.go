@@ -1,12 +1,11 @@
 package model
 
 type Exercise struct {
-	ID            int64
-	Name          string
-	Notes         string
-	Instructions  string
-	ImageID       *int64
-	MuscleGroupID *int64
+	ID           int64
+	Name         string
+	Notes        string
+	Instructions string
+	ImageID      *int64
 }
 
 type PlannedExercise struct {
@@ -23,4 +22,10 @@ type PlannedSetInfo struct {
 	PlannedExerciseID int64
 	Reps              int
 	Notes             string
+}
+
+type ExerciseMuscleGroup struct {
+	ID            int64
+	ExerciseID    int64
+	MuscleGroupID int64
 }
