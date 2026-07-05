@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -11,12 +12,13 @@ import {
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
+import { BarChart } from 'react-native-gifted-charts';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { api, ActualRoutine, MuscleGroupDistribution } from '@/services/api';
+import { api, ActualRoutine, MuscleGroupDistribution, WeeklyWorkoutHourDistribution } from '@/services/api';
 
 const getNow = () => Date.now();
 
@@ -30,6 +32,8 @@ export default function StatsScreen() {
   const [weeklyFrequency, setWeeklyFrequency] = useState<number>(0);
   const [monthlyRoutines, setMonthlyRoutines] = useState<ActualRoutine[]>([]);
   const [muscleDistribution, setMuscleDistribution] = useState<MuscleGroupDistribution[]>([]);
+  const [weeklyHours, setWeeklyHours] = useState<WeeklyWorkoutHourDistribution[]>([]);
+  const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,17 +41,20 @@ export default function StatsScreen() {
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const [workoutsCount, frequencyCount, monthlyData, distributionData] = await Promise.all([
+      const [workoutsCount, frequencyCount, monthlyData, distributionData, weeklyHoursData] = await Promise.all([
         api.getStatsTotalWorkouts(),
         api.getStatsWeeklyFrequency(),
         api.getStatsMonthlyRoutines(),
         api.getStatsMuscleDistribution(),
+        api.getStatsWeeklyHours(),
       ]);
 
       setTotalWorkouts(workoutsCount ?? 0);
       setWeeklyFrequency(frequencyCount ?? 0);
       setMonthlyRoutines(monthlyData || []);
       setMuscleDistribution(distributionData || []);
+      setWeeklyHours(weeklyHoursData || []);
+      setSelectedBarIndex(null);
     } catch (error: any) {
       console.error(error);
       Alert.alert('Error', error.message || 'Failed to sync stats with server');
@@ -171,6 +178,111 @@ export default function StatsScreen() {
             </View>
           </ThemedView>
 
+          {/* Weekly Workout Hours Header */}
+          <View style={styles.sectionHeader}>
+            <ThemedText type="smallBold" themeColor="textSecondary">
+              WEEKLY WORKOUT HOURS
+            </ThemedText>
+          </View>
+
+          {/* Weekly Workout Hours Bar Chart Card */}
+          <ThemedView type="backgroundElement" style={styles.chartCard}>
+            {weeklyHours.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: Spacing.two }}>
+                <SymbolView
+                  tintColor={theme.textSecondary}
+                  name="info.circle"
+                  size={24}
+                  style={{ marginBottom: Spacing.one, opacity: 0.6 }}
+                />
+                <ThemedText type="small" themeColor="textSecondary">
+                  No weekly workout hours data this month.
+                </ThemedText>
+              </View>
+            ) : (
+              (() => {
+                const maxHours = Math.max(4.0, ...weeklyHours.map(w => w.hours));
+                // We use stackData to simulate background tracks:
+                // Stack element 1: the actual completed hours (blue)
+                // Stack element 2: the remaining hours up to maxHours (gray background track)
+                const stackData = weeklyHours.map((item, index) => {
+                  const isSelected = selectedBarIndex === index;
+                  const activeVal = item.hours;
+                  const trackVal = Math.max(0, (maxHours * 1.15) - activeVal);
+                  
+                  // Lighter blue accent color when selected (#54A6FF instead of #0A84FF)
+                  const activeColor = isSelected ? '#54A6FF' : '#0A84FF';
+
+                  return {
+                    stacks: [
+                      { value: activeVal, color: activeColor },
+                      { value: trackVal, color: theme.backgroundSelected } // background track
+                    ],
+                    label: `W${item.week_iso}`,
+                    topLabelComponent: isSelected ? () => (
+                      <ThemedText style={{ fontSize: 9, color: theme.textSecondary, marginBottom: 4, fontWeight: 'bold' }}>
+                        {item.hours.toFixed(1)}h
+                      </ThemedText>
+                    ) : undefined,
+                  };
+                });
+
+                const screenWidth = Dimensions.get('window').width;
+                // available width inside chartCard (screenWidth minus margins & padding: 16 * 2 margins + 16 * 2 padding = 64px)
+                const containerWidth = screenWidth - 64; 
+                
+                const sideMargin = 10;
+                // Since Y-axis text is hidden, the chart grid width takes the entire inner card width
+                const chartGridWidth = containerWidth;
+                
+                const barWidth = 20;
+                const numBars = stackData.length;
+                const totalBarsWidth = numBars * barWidth;
+                
+                // available space for intermediate gaps between bars
+                const availableSpacingWidth = chartGridWidth - totalBarsWidth - (2 * sideMargin);
+                const spacing = numBars > 1 
+                  ? availableSpacingWidth / (numBars - 1) 
+                  : 30;
+
+                return (
+                  <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                    <BarChart
+                      stackData={stackData}
+                      barWidth={barWidth}
+                      spacing={spacing}
+                      barBorderRadius={3}
+                      height={140}
+                      width={chartGridWidth}
+                      noOfSections={3}
+                      maxValue={maxHours * 1.15}
+                      yAxisExtraHeight={15}
+                      yAxisThickness={0}
+                      xAxisThickness={0}
+                      xAxisColor={theme.backgroundSelected}
+                      yAxisColor={theme.backgroundSelected}
+                      rulesColor={theme.backgroundSelected}
+                      rulesType="solid"
+                      yAxisTextStyle={{ color: theme.textSecondary, fontSize: 9 }}
+                      yAxisLabelSuffix="h"
+                      yAxisLabelWidth={0}
+                      xAxisLabelTextStyle={{ marginTop: 8, color: theme.textSecondary, fontSize: 10, fontWeight: 'bold' }}
+                      hideRules={true}
+                      hideYAxisText={true}
+                      onPress={(_item: any, index: number) => {
+                        setSelectedBarIndex((prev) => (prev === index ? null : index));
+                      }}
+                      showReferenceLine1={false}
+                      initialSpacing={sideMargin}
+                      endSpacing={sideMargin}
+                      isAnimated
+                    />
+                  </View>
+                );
+              })()
+            )}
+          </ThemedView>
+
           {/* Muscle Group Focus Header */}
           <View style={styles.sectionHeader}>
             <ThemedText type="smallBold" themeColor="textSecondary">
@@ -190,7 +302,7 @@ export default function StatsScreen() {
                   style={{ marginBottom: Spacing.one, opacity: 0.6 }}
                 />
                 <ThemedText type="small" themeColor="textSecondary">
-                  No muscle focus data yet this month.
+                  No muscle focus data this month.
                 </ThemedText>
               </View>
             ) : (
@@ -287,6 +399,12 @@ const styles = StyleSheet.create({
   },
   heatmapSquareText: {
     fontSize: 10,
+  },
+  chartCard: {
+    marginHorizontal: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: 12,
+    marginBottom: Spacing.three,
   },
   distributionCard: {
     marginHorizontal: Spacing.three,

@@ -21,8 +21,8 @@ func (d *SQLiteStatsDAO) GetActualRoutinesThisMonth(dbtx sqlw.DBTX) ([]model.Act
 	beginTimestamp := timew.BeginningOfMonth(now).Unix()
 
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.ActualRoutine) error {
-		return rows.Scan(&t.ID, &t.FinishTimestamp, &t.RoutineID)
-	}, `SELECT id, finish_timestamp, routine_id FROM ActualRoutine
+		return rows.Scan(&t.ID, &t.StartTimestamp, &t.FinishTimestamp, &t.RoutineID)
+	}, `SELECT id, start_timestamp, finish_timestamp, routine_id FROM ActualRoutine
 		WHERE finish_timestamp > ?`, beginTimestamp)
 }
 
@@ -65,4 +65,19 @@ func (d *SQLiteStatsDAO) GetMuscleGroupDistributionThisMonth(
 	JOIN MuscleGroup MG ON (MG.id = EMG.muscle_group_id)
 	WHERE AR.finish_timestamp > ?
 	GROUP BY MG.name`, beginTimestamp)
+}
+
+func (d *SQLiteStatsDAO) GetWeeklyWorkoutHourDistributionThisMonth(
+	dbtx sqlw.DBTX) ([]dto_response.WeeklyWorkoutHourDistribution, error) {
+
+	now := time.Now()
+	beginTimestamp := timew.BeginningOfMonth(now)
+
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *dto_response.WeeklyWorkoutHourDistribution) error {
+		return rows.Scan(&t.WeekISO, &t.Hours)
+	}, `strftime("%V", AR.start_timestamp) AS week_iso,
+	SUM((julianday(AR.finish_timestamp) - julianday(AR.start_timestamp)) * 24.0) AS hours
+	FROM ActualRoutine AS AR
+	WHERE AR.start_timestamp > ?
+	GROUP BY week_of_year`, beginTimestamp)
 }

@@ -9,6 +9,7 @@ type Routine struct {
 
 type ActualRoutine struct {
 	ID              int64
+	StartTimestamp  int64
 	FinishTimestamp int64
 	RoutineID       int64
 }

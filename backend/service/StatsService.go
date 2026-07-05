@@ -35,3 +35,9 @@ func (s *StatsService) GetTotalWorkouts() int {
 func (s *StatsService) GetMuscleGroupDistributionThisMonth() ([]dto_response.MuscleGroupDistribution, error) {
 	return s.statsDAO.GetMuscleGroupDistributionThisMonth(s.db)
 }
+
+func (s *StatsService) GetWeeklyWorkoutHourDistributionThisMonth() ([]dto_response.WeeklyWorkoutHourDistribution,
+	error) {
+
+	return s.statsDAO.GetWeeklyWorkoutHourDistributionThisMonth(s.db)
+}

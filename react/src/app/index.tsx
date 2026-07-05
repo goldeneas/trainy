@@ -559,6 +559,8 @@ export default function WorkoutsScreen() {
       await api.registerActualRoutine({
         routine_id: selectedRoutine.ID,
         actual_set_infos: actualSetInfos,
+        start_timestamp: Math.floor(workoutStartTime / 1000),
+        finish_timestamp: Math.floor(Date.now() / 1000),
       });
 
       setIsWorkoutActive(false);

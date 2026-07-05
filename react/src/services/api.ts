@@ -78,6 +78,7 @@ export interface Routine {
 
 export interface ActualRoutine {
   ID: number;
+  StartTimestamp: number;  // Unix timestamp in seconds
   FinishTimestamp: number; // Unix timestamp in seconds
   RoutineID: number;
 }
@@ -93,6 +94,11 @@ export interface ActualSetInfo {
 export interface MuscleGroupDistribution {
   name: string;
   distribution: number;
+}
+
+export interface WeeklyWorkoutHourDistribution {
+  week_iso: string;
+  hours: number;
 }
 
 // Request payloads
@@ -133,6 +139,8 @@ export interface ActualSetInfoCreate {
 export interface RegisterActualRoutineDto {
   routine_id: number;
   actual_set_infos: ActualSetInfoCreate[];
+  start_timestamp: number;
+  finish_timestamp: number;
 }
 
 // Custom structure for aggregated frontend display
@@ -254,6 +262,7 @@ export const api = {
   getStatsWeeklyFrequency: () => request<number>('/v1/stats/frequency/week'),
   getStatsTotalWorkouts: () => request<number>('/v1/stats/workouts'),
   getStatsMuscleDistribution: () => request<MuscleGroupDistribution[]>('/v1/stats/distribution/monthly'),
+  getStatsWeeklyHours: () => request<WeeklyWorkoutHourDistribution[]>('/v1/stats/weekly/hours'),
 
   // Composite helpers for easier UI integration
   async getFullRoutine(routineId: number): Promise<FullRoutine> {

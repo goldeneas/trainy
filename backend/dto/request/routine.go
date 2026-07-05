@@ -7,8 +7,10 @@ type CreateRoutine struct {
 }
 
 type RegisterActualRoutine struct {
-	RoutineID      int64           `json:"routine_id"`
-	ActualSetInfos []ActualSetInfo `json:"actual_set_infos"`
+	RoutineID       int64           `json:"routine_id"`
+	StartTimestamp  int64           `json:"start_timestamp"`
+	FinishTimestamp int64           `json:"finish_timestamp"`
+	ActualSetInfos  []ActualSetInfo `json:"actual_set_infos"`
 }
 
 type ActualSetInfo struct {

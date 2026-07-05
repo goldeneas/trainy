@@ -25,8 +25,8 @@ func (d *SQLiteRoutineDAO) InsertRoutine(dbtx sqlw.DBTX, m *model.Routine) (int6
 }
 
 func (d *SQLiteRoutineDAO) InsertActualRoutine(dbtx sqlw.DBTX, m *model.ActualRoutine) (int64, error) {
-	res, err := dbtx.Exec("INSERT INTO ActualRoutine (finish_timestamp, routine_id) VALUES (?, ?)",
-		m.FinishTimestamp, m.RoutineID)
+	res, err := dbtx.Exec("INSERT INTO ActualRoutine (start_timestamp, finish_timestamp, routine_id) VALUES (?, ?, ?)",
+		m.StartTimestamp, m.FinishTimestamp, m.RoutineID)
 
 	if err != nil {
 		return 0, err
@@ -62,8 +62,8 @@ func (d *SQLiteRoutineDAO) GetRoutineByID(dbtx sqlw.DBTX, id int64) (*model.Rout
 func (d *SQLiteRoutineDAO) GetActualRoutineByID(dbtx sqlw.DBTX, id int64) (*model.ActualRoutine, error) {
 	var m model.ActualRoutine
 
-	row := dbtx.QueryRow("SELECT id, finish_timestamp, routine_id FROM ActualRoutine WHERE id = ?", id)
-	err := row.Scan(&m.ID, &m.FinishTimestamp, &m.RoutineID)
+	row := dbtx.QueryRow("SELECT id, start_timestamp, finish_timestamp, routine_id FROM ActualRoutine WHERE id = ?", id)
+	err := row.Scan(&m.ID, &m.StartTimestamp, &m.FinishTimestamp, &m.RoutineID)
 
 	if err != nil {
 		return nil, err
@@ -100,8 +100,8 @@ func (d *SQLiteRoutineDAO) GetAllRoutines(dbtx sqlw.DBTX) ([]model.Routine, erro
 
 func (d *SQLiteRoutineDAO) GetAllActualRoutines(dbtx sqlw.DBTX) ([]model.ActualRoutine, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.ActualRoutine) error {
-		return rows.Scan(&t.ID, &t.FinishTimestamp, &t.RoutineID)
-	}, "SELECT id, finish_timestamp, routine_id FROM ActualRoutine")
+		return rows.Scan(&t.ID, &t.StartTimestamp, &t.FinishTimestamp, &t.RoutineID)
+	}, "SELECT id, start_timestamp, finish_timestamp, routine_id FROM ActualRoutine")
 }
 
 func (d *SQLiteRoutineDAO) DeleteRoutine(dbtx sqlw.DBTX, id int64) error {

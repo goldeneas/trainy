@@ -64,3 +64,17 @@ func (c *StatsController) GetMuscleGroupDistributionThisMonth(ctx *gin.Context) 
 
 	ctx.JSON(http.StatusOK, res)
 }
+
+func (c *StatsController) GetWeeklyWorkoutHourDistributionThisMonth(ctx *gin.Context) {
+	res, err := c.service.GetWeeklyWorkoutHourDistributionThisMonth()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if res == nil {
+		res = []dto_response.WeeklyWorkoutHourDistribution{}
+	}
+
+	ctx.JSON(http.StatusOK, res)
+}

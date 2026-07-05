@@ -10,5 +10,6 @@ type StatsDao interface {
 	GetActualRoutinesThisMonth(dbtx sqlw.DBTX) ([]model.ActualRoutine, error)
 	GetFrequencyThisWeek(dbtx sqlw.DBTX) int
 	GetTotalWorkouts(dbtx sqlw.DBTX) int
+	GetWeeklyWorkoutHourDistributionThisMonth(dbtx sqlw.DBTX) ([]dto_response.WeeklyWorkoutHourDistribution, error)
 	GetMuscleGroupDistributionThisMonth(dbtx sqlw.DBTX) ([]dto_response.MuscleGroupDistribution, error)
 }

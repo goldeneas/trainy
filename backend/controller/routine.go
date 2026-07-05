@@ -3,7 +3,6 @@ package controller
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	dto_request "github.com/goldeneas/trainy/dto/request"
@@ -120,7 +119,8 @@ func (c *RoutineController) RegisterActualRoutine(ctx *gin.Context) {
 
 	r := model.ActualRoutine{
 		RoutineID:       request.RoutineID,
-		FinishTimestamp: time.Now().Unix(),
+		StartTimestamp:  request.StartTimestamp,
+		FinishTimestamp: request.FinishTimestamp,
 	}
 
 	infos := make([]model.ActualSetInfo, 0, len(request.ActualSetInfos))

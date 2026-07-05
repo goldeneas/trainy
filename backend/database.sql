@@ -77,9 +77,11 @@ CREATE TABLE IF NOT EXISTS Routine (
 
 CREATE TABLE IF NOT EXISTS ActualRoutine (
     id INTEGER PRIMARY KEY,
+    start_timestamp INTEGER NOT NULL,
     finish_timestamp INTEGER NOT NULL,
     routine_id INTEGER NOT NULL,
 
+    CHECK (finish_timestamp >= start_timestamp),
     FOREIGN KEY (routine_id) REFERENCES Routine(id)
         ON DELETE CASCADE
 );
