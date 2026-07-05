@@ -120,8 +120,8 @@ func (d *SQLiteExerciseDAO) GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.Plan
 
 func (d *SQLiteExerciseDAO) GetAllExerciseMuscleGroupIDs(dbtx sqlw.DBTX, exerciseID int64) ([]int64, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *int64) error {
-		return rows.Scan(&t)
-	}, `SELECT id FROM ExerciseMuscleGroup WHERE exercise_id = ?`, exerciseID)
+		return rows.Scan(t)
+	}, `SELECT muscle_group_id FROM ExerciseMuscleGroup WHERE exercise_id = ?`, exerciseID)
 }
 
 func (d *SQLiteExerciseDAO) DeleteExercise(dbtx sqlw.DBTX, id int64) error {

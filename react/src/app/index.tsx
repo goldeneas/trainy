@@ -2,9 +2,12 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   RefreshControl,
@@ -57,6 +60,50 @@ Notifications.setNotificationHandler({
 
 const getNow = () => Date.now();
 
+function useSwipeToClose(onClose: () => void, visible: boolean) {
+  const { translateY, panHandlers } = useMemo(() => {
+    const animVal = new Animated.Value(0);
+    const pr = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return gestureState.dy > 5;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (gestureState.dy > 0) {
+          animVal.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dy > 120 || gestureState.vy > 0.8) {
+          Animated.timing(animVal, {
+            toValue: 800,
+            duration: 250,
+            useNativeDriver: true,
+          }).start(() => {
+            onClose();
+          });
+        } else {
+          Animated.spring(animVal, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 40,
+            friction: 6,
+          }).start();
+        }
+      },
+    });
+    return { translateY: animVal, panHandlers: pr.panHandlers };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (visible) {
+      translateY.setValue(0);
+    }
+  }, [visible, translateY]);
+
+  return { translateY, panHandlers };
+}
+
 export default function WorkoutsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -98,6 +145,7 @@ export default function WorkoutsScreen() {
   const [plannedSets, setPlannedSets] = useState<{ reps: string; notes: string }[]>([
     { reps: '10', notes: '' },
   ]);
+  const [dropdownSearchQuery, setDropdownSearchQuery] = useState('');
 
   // Active Workout Log State
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
@@ -112,6 +160,32 @@ export default function WorkoutsScreen() {
   const [tempServerUrl, setTempServerUrl] = useState('');
   // Audio player and notifications setup
   const player = useAudioPlayer('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
+
+  // Swipe gesture controllers for Bottom Sheets
+  const createRoutineSwipe = useSwipeToClose(() => {
+    setNewRoutineName('');
+    setNewRoutineDesc('');
+    setIsAddRoutineVisible(false);
+  }, isAddRoutineVisible);
+
+  const routineDetailSwipe = useSwipeToClose(() => {
+    if (isAddExerciseToRoutineVisible) {
+      setIsAddExerciseToRoutineVisible(false);
+      setDropdownSearchQuery('');
+      setSelectedExerciseId(null);
+    } else {
+      setIsRoutineDetailVisible(false);
+    }
+  }, isRoutineDetailVisible);
+
+  const historyDetailSwipe = useSwipeToClose(() => {
+    setIsHistoryDetailVisible(false);
+  }, isHistoryDetailVisible);
+
+  const settingsSwipe = useSwipeToClose(() => {
+    setTempServerUrl('');
+    setIsSettingsVisible(false);
+  }, isSettingsVisible);
 
   useEffect(() => {
     async function requestPermissions() {
@@ -296,6 +370,7 @@ export default function WorkoutsScreen() {
       setSelectedExerciseId(null);
       setNewRestTime('90');
       setPlannedSets([{ reps: '10', notes: '' }]);
+      setDropdownSearchQuery('');
       fetchData();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to add exercise');
@@ -738,68 +813,80 @@ export default function WorkoutsScreen() {
           style={{ flex: 1 }}>
           <View style={styles.modalOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsAddRoutineVisible(false)} />
-            <ThemedView type="background" style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={() => {
-                    setNewRoutineName('');
-                    setNewRoutineDesc('');
-                    setIsAddRoutineVisible(false);
-                  }}
-                  style={styles.modalHeaderButton}>
-                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                </Pressable>
-                <ThemedText type="smallBold" style={styles.modalTitle}>
-                  New Routine
-                </ThemedText>
-                <Pressable onPress={handleCreateRoutine} style={styles.modalHeaderButton}>
-                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                </Pressable>
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: createRoutineSwipe.translateY }]
+                }
+              ]}>
+              <View {...createRoutineSwipe.panHandlers} style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
               </View>
-              <View style={styles.modalFormBody}>
-                <View style={styles.formGroup}>
-                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                    ROUTINE NAME
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
+                <View style={styles.modalHeader}>
+                  <Pressable
+                    onPress={() => {
+                      setNewRoutineName('');
+                      setNewRoutineDesc('');
+                      setIsAddRoutineVisible(false);
+                    }}
+                    style={styles.modalHeaderButton}>
+                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                  </Pressable>
+                  <ThemedText type="smallBold" style={styles.modalTitle}>
+                    New Routine
                   </ThemedText>
-                  <TextInput
-                    placeholder="e.g. Leg Day, Upper Body Push"
-                    placeholderTextColor={theme.textSecondary}
-                    value={newRoutineName}
-                    onChangeText={setNewRoutineName}
-                    style={[
-                      styles.inputField,
-                      {
-                        backgroundColor: theme.backgroundElement,
-                        color: theme.text,
-                        borderColor: theme.backgroundSelected,
-                      },
-                    ]}
-                  />
+                  <Pressable onPress={handleCreateRoutine} style={styles.modalHeaderButton}>
+                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                  </Pressable>
                 </View>
-                <View style={styles.formGroup}>
-                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                    DESCRIPTION
-                  </ThemedText>
-                  <TextInput
-                    placeholder="e.g. Focus on quads, glutes and core"
-                    placeholderTextColor={theme.textSecondary}
-                    value={newRoutineDesc}
-                    onChangeText={setNewRoutineDesc}
-                    style={[
-                      styles.inputField,
-                      styles.textAreaField,
-                      {
-                        backgroundColor: theme.backgroundElement,
-                        color: theme.text,
-                        borderColor: theme.backgroundSelected,
-                      },
-                    ]}
-                    multiline
-                    numberOfLines={2}
-                  />
+                <View style={styles.modalFormBody}>
+                  <View style={styles.formGroup}>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                      ROUTINE NAME
+                    </ThemedText>
+                    <TextInput
+                      placeholder="e.g. Hypertrophy A"
+                      placeholderTextColor={theme.textSecondary}
+                      value={newRoutineName}
+                      onChangeText={setNewRoutineName}
+                      style={[
+                        styles.inputField,
+                        {
+                          backgroundColor: theme.backgroundElement,
+                          color: theme.text,
+                          borderColor: theme.backgroundSelected,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <View style={styles.formGroup}>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                      ROUTINE DESCRIPTION
+                    </ThemedText>
+                    <TextInput
+                      placeholder="e.g. Focus on chest and arms"
+                      placeholderTextColor={theme.textSecondary}
+                      value={newRoutineDesc}
+                      onChangeText={setNewRoutineDesc}
+                      style={[
+                        styles.inputField,
+                        styles.textAreaField,
+                        {
+                          backgroundColor: theme.backgroundElement,
+                          color: theme.text,
+                          borderColor: theme.backgroundSelected,
+                        },
+                      ]}
+                      multiline
+                      numberOfLines={2}
+                    />
+                  </View>
                 </View>
-              </View>
-            </ThemedView>
+              </Pressable>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -815,12 +902,26 @@ export default function WorkoutsScreen() {
           style={{ flex: 1 }}>
           <View style={styles.modalOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsRoutineDetailVisible(false)} />
-            <ThemedView type="background" style={[styles.modalContent, { height: '80%' }]}>
-              <View style={styles.modalHeader}>
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  height: '80%',
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: routineDetailSwipe.translateY }]
+                }
+              ]}>
+              <View {...routineDetailSwipe.panHandlers} style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
+              </View>
+              <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+                <View style={styles.modalHeader}>
                 <Pressable
                   onPress={() => {
                     if (isAddExerciseToRoutineVisible) {
                       setIsAddExerciseToRoutineVisible(false);
+                      setDropdownSearchQuery('');
+                      setSelectedExerciseId(null);
                     } else {
                       setIsRoutineDetailVisible(false);
                     }
@@ -845,119 +946,98 @@ export default function WorkoutsScreen() {
               {selectedRoutine && (
                 <View style={{ flex: 1 }}>
                   {!isAddExerciseToRoutineVisible ? (
-                    <>
-                      <ScrollView
-                        style={styles.modalScrollBody}
-                        contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
-                        <ThemedText type="subtitle" style={styles.detailTitle}>
-                          {selectedRoutine.Name}
-                        </ThemedText>
-                        <ThemedText type="default" themeColor="textSecondary" style={styles.detailDesc}>
-                          {selectedRoutine.Description || 'No description provided.'}
-                        </ThemedText>
+                    <ScrollView
+                      style={styles.modalScrollBody}
+                      contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
+                      <ThemedText type="subtitle" style={styles.detailTitle}>
+                        {selectedRoutine.Name}
+                      </ThemedText>
+                      <ThemedText type="default" themeColor="textSecondary" style={styles.detailDesc}>
+                        {selectedRoutine.Description || 'No description provided.'}
+                      </ThemedText>
 
-                        {/* Planned Exercises Section */}
-                        <View style={styles.detailSection}>
-                          <View style={styles.sectionHeaderRow}>
-                            <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
-                              EXERCISES
+                      {/* Planned Exercises Section */}
+                      <View style={styles.detailSection}>
+                        <View style={styles.sectionHeaderRow}>
+                          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                            EXERCISES
+                          </ThemedText>
+                          <Pressable
+                            onPress={() => setIsAddExerciseToRoutineVisible(true)}
+                            style={styles.inlineAddBtn}>
+                            <SymbolView
+                              tintColor="#0A84FF"
+                              name="plus.circle"
+                              size={16}
+                              style={{ marginRight: Spacing.one }}
+                            />
+                            <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>
+                              Add Exercise
                             </ThemedText>
-                            <Pressable
-                              onPress={() => setIsAddExerciseToRoutineVisible(true)}
-                              style={styles.inlineAddBtn}>
-                              <SymbolView
-                                tintColor="#0A84FF"
-                                name="plus.circle"
-                                size={16}
-                                style={{ marginRight: Spacing.one }}
-                              />
-                              <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>
-                                Add Exercise
-                              </ThemedText>
-                            </Pressable>
-                          </View>
-
-                          {selectedRoutine.plannedExercises.length === 0 ? (
-                            <ThemedView type="backgroundElement" style={styles.detailTextBox}>
-                              <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-                                {"No exercises added to this routine yet. Tap 'Add Exercise' to plan."}
-                              </ThemedText>
-                            </ThemedView>
-                          ) : (
-                            selectedRoutine.plannedExercises.map((pe) => (
-                              <ThemedView
-                                key={pe.ID}
-                                type="backgroundElement"
-                                style={styles.routineExerciseCard}>
-                                <View style={styles.peCardTop}>
-                                  <View style={{ flex: 1 }}>
-                                    <ThemedText type="smallBold">{pe.exercise?.Name || 'Exercise'}</ThemedText>
-                                    {(() => {
-                                      const mgIds = pe.exercise?.MuscleGroupIDs ?? (pe.exercise as any)?.muscle_group_ids;
-                                      if (mgIds && mgIds.length > 0) {
-                                        const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
-                                        return names ? (
-                                          <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
-                                            {names}
-                                          </ThemedText>
-                                        ) : null;
-                                      }
-                                      return null;
-                                    })()}
-                                    <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
-                                      Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
-                                    </ThemedText>
-                                  </View>
-                                  <Pressable
-                                    onPress={() => handleRemovePlannedExercise(pe.ID)}
-                                    style={styles.trashBtn}>
-                                    <SymbolView
-                                      tintColor="#FF3B30"
-                                      name="trash"
-                                      size={16}
-                                    />
-                                  </Pressable>
-                                </View>
-                                {pe.sets.map((set) => (
-                                  <View key={set.ID} style={styles.setPlanRow}>
-                                    <ThemedText type="small" themeColor="textSecondary">
-                                      Set {set.Ord}:
-                                    </ThemedText>
-                                    <ThemedText type="smallBold" style={{ marginHorizontal: Spacing.one }}>
-                                      {set.Reps} Reps
-                                    </ThemedText>
-                                    {set.Notes ? (
-                                      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontStyle: 'italic' }}>
-                                        ({set.Notes})
-                                      </ThemedText>
-                                    ) : null}
-                                  </View>
-                                ))}
-                              </ThemedView>
-                            ))
-                          )}
+                          </Pressable>
                         </View>
-                      </ScrollView>
 
-                      {/* Workout Start Panel */}
-                      <View style={[styles.bottomActionPanel, { paddingBottom: insets.bottom + Spacing.three }]}>
-                        <Pressable
-                          onPress={() => handleStartWorkout(selectedRoutine)}
-                          style={({ pressed }) => [
-                            styles.primaryActionButton,
-                            { backgroundColor: '#0A84FF' },
-                            pressed && styles.pressed,
-                          ]}>
-                          <SymbolView
-                            tintColor="#FFFFFF"
-                            name="play.fill"
-                            size={16}
-                            style={{ marginRight: Spacing.two }}
-                          />
-                          <ThemedText style={styles.primaryActionButtonText}>Start Workout</ThemedText>
-                        </Pressable>
+                        {selectedRoutine.plannedExercises.length === 0 ? (
+                          <ThemedView type="backgroundElement" style={styles.detailTextBox}>
+                            <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
+                              {"No exercises added to this routine yet. Tap 'Add Exercise' to plan."}
+                            </ThemedText>
+                          </ThemedView>
+                          ) : (
+                          selectedRoutine.plannedExercises.map((pe) => (
+                            <ThemedView
+                              key={pe.ID}
+                              type="backgroundElement"
+                              style={styles.routineExerciseCard}>
+                              <View style={styles.peCardTop}>
+                                <View style={{ flex: 1 }}>
+                                  <ThemedText type="smallBold">{pe.exercise?.Name || 'Exercise'}</ThemedText>
+                                  {(() => {
+                                    const mgIds = pe.exercise?.MuscleGroupIDs ?? (pe.exercise as any)?.muscle_group_ids;
+                                    if (mgIds && mgIds.length > 0) {
+                                      const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                                      return names ? (
+                                        <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
+                                          {names}
+                                        </ThemedText>
+                                      ) : null;
+                                    }
+                                    return null;
+                                  })()}
+                                  <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
+                                    Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
+                                  </ThemedText>
+                                </View>
+                                <Pressable
+                                  onPress={() => handleRemovePlannedExercise(pe.ID)}
+                                  style={styles.trashBtn}>
+                                  <SymbolView
+                                    tintColor="#FF3B30"
+                                    name="trash"
+                                    size={16}
+                                  />
+                                </Pressable>
+                              </View>
+                              {pe.sets.map((set) => (
+                                <View key={set.ID} style={styles.setPlanRow}>
+                                  <ThemedText type="small" themeColor="textSecondary">
+                                    Set {set.Ord}:
+                                  </ThemedText>
+                                  <ThemedText type="smallBold" style={{ marginHorizontal: Spacing.one }}>
+                                    {set.Reps} Reps
+                                  </ThemedText>
+                                  {set.Notes ? (
+                                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontStyle: 'italic' }}>
+                                      ({set.Notes})
+                                    </ThemedText>
+                                  ) : null}
+                                </View>
+                              ))}
+                            </ThemedView>
+                          ))
+                        )}
                       </View>
-                    </>
+                    </ScrollView>
                   ) : (
                     <ScrollView 
                       style={styles.modalFormBody}
@@ -972,34 +1052,126 @@ export default function WorkoutsScreen() {
                             {"Please add exercises in the 'Exercises' tab first!"}
                           </ThemedText>
                         ) : (
-                          <View style={styles.exerciseSelectGrid}>
-                            {exercises.map((ex) => (
-                              <Pressable
-                                key={ex.ID}
-                                onPress={() => setSelectedExerciseId(ex.ID)}
-                                style={[
-                                  styles.selectOption,
-                                  { backgroundColor: theme.backgroundElement },
-                                  selectedExerciseId === ex.ID && [
-                                    styles.selectOptionActive,
-                                    { borderColor: '#0A84FF' },
-                                  ],
-                                ]}>
-                                <ThemedText type="smallBold">{ex.Name}</ThemedText>
-                                {(() => {
-                                  const mgIds = ex.MuscleGroupIDs ?? (ex as any).muscle_group_ids;
-                                  if (mgIds && mgIds.length > 0) {
-                                    const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
-                                    return names ? (
-                                      <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
-                                        {names}
-                                      </ThemedText>
-                                    ) : null;
+                          <View style={styles.dropdownContainer}>
+                            {/* Search bar is the first widget under SELECT EXERCISE */}
+                            <View style={[
+                              styles.dropdownSearchContainer,
+                              {
+                                backgroundColor: theme.backgroundElement,
+                                borderColor: theme.backgroundSelected,
+                                borderWidth: 1,
+                                borderRadius: 8,
+                                marginBottom: Spacing.two,
+                              }
+                            ]}>
+                              <SymbolView
+                                name="magnifyingglass"
+                                tintColor={theme.textSecondary}
+                                size={14}
+                                style={styles.dropdownSearchIcon}
+                              />
+                              <TextInput
+                                placeholder="Search exercises..."
+                                placeholderTextColor={theme.textSecondary}
+                                value={dropdownSearchQuery}
+                                onFocus={() => {
+                                  setSelectedExerciseId(null);
+                                  setDropdownSearchQuery('');
+                                }}
+                                onChangeText={(text) => {
+                                  setDropdownSearchQuery(text);
+                                  const currentSelected = exercises.find(e => e.ID === selectedExerciseId);
+                                  if (currentSelected && currentSelected.Name !== text) {
+                                    setSelectedExerciseId(null);
                                   }
-                                  return null;
-                                })()}
-                              </Pressable>
-                            ))}
+                                }}
+                                style={[styles.dropdownSearchInput, { color: theme.text }]}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                              />
+                              {dropdownSearchQuery ? (
+                                <Pressable 
+                                  onPress={() => {
+                                    setDropdownSearchQuery('');
+                                    setSelectedExerciseId(null);
+                                  }} 
+                                  style={styles.dropdownClearSearch}>
+                                  <SymbolView
+                                    name="xmark.circle.fill"
+                                    tintColor={theme.textSecondary}
+                                    size={14}
+                                  />
+                                </Pressable>
+                              ) : null}
+                            </View>
+ 
+                            {/* The scrollable list of exercises directly below it, shown conditionally */}
+                            {dropdownSearchQuery.trim() !== '' && selectedExerciseId === null && (
+                              <View style={[
+                                styles.dropdownMenu,
+                                {
+                                  backgroundColor: theme.backgroundElement,
+                                  borderColor: theme.backgroundSelected,
+                                }
+                              ]}>
+                                <ScrollView 
+                                  nestedScrollEnabled={true}
+                                  style={styles.dropdownList}
+                                  contentContainerStyle={{ paddingVertical: Spacing.one }}>
+                                  {(() => {
+                                    const filtered = exercises.filter(e =>
+                                      e.Name.toLowerCase().includes(dropdownSearchQuery.toLowerCase())
+                                    );
+                                    if (filtered.length === 0) {
+                                      return (
+                                        <View style={{ padding: Spacing.three, alignItems: 'center' }}>
+                                          <ThemedText type="small" themeColor="textSecondary">
+                                            No exercises match your search
+                                          </ThemedText>
+                                        </View>
+                                      );
+                                    }
+                                    return filtered.map(ex => {
+                                      const isSelected = selectedExerciseId === ex.ID;
+                                      return (
+                                        <Pressable
+                                          key={ex.ID}
+                                          onPress={() => {
+                                            setSelectedExerciseId(ex.ID);
+                                            setDropdownSearchQuery(ex.Name);
+                                          }}
+                                          style={styles.dropdownItem}>
+                                          <View style={{ flex: 1 }}>
+                                            <ThemedText type="smallBold" style={isSelected ? { color: '#0A84FF' } : undefined}>
+                                              {ex.Name}
+                                            </ThemedText>
+                                            {(() => {
+                                              const mgIds = ex.MuscleGroupIDs ?? (ex as any).muscle_group_ids;
+                                              if (mgIds && mgIds.length > 0) {
+                                                const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                                                return names ? (
+                                                  <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
+                                                    {names}
+                                                  </ThemedText>
+                                                ) : null;
+                                              }
+                                              return null;
+                                            })()}
+                                          </View>
+                                          {isSelected && (
+                                            <SymbolView
+                                              name="checkmark"
+                                              tintColor="#0A84FF"
+                                              size={14}
+                                            />
+                                          )}
+                                        </Pressable>
+                                      );
+                                    });
+                                  })()}
+                                </ScrollView>
+                              </View>
+                            )}
                           </View>
                         )}
                       </View>
@@ -1107,7 +1279,8 @@ export default function WorkoutsScreen() {
                   )}
                 </View>
               )}
-            </ThemedView>
+              </Pressable>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1278,7 +1451,7 @@ export default function WorkoutsScreen() {
             )}
 
           {/* Workout Footer panel */}
-          <View style={[styles.bottomActionPanel, { paddingBottom: insets.bottom + Spacing.three }]}>
+          <View style={[styles.bottomActionPanel, { paddingBottom: insets.bottom }]}>
             <Pressable
               onPress={handleFinishWorkout}
               style={({ pressed }) => [
@@ -1301,8 +1474,20 @@ export default function WorkoutsScreen() {
         onRequestClose={() => setIsHistoryDetailVisible(false)}>
         <View style={styles.modalOverlay}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsHistoryDetailVisible(false)} />
-          <ThemedView type="background" style={[styles.modalContent, { height: '80%' }]}>
-            <View style={styles.modalHeader}>
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '80%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: historyDetailSwipe.translateY }]
+              }
+            ]}>
+            <View {...historyDetailSwipe.panHandlers} style={styles.dragHandleContainer}>
+              <View style={styles.dragHandle} />
+            </View>
+            <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+              <View style={styles.modalHeader}>
               <Pressable
                 onPress={() => setIsHistoryDetailVisible(false)}
                 style={styles.modalHeaderButton}>
@@ -1391,7 +1576,8 @@ export default function WorkoutsScreen() {
                 </View>
               </ScrollView>
             )}
-          </ThemedView>
+            </Pressable>
+          </Animated.View>
         </View>
       </Modal>
 
@@ -1406,8 +1592,20 @@ export default function WorkoutsScreen() {
           style={{ flex: 1 }}>
           <View style={styles.modalOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsSettingsVisible(false)} />
-            <ThemedView type="background" style={[styles.modalContent, { maxHeight: '60%' }]}>
-              <View style={styles.modalHeader}>
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  maxHeight: '60%',
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: settingsSwipe.translateY }]
+                }
+              ]}>
+              <View {...settingsSwipe.panHandlers} style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
+              </View>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
+                <View style={styles.modalHeader}>
                 <Pressable
                   onPress={() => {
                     setTempServerUrl('');
@@ -1461,7 +1659,8 @@ export default function WorkoutsScreen() {
                   </ThemedText>
                 </View>
               </ScrollView>
-            </ThemedView>
+              </Pressable>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1611,6 +1810,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'transparent',
+  },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  dragHandle: {
+    width: 36,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: 'rgba(120, 120, 128, 0.4)',
   },
   modalContent: {
     borderTopLeftRadius: 20,
@@ -1786,21 +1996,56 @@ const styles = StyleSheet.create({
     height: 80,
     textAlignVertical: 'top',
   },
-  exerciseSelectGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
+  dropdownContainer: {
+    width: '100%',
+    zIndex: 10,
+    position: 'relative',
     marginTop: Spacing.one,
   },
-  selectOption: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'transparent',
   },
-  selectOptionActive: {
+  dropdownMenu: {
+    marginTop: Spacing.one,
+    borderRadius: 8,
     borderWidth: 1,
+    maxHeight: 250,
+    overflow: 'hidden',
+  },
+  dropdownSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    height: 44,
+  },
+  dropdownSearchIcon: {
+    marginRight: Spacing.two,
+  },
+  dropdownSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    height: '100%',
+    padding: 0,
+  },
+  dropdownClearSearch: {
+    padding: 4,
+  },
+  dropdownList: {
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   setBuilderRow: {
     flexDirection: 'row',

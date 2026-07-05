@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Dynamically determine the default host.
 // On Android emulator, localhost refers to the emulator itself, so we use 10.0.2.2.
@@ -10,8 +11,22 @@ const DEFAULT_HOST = Platform.select({
 
 let apiBaseUrl = DEFAULT_HOST;
 
+// Asynchronously load the saved server URL from storage on startup.
+AsyncStorage.getItem('saved_server_url')
+  .then((savedUrl) => {
+    if (savedUrl) {
+      apiBaseUrl = savedUrl;
+    }
+  })
+  .catch((err) => {
+    console.warn('Failed to load saved server URL:', err);
+  });
+
 export const setApiBaseUrl = (url: string) => {
   apiBaseUrl = url;
+  AsyncStorage.setItem('saved_server_url', url).catch((err) => {
+    console.warn('Failed to save server URL:', err);
+  });
 };
 
 export const getApiBaseUrl = () => {

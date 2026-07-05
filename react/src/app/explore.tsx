@@ -1,10 +1,13 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
+  Keyboard,
   Modal,
   KeyboardAvoidingView,
+  PanResponder,
   Platform,
   Pressable,
   RefreshControl,
@@ -53,6 +56,50 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
+function useSwipeToClose(onClose: () => void, visible: boolean) {
+  const { translateY, panHandlers } = useMemo(() => {
+    const animVal = new Animated.Value(0);
+    const pr = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return gestureState.dy > 5;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (gestureState.dy > 0) {
+          animVal.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dy > 120 || gestureState.vy > 0.8) {
+          Animated.timing(animVal, {
+            toValue: 800,
+            duration: 250,
+            useNativeDriver: true,
+          }).start(() => {
+            onClose();
+          });
+        } else {
+          Animated.spring(animVal, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 40,
+            friction: 6,
+          }).start();
+        }
+      },
+    });
+    return { translateY: animVal, panHandlers: pr.panHandlers };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (visible) {
+      translateY.setValue(0);
+    }
+  }, [visible, translateY]);
+
+  return { translateY, panHandlers };
+}
+
 export default function ExercisesScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -79,6 +126,20 @@ export default function ExercisesScreen() {
   const [csvInput, setCsvInput] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Swipe gesture controllers for Bottom Sheets
+  const detailSwipe = useSwipeToClose(() => setIsDetailModalVisible(false), isDetailModalVisible);
+  const addExerciseSwipe = useSwipeToClose(() => {
+    setNewName('');
+    setNewNotes('');
+    setNewInstructions('');
+    setSelectedMuscleGroupIds([]);
+    setIsAddModalVisible(false);
+  }, isAddModalVisible);
+  const importCSVSwipe = useSwipeToClose(() => {
+    setCsvInput('');
+    setIsImportModalVisible(false);
+  }, isImportModalVisible);
 
   // Fetch exercises
   const fetchExercises = useCallback(async (showLoadingIndicator = false) => {
@@ -376,8 +437,21 @@ export default function ExercisesScreen() {
         visible={isDetailModalVisible}
         onRequestClose={() => setIsDetailModalVisible(false)}>
         <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <ThemedView type="background" style={[styles.modalContent, { maxHeight: '85%' }]}>
-            <View style={styles.modalHeader}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsDetailModalVisible(false)} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                maxHeight: '85%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: detailSwipe.translateY }]
+              }
+            ]}>
+            <View {...detailSwipe.panHandlers} style={styles.dragHandleContainer}>
+              <View style={styles.dragHandle} />
+            </View>
+            <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
+              <View style={styles.modalHeader}>
               <Pressable
                 onPress={() => setIsDetailModalVisible(false)}
                 style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
@@ -466,7 +540,8 @@ export default function ExercisesScreen() {
                 ) : null}
               </ScrollView>
             )}
-          </ThemedView>
+            </Pressable>
+          </Animated.View>
         </View>
       </Modal>
 
@@ -480,8 +555,20 @@ export default function ExercisesScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}>
           <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <ThemedView type="background" style={styles.modalContent}>
-              <View style={styles.modalHeader}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsAddModalVisible(false)} />
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: addExerciseSwipe.translateY }]
+                }
+              ]}>
+              <View {...addExerciseSwipe.panHandlers} style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
+              </View>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
+                <View style={styles.modalHeader}>
                 <Pressable
                   onPress={() => {
                     setNewName('');
@@ -613,7 +700,8 @@ export default function ExercisesScreen() {
                   />
                 </View>
               </ScrollView>
-            </ThemedView>
+              </Pressable>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -628,8 +716,21 @@ export default function ExercisesScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}>
           <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <ThemedView type="background" style={[styles.modalContent, { height: '80%' }]}>
-              <View style={styles.modalHeader}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsImportModalVisible(false)} />
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  height: '80%',
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: importCSVSwipe.translateY }]
+                }
+              ]}>
+              <View {...importCSVSwipe.panHandlers} style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
+              </View>
+              <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+                <View style={styles.modalHeader}>
                 <Pressable
                   onPress={() => {
                     setCsvInput('');
@@ -679,7 +780,8 @@ export default function ExercisesScreen() {
                   ]}
                 />
               </ScrollView>
-            </ThemedView>
+              </Pressable>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -787,6 +889,17 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end', // iOS Action Sheet style (slide from bottom)
+  },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  dragHandle: {
+    width: 36,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: 'rgba(120, 120, 128, 0.4)',
   },
   modalContent: {
     borderTopLeftRadius: 20,
