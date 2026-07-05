@@ -71,13 +71,13 @@ func (d *SQLiteStatsDAO) GetWeeklyWorkoutHourDistributionThisMonth(
 	dbtx sqlw.DBTX) ([]dto_response.WeeklyWorkoutHourDistribution, error) {
 
 	now := time.Now()
-	beginTimestamp := timew.BeginningOfMonth(now)
+	beginTimestamp := timew.BeginningOfMonth(now).Unix()
 
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *dto_response.WeeklyWorkoutHourDistribution) error {
 		return rows.Scan(&t.WeekISO, &t.Hours)
-	}, `strftime("%V", AR.start_timestamp) AS week_iso,
-	SUM((julianday(AR.finish_timestamp) - julianday(AR.start_timestamp)) * 24.0) AS hours
+	}, `SELECT strftime("%V", AR.start_timestamp, 'unixepoch') AS week_iso,
+	SUM(CAST((AR.finish_timestamp - AR.start_timestamp) / 3600.0 AS INTEGER)) AS hours
 	FROM ActualRoutine AS AR
 	WHERE AR.start_timestamp > ?
-	GROUP BY week_of_year`, beginTimestamp)
+	GROUP BY week_iso`, beginTimestamp)
 }

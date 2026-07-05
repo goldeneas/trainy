@@ -1,4 +1,6 @@
 PODS:
+  - BVLinearGradient (2.8.3):
+    - React-Core
   - EXApplication (57.0.0):
     - ExpoModulesCore
   - EXConstants (57.0.3):
@@ -2480,6 +2482,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
@@ -2598,6 +2601,8 @@ DEPENDENCIES:
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 EXTERNAL SOURCES:
+  BVLinearGradient:
+    :path: "../node_modules/react-native-linear-gradient"
   EXApplication:
     :path: "../node_modules/expo-application/ios"
   EXConstants:
@@ -2831,6 +2836,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  BVLinearGradient: cb006ba232a1f3e4f341bb62c42d1098c284da70
   EXApplication: 7283a281903a90230466ab545ab87a8c48cf4e12
   EXConstants: d069b4a2dd469d5a3a4d3d7b09757e708fda8f64
   EXJSONUtils: 55eca2b6f8fc320cb36933cf45c4f2200a441589

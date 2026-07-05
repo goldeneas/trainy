@@ -127,13 +127,15 @@ func (c *ExerciseController) RegisterPlannedExercise(ctx *gin.Context) {
 	}
 
 	infos := make([]model.PlannedSetInfo, 0, len(m.PlannedSetInfos))
-	for i, info := range m.PlannedSetInfos {
-		infos[i] = model.PlannedSetInfo{
+	for _, info := range m.PlannedSetInfos {
+		m := model.PlannedSetInfo{
 			Ord:               info.Ord,
 			PlannedExerciseID: info.PlannedExerciseID,
 			Reps:              info.Reps,
 			Notes:             info.Notes,
 		}
+
+		infos = append(infos, m)
 	}
 
 	id, err := c.service.RegisterPlannedExercise(&pe, infos)

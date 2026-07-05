@@ -24,6 +24,7 @@ func EnableStatsController(router *gin.Engine, statsService *service.StatsServic
 		v1.GET("/frequency/week", c.GetFrequencyThisWeek)
 		v1.GET("/workouts", c.GetTotalWorkouts)
 		v1.GET("/distribution/monthly", c.GetMuscleGroupDistributionThisMonth)
+		v1.GET("/weekly/hours", c.GetWeeklyWorkoutHourDistributionThisMonth)
 	}
 }
 

@@ -124,12 +124,14 @@ func (c *RoutineController) RegisterActualRoutine(ctx *gin.Context) {
 	}
 
 	infos := make([]model.ActualSetInfo, 0, len(request.ActualSetInfos))
-	for i, info := range request.ActualSetInfos {
-		infos[i] = model.ActualSetInfo{
+	for _, info := range request.ActualSetInfos {
+		m := model.ActualSetInfo{
 			Weight:           info.Weight,
 			PlannedSetInfoID: info.PlannedSetInfoID,
 			ActualReps:       info.ActualReps,
 		}
+
+		infos = append(infos, m)
 	}
 
 	id, err := c.service.RegisterActualRoutine(&r, infos)
