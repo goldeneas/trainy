@@ -1600,7 +1600,7 @@ export default function WorkoutsScreen() {
                       <Pressable
                         onPress={customTimerSwipe.close}
                         style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                        <ThemedText type="link" themeColor="textSecondary">Close</ThemedText>
+                        <ThemedText type="link"  style={{ color: '#0A84FF' }}>Close</ThemedText>
                       </Pressable>
                       <ThemedText type="smallBold" style={styles.modalTitle}>
                         Clock & Timer
