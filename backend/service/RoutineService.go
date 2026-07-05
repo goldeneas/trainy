@@ -80,10 +80,10 @@ func (s *RoutineService) GetAllActualRoutines() ([]model.ActualRoutine, error) {
 	return s.routineDAO.GetAllActualRoutines(s.db)
 }
 
-func (s *RoutineService) DeleteRoutine(id int64) error {
-	return s.routineDAO.DeleteRoutine(s.db, id)
+func (s *RoutineService) DeleteRoutineByID(id int64) error {
+	return s.routineDAO.DeleteRoutineByID(s.db, id)
 }
 
-func (s *RoutineService) DeleteActualRoutine(id int64) error {
-	return s.routineDAO.DeleteActualRoutine(s.db, id)
+func (s *RoutineService) DeleteActualRoutineByID(id int64) error {
+	return s.routineDAO.DeleteActualRoutineByID(s.db, id)
 }

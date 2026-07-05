@@ -11,17 +11,18 @@ type ExerciseDAO interface {
 	InsertPlannedSetInfo(dbtx sqlw.DBTX, m *model.PlannedSetInfo) (int64, error)
 	InsertExerciseMuscleGroup(dbtx sqlw.DBTX, m *model.ExerciseMuscleGroup) (int64, error)
 
+	GetRepUnitByID(dbtx sqlw.DBTX, id int64) (*model.RepUnit, error)
 	GetExerciseByID(dbtx sqlw.DBTX, id int64) (*model.Exercise, error)
 	GetPlannedExerciseByID(dbtx sqlw.DBTX, id int64) (*model.PlannedExercise, error)
-	GetSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.PlannedSetInfo, error)
+	GetPlannedSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.PlannedSetInfo, error)
 
 	GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id int64) ([]model.PlannedSetInfo, error)
 	GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, error)
 	GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error)
 	GetAllExerciseMuscleGroupIDs(dbtx sqlw.DBTX, exerciseID int64) ([]int64, error)
 
-	DeleteExercise(dbtx sqlw.DBTX, id int64) error
-	DeletePlannedExercise(dbtx sqlw.DBTX, id int64) error
-	DeletePlannedSetInfo(dbtx sqlw.DBTX, id int64) error
-	DeleteExerciseMuscleGroup(dbtx sqlw.DBTX, id int64) error
+	DeleteExerciseByID(dbtx sqlw.DBTX, id int64) error
+	DeletePlannedExerciseByID(dbtx sqlw.DBTX, id int64) error
+	DeletePlannedSetInfoByID(dbtx sqlw.DBTX, id int64) error
+	DeleteExerciseMuscleGroupByID(dbtx sqlw.DBTX, id int64) error
 }

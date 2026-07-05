@@ -117,8 +117,12 @@ func (s *ExerciseService) GetPlannedExerciseByID(id int64) (*model.PlannedExerci
 	return s.exerciseDAO.GetPlannedExerciseByID(s.db, id)
 }
 
+func (s *ExerciseService) GetRepUnitByID(id int64) (*model.RepUnit, error) {
+	return s.exerciseDAO.GetRepUnitByID(s.db, id)
+}
+
 func (s *ExerciseService) GetSetInfoByID(id int64) (*model.PlannedSetInfo, error) {
-	return s.exerciseDAO.GetSetInfoByID(s.db, id)
+	return s.exerciseDAO.GetPlannedSetInfoByID(s.db, id)
 }
 
 func (s *ExerciseService) GetAllSetInfoByPlannedExerciseID(id int64) ([]model.PlannedSetInfo, error) {
@@ -162,10 +166,10 @@ func (s *ExerciseService) GetAllPlannedExercises() ([]model.PlannedExercise, err
 	return s.exerciseDAO.GetAllPlannedExercises(s.db)
 }
 
-func (s *ExerciseService) DeleteExercise(id int64) error {
-	return s.exerciseDAO.DeleteExercise(s.db, id)
+func (s *ExerciseService) DeleteExerciseByID(id int64) error {
+	return s.exerciseDAO.DeleteExerciseByID(s.db, id)
 }
 
-func (s *ExerciseService) DeletePlannedExercise(id int64) error {
-	return s.exerciseDAO.DeletePlannedExercise(s.db, id)
+func (s *ExerciseService) DeletePlannedExerciseByID(id int64) error {
+	return s.exerciseDAO.DeletePlannedExerciseByID(s.db, id)
 }

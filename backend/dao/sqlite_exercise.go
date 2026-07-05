@@ -85,7 +85,19 @@ func (d *SQLiteExerciseDAO) GetPlannedExerciseByID(dbtx sqlw.DBTX, id int64) (*m
 	return &m, nil
 }
 
-func (d *SQLiteExerciseDAO) GetSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.PlannedSetInfo, error) {
+func (d *SQLiteExerciseDAO) GetRepUnitByID(dbtx sqlw.DBTX, id int64) (*model.RepUnit, error) {
+	var m model.RepUnit
+	row := dbtx.QueryRow(`SELECT id, name_singular, name_plural WHERE id = ?`, id)
+	err := row.Scan(&m.ID, &m.NameSingular, &m.NamePlural)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &m, nil
+}
+
+func (d *SQLiteExerciseDAO) GetPlannedSetInfoByID(dbtx sqlw.DBTX, id int64) (*model.PlannedSetInfo, error) {
 	var m model.PlannedSetInfo
 	row := dbtx.QueryRow(`SELECT id, ord, planned_exercise_id, reps, notes FROM PlannedSetInfo WHERE id = ?`, id)
 	err := row.Scan(&m.ID, &m.Ord, &m.PlannedExerciseID, &m.Reps, &m.Notes)
@@ -124,22 +136,22 @@ func (d *SQLiteExerciseDAO) GetAllExerciseMuscleGroupIDs(dbtx sqlw.DBTX, exercis
 	}, `SELECT muscle_group_id FROM ExerciseMuscleGroup WHERE exercise_id = ?`, exerciseID)
 }
 
-func (d *SQLiteExerciseDAO) DeleteExercise(dbtx sqlw.DBTX, id int64) error {
+func (d *SQLiteExerciseDAO) DeleteExerciseByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM Exercise WHERE id = ?", id)
 	return err
 }
 
-func (d *SQLiteExerciseDAO) DeletePlannedExercise(dbtx sqlw.DBTX, id int64) error {
+func (d *SQLiteExerciseDAO) DeletePlannedExerciseByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM PlannedExercise WHERE id = ?", id)
 	return err
 }
 
-func (d *SQLiteExerciseDAO) DeletePlannedSetInfo(dbtx sqlw.DBTX, id int64) error {
+func (d *SQLiteExerciseDAO) DeletePlannedSetInfoByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM PlannedSetInfo WHERE id = ?", id)
 	return err
 }
 
-func (d *SQLiteExerciseDAO) DeleteExerciseMuscleGroup(dbtx sqlw.DBTX, id int64) error {
+func (d *SQLiteExerciseDAO) DeleteExerciseMuscleGroupByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM ExerciseMuscleGroup WHERE id = ?", id)
 	return err
 }

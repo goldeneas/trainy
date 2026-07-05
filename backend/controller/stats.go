@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	dto_response "github.com/goldeneas/trainy/dto/response"
+	"github.com/goldeneas/trainy/httpw"
 	"github.com/goldeneas/trainy/model"
 	"github.com/goldeneas/trainy/service"
 )
@@ -29,17 +30,9 @@ func EnableStatsController(router *gin.Engine, statsService *service.StatsServic
 }
 
 func (c *StatsController) GetActualRoutinesThisMonth(ctx *gin.Context) {
-	res, err := c.service.GetActualRoutinesThisMonth()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if res == nil {
-		res = []model.ActualRoutine{}
-	}
-
-	ctx.JSON(http.StatusOK, res)
+	httpw.GetAll(ctx, func() ([]model.ActualRoutine, error) {
+		return c.service.GetActualRoutinesThisMonth()
+	})
 }
 
 func (c *StatsController) GetFrequencyThisWeek(ctx *gin.Context) {
@@ -53,29 +46,13 @@ func (c *StatsController) GetTotalWorkouts(ctx *gin.Context) {
 }
 
 func (c *StatsController) GetMuscleGroupDistributionThisMonth(ctx *gin.Context) {
-	res, err := c.service.GetMuscleGroupDistributionThisMonth()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if res == nil {
-		res = []dto_response.MuscleGroupDistribution{}
-	}
-
-	ctx.JSON(http.StatusOK, res)
+	httpw.GetAll(ctx, func() ([]dto_response.MuscleGroupDistribution, error) {
+		return c.service.GetMuscleGroupDistributionThisMonth()
+	})
 }
 
 func (c *StatsController) GetWeeklyWorkoutHourDistributionThisMonth(ctx *gin.Context) {
-	res, err := c.service.GetWeeklyWorkoutHourDistributionThisMonth()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if res == nil {
-		res = []dto_response.WeeklyWorkoutHourDistribution{}
-	}
-
-	ctx.JSON(http.StatusOK, res)
+	httpw.GetAll(ctx, func() ([]dto_response.WeeklyWorkoutHourDistribution, error) {
+		return c.service.GetWeeklyWorkoutHourDistributionThisMonth()
+	})
 }

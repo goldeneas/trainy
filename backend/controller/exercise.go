@@ -2,11 +2,11 @@ package controller
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	dto_request "github.com/goldeneas/trainy/dto/request"
 	dto_response "github.com/goldeneas/trainy/dto/response"
+	"github.com/goldeneas/trainy/httpw"
 	"github.com/goldeneas/trainy/model"
 	"github.com/goldeneas/trainy/service"
 )
@@ -26,14 +26,17 @@ func EnableExerciseController(router *gin.Engine, exerciseService *service.Exerc
 		v1.POST("", c.CreateExercise)
 		v1.GET("", c.GetAllExercises)
 		v1.GET("/:id", c.GetExerciseByID)
-		v1.DELETE("/:id", c.DeleteExercise)
+		v1.DELETE("/:id", c.DeleteExerciseByID)
 
 		// PlannedExercise routes
 		v1.POST("/instance", c.RegisterPlannedExercise)
 		v1.GET("/instance", c.GetAllPlannedExercises)
 		v1.GET("/instance/:id", c.GetPlannedExerciseByID)
-		v1.GET("/instance/:id/set_info", c.GetSetInfosByPlannedExerciseID)
+		v1.GET("/instance/:id/set_info", c.GetPlannedSetInfosByPlannedExerciseID)
 		v1.DELETE("/instance/:id", c.DeletePlannedExercise)
+
+		// RepUnit route
+		v1.GET("/unit/:id", c.GetRepUnitByID)
 	}
 }
 
@@ -63,51 +66,21 @@ func (c *ExerciseController) CreateExercise(ctx *gin.Context) {
 }
 
 func (c *ExerciseController) GetAllExercises(ctx *gin.Context) {
-	res, err := c.service.GetAllExercises()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if res == nil {
-		res = []dto_response.Exercise{}
-	}
-
-	ctx.JSON(http.StatusOK, res)
+	httpw.GetAll(ctx, func() ([]dto_response.Exercise, error) {
+		return c.service.GetAllExercises()
+	})
 }
 
 func (c *ExerciseController) GetExerciseByID(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
-		return
-	}
-
-	res, err := c.service.GetExerciseByID(id)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "exercise not found"})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, res)
+	httpw.GetByID(ctx, func(id int64) (*dto_response.Exercise, error) {
+		return c.service.GetExerciseByID(id)
+	})
 }
 
-func (c *ExerciseController) DeleteExercise(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
-		return
-	}
-
-	err = c.service.DeleteExercise(id)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "exercise deleted"})
+func (c *ExerciseController) DeleteExerciseByID(ctx *gin.Context) {
+	httpw.DeleteByID(ctx, func(id int64) error {
+		return c.service.DeleteExerciseByID(id)
+	})
 }
 
 // PlannedExercise Handlers
@@ -148,69 +121,33 @@ func (c *ExerciseController) RegisterPlannedExercise(ctx *gin.Context) {
 }
 
 func (c *ExerciseController) GetAllPlannedExercises(ctx *gin.Context) {
-	res, err := c.service.GetAllPlannedExercises()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if res == nil {
-		res = []model.PlannedExercise{}
-	}
-	ctx.JSON(http.StatusOK, res)
+	httpw.GetAll(ctx, func() ([]model.PlannedExercise, error) {
+		return c.service.GetAllPlannedExercises()
+	})
 }
 
 func (c *ExerciseController) GetPlannedExerciseByID(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
-		return
-	}
-
-	res, err := c.service.GetPlannedExerciseByID(id)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "exercise instance not found"})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, res)
+	httpw.GetByID(ctx, func(id int64) (*model.PlannedExercise, error) {
+		return c.service.GetPlannedExerciseByID(id)
+	})
 }
 
 func (c *ExerciseController) DeletePlannedExercise(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
-		return
-	}
-
-	err = c.service.DeletePlannedExercise(id)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "exercise instance deleted"})
+	httpw.DeleteByID(ctx, func(id int64) error {
+		return c.service.DeletePlannedExerciseByID(id)
+	})
 }
 
-func (c *ExerciseController) GetSetInfosByPlannedExerciseID(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
-		return
-	}
+func (c *ExerciseController) GetPlannedSetInfosByPlannedExerciseID(ctx *gin.Context) {
+	httpw.GetAllByID(ctx, func(id int64) ([]model.PlannedSetInfo, error) {
+		return c.service.GetAllSetInfoByPlannedExerciseID(id)
+	})
+}
 
-	res, err := c.service.GetAllSetInfoByPlannedExerciseID(id)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+// Unit routes
 
-	if res == nil {
-		res = []model.PlannedSetInfo{}
-	}
-
-	ctx.JSON(http.StatusOK, res)
+func (c *ExerciseController) GetRepUnitByID(ctx *gin.Context) {
+	httpw.GetByID(ctx, func(id int64) (*model.RepUnit, error) {
+		return c.service.GetRepUnitByID(id)
+	})
 }

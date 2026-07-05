@@ -104,17 +104,17 @@ func (d *SQLiteRoutineDAO) GetAllActualRoutines(dbtx sqlw.DBTX) ([]model.ActualR
 	}, "SELECT id, start_timestamp, finish_timestamp, routine_id FROM ActualRoutine")
 }
 
-func (d *SQLiteRoutineDAO) DeleteRoutine(dbtx sqlw.DBTX, id int64) error {
+func (d *SQLiteRoutineDAO) DeleteRoutineByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM Routine WHERE id = ?", id)
 	return err
 }
 
-func (d *SQLiteRoutineDAO) DeleteActualRoutine(dbtx sqlw.DBTX, id int64) error {
+func (d *SQLiteRoutineDAO) DeleteActualRoutineByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM ActualRoutine WHERE id = ?", id)
 	return err
 }
 
-func (d *SQLiteRoutineDAO) DeleteActualSetInfo(dbtx sqlw.DBTX, id int64) error {
+func (d *SQLiteRoutineDAO) DeleteActualSetInfoByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM ActualSetInfo WHERE id = ?", id)
 	return err
 }

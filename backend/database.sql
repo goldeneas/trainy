@@ -52,15 +52,23 @@ CREATE TABLE IF NOT EXISTS PlannedExercise (
         ON DELETE RESTRICT
 );
 
+CREATE TABLE IF NOT EXISTS RepUnit (
+    id INTEGER PRIMARY KEY,
+    name_singular STRING NOT NULL,
+    name_plural STRING NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS PlannedSetInfo (
     id INTEGER PRIMARY KEY,
     ord INTEGER NOT NULL,
     planned_exercise_id INTEGER NOT NULL,
     reps INTEGER NOT NULL,
+    rep_unit_id INTEGER NOT NULL,
     notes TEXT,
 
     UNIQUE(ord, planned_exercise_id),
-
+    FOREIGN KEY (rep_unit_id) REFERENCES RepUnit(id)
+        ON DELETE RESTRICT,
     FOREIGN KEY (planned_exercise_id) REFERENCES PlannedExercise(id)
         ON DELETE CASCADE
 );
@@ -106,3 +114,6 @@ INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (4, 'Shoulders');
 INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (5, 'Arms');
 INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (6, 'Core');
 INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (7, 'Other');
+
+INSERT OR IGNORE INTO RepUnit (id, name_singular, name_plural) VALUES (1, 'Rep', 'Reps');
+INSERT OR IGNORE INTO RepUnit (id, name_singular, name_plural) VALUES (2, 'Second', 'Seconds');
