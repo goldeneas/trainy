@@ -24,6 +24,7 @@ import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler'
 import { useFocusEffect } from 'expo-router';
 import { useAudioPlayer } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
+import Svg, { Circle } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -125,6 +126,8 @@ function useBottomSheet(visible: boolean, onClose: () => void) {
   return { translateY, panHandlers, close: animateClose };
 }
 
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
 export default function WorkoutsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -181,6 +184,14 @@ export default function WorkoutsScreen() {
   const [stopwatchTime, setStopwatchTime] = useState(0);
   const [stopwatchActive, setStopwatchActive] = useState(false);
   const [timerInitialDuration, setTimerInitialDuration] = useState(45);
+  const [timerAnimatedValue] = useState(() => new Animated.Value(45));
+  useEffect(() => {
+    Animated.timing(timerAnimatedValue, {
+      toValue: restTimerSeconds,
+      duration: 350,
+      useNativeDriver: false,
+    }).start();
+  }, [restTimerSeconds, timerAnimatedValue]);
   // Settings Modal State
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [tempServerUrl, setTempServerUrl] = useState('');
@@ -1370,14 +1381,14 @@ export default function WorkoutsScreen() {
                   Duration: {formatDuration(workoutDuration)}
                 </ThemedText>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.four }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
                 <Pressable
                   onPress={() => setIsCustomTimerModalVisible(true)}
                   style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed, { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }]}>
                   <SymbolView
                     name="timer"
                     tintColor={theme.textSecondary}
-                    size={26}
+                    size={28}
                   />
                 </Pressable>
                 <Pressable
@@ -1386,7 +1397,7 @@ export default function WorkoutsScreen() {
                   <SymbolView
                     name="trash.fill"
                     tintColor="#FF3B30"
-                    size={24}
+                    size={28}
                   />
                 </Pressable>
               </View>
@@ -1612,12 +1623,7 @@ export default function WorkoutsScreen() {
                       {timerTab === 'timer' ? (
                         <View style={{ alignItems: 'center', width: '100%' }}>
                           {/* Timer Tab Circle display with base-aligned side controls */}
-                          {(() => {
-                            const elapsedPercentage = timerInitialDuration > 0 
-                              ? (timerInitialDuration - restTimerSeconds) / timerInitialDuration 
-                              : 0;
-                            return (
-                              <View style={styles.timerCircleRow}>
+                          <View style={styles.timerCircleRow}>
                                 <Pressable
                                   onPress={() => {
                                     setRestTimerSeconds((prev) => {
@@ -1635,14 +1641,58 @@ export default function WorkoutsScreen() {
                                   <ThemedText type="smallBold" style={{ color: '#0A84FF', fontSize: 15 }}>-15s</ThemedText>
                                 </Pressable>
 
-                                <View style={styles.circleContainer}>
-                                  <View style={[styles.circleOutline, { borderColor: '#8E8E93' }]} />
-                                  <View style={[styles.circleOutline, { borderColor: '#0A84FF', opacity: 1 - elapsedPercentage }]} />
-                                  <View style={styles.circleContent}>
-                                    <ThemedText style={{ color: theme.text, fontSize: 38, fontWeight: '700', lineHeight: 46, textAlign: 'center' }}>
-                                      {formatTimer(restTimerSeconds)}
-                                    </ThemedText>
-                                  </View>
+                                 <View style={styles.circleContainer}>
+                                  {(() => {
+                                    const radius = 82;
+                                    const circumference = 2 * Math.PI * radius;
+                                    const maxDuration = Math.max(1, timerInitialDuration);
+                                    const strokeDashoffset = timerAnimatedValue.interpolate({
+                                      inputRange: [0, maxDuration],
+                                      outputRange: [circumference, 0],
+                                      extrapolate: 'clamp',
+                                    });
+
+                                    return (
+                                      <>
+                                        <Svg width={170} height={170} style={[StyleSheet.absoluteFill, { transform: [{ rotate: '90deg' }, { scaleX: -1 }] }]}>
+                                          {/* Gray background outline */}
+                                          <Circle
+                                            cx={85}
+                                            cy={85}
+                                            r={radius}
+                                            stroke="#8E8E93"
+                                            strokeWidth={6}
+                                            fill="transparent"
+                                            opacity={0.2}
+                                          />
+                                          {/* Blue active progress outline */}
+                                          <AnimatedCircle
+                                            cx={85}
+                                            cy={85}
+                                            r={radius}
+                                            stroke="#0A84FF"
+                                            strokeWidth={6}
+                                            fill="transparent"
+                                            strokeDasharray={circumference}
+                                            strokeDashoffset={strokeDashoffset}
+                                            strokeLinecap="round"
+                                          />
+                                        </Svg>
+                                        <View style={styles.circleContent}>
+                                          <ThemedText style={{ 
+                                            color: theme.text, 
+                                            fontSize: 38, 
+                                            fontWeight: '700', 
+                                            lineHeight: 46, 
+                                            textAlign: 'center',
+                                            fontVariant: ['tabular-nums']
+                                          }}>
+                                            {formatTimer(restTimerSeconds)}
+                                          </ThemedText>
+                                        </View>
+                                      </>
+                                    );
+                                  })()}
                                 </View>
 
                                 <Pressable
@@ -1661,8 +1711,6 @@ export default function WorkoutsScreen() {
                                   <ThemedText type="smallBold" style={{ color: '#0A84FF', fontSize: 15 }}>+15s</ThemedText>
                                 </Pressable>
                               </View>
-                            );
-                          })()}
 
                           {/* Primary start/stop/pause button */}
                           <Pressable
@@ -1689,7 +1737,7 @@ export default function WorkoutsScreen() {
                               fontWeight: 'bold', 
                               fontSize: 16 
                             }}>
-                              {restTimerActive ? 'Pause Timer' : 'Start Timer'}
+                              {restTimerActive ? 'Pause' : 'Start'}
                             </ThemedText>
                           </Pressable>
                         </View>
@@ -1702,7 +1750,14 @@ export default function WorkoutsScreen() {
                             <View style={styles.circleContainer}>
                               <View style={[styles.circleOutline, { borderColor: '#8E8E93' }]} />
                               <View style={styles.circleContent}>
-                                <ThemedText style={{ color: theme.text, fontSize: 30, fontWeight: '700', lineHeight: 36, textAlign: 'center' }}>
+                                <ThemedText style={{ 
+                                  color: theme.text, 
+                                  fontSize: 30, 
+                                  fontWeight: '700', 
+                                  lineHeight: 36, 
+                                  textAlign: 'center',
+                                  fontVariant: ['tabular-nums']
+                                }}>
                                   {formatStopwatch(stopwatchTime)}
                                 </ThemedText>
                               </View>
