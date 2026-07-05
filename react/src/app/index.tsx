@@ -844,6 +844,7 @@ export default function WorkoutsScreen() {
               style={[
                 styles.modalContent,
                 {
+                  height: '80%',
                   backgroundColor: theme.background,
                   transform: [{ translateY: createRoutineSwipe.translateY }]
                 }
@@ -1625,7 +1626,7 @@ export default function WorkoutsScreen() {
               style={[
                 styles.modalContent,
                 {
-                  maxHeight: '60%',
+                  height: '60%',
                   backgroundColor: theme.background,
                   transform: [{ translateY: settingsSwipe.translateY }]
                 }

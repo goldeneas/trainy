@@ -591,6 +591,7 @@ export default function ExercisesScreen() {
               style={[
                 styles.modalContent,
                 {
+                  height: '80%',
                   backgroundColor: theme.background,
                   transform: [{ translateY: addExerciseSwipe.translateY }]
                 }
