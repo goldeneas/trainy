@@ -25,17 +25,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { api, Exercise } from '@/services/api';
+import { api, Exercise, MuscleGroup, RepUnit } from '@/services/api';
 
-const MUSCLE_GROUPS = [
-  { id: 1, name: 'Chest' },
-  { id: 2, name: 'Back' },
-  { id: 3, name: 'Legs' },
-  { id: 4, name: 'Shoulders' },
-  { id: 5, name: 'Arms' },
-  { id: 6, name: 'Core' },
-  { id: 7, name: 'Other' },
-];
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -142,6 +133,9 @@ export default function ExercisesScreen() {
   const [newNotes, setNewNotes] = useState('');
   const [newInstructions, setNewInstructions] = useState('');
   const [selectedMuscleGroupIds, setSelectedMuscleGroupIds] = useState<number[]>([]);
+  const [newRepUnitId, setNewRepUnitId] = useState<number>(1);
+  const [repUnits, setRepUnits] = useState<RepUnit[]>([]);
+  const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([]);
   
   // CSV Import state
   const [csvInput, setCsvInput] = useState('');
@@ -167,8 +161,14 @@ export default function ExercisesScreen() {
     if (showLoadingIndicator) setLoading(true);
     try {
       await api.initializeApi();
-      const data = await api.getExercises();
-      setExercises(data || []);
+      const [exsData, unitsData, musclesData] = await Promise.all([
+        api.getExercises(),
+        api.getRepUnits().catch(() => [] as RepUnit[]),
+        api.getMuscleGroups().catch(() => [] as MuscleGroup[]),
+      ]);
+      setExercises(exsData || []);
+      if (unitsData && unitsData.length > 0) setRepUnits(unitsData);
+      if (musclesData && musclesData.length > 0) setMuscleGroups(musclesData);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to load exercises');
     } finally {
@@ -192,8 +192,8 @@ export default function ExercisesScreen() {
   const filteredExercises = useMemo(() => {
     return exercises.filter(
       (ex) =>
-        ex.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (ex.Notes && ex.Notes.toLowerCase().includes(searchQuery.toLowerCase()))
+        ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (ex.notes && ex.notes.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }, [exercises, searchQuery]);
 
@@ -210,6 +210,7 @@ export default function ExercisesScreen() {
         name: newName.trim(),
         notes: newNotes.trim(),
         instructions: newInstructions.trim(),
+        rep_unit_id: newRepUnitId,
         muscle_group_ids: selectedMuscleGroupIds,
       });
       
@@ -218,6 +219,7 @@ export default function ExercisesScreen() {
       setNewNotes('');
       setNewInstructions('');
       setSelectedMuscleGroupIds([]);
+      setNewRepUnitId(1);
       addExerciseSwipe.close();
       
       // Refresh
@@ -272,6 +274,7 @@ export default function ExercisesScreen() {
           name,
           notes,
           instructions,
+          rep_unit_id: 1,
           muscle_group_ids: muscleGroupIds,
           image_id: imageId,
         });
@@ -331,12 +334,12 @@ export default function ExercisesScreen() {
         <View style={styles.exerciseCardHeader}>
           <View style={{ flex: 1 }}>
             <ThemedText type="smallBold" style={styles.exerciseName}>
-              {item.Name}
+              {item.name}
             </ThemedText>
             {(() => {
-              const mgIds = item.MuscleGroupIDs ?? (item as any).muscle_group_ids;
+              const mgIds = item.muscle_group_ids;
               if (mgIds && mgIds.length > 0) {
-                const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
                 return names ? (
                   <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
                     {names}
@@ -352,9 +355,9 @@ export default function ExercisesScreen() {
             size={14}
           />
         </View>
-        {item.Notes ? (
+        {item.notes ? (
           <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.exerciseNotes}>
-            {item.Notes}
+            {item.notes}
           </ThemedText>
         ) : null}
       </Pressable>
@@ -442,7 +445,7 @@ export default function ExercisesScreen() {
       ) : (
         <FlatList
           data={filteredExercises}
-          keyExtractor={(item) => item.ID.toString()}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={renderExerciseItem}
           contentContainerStyle={[
             styles.listContainer,
@@ -492,7 +495,7 @@ export default function ExercisesScreen() {
                 <Pressable
                   onPress={() => {
                     if (selectedExercise) {
-                      handleDeleteExercise(selectedExercise.ID, selectedExercise.Name);
+                      handleDeleteExercise(selectedExercise.id, selectedExercise.name);
                     }
                   }}
                   style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
@@ -505,13 +508,13 @@ export default function ExercisesScreen() {
               <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
                 <ScrollView style={styles.modalScrollBody} contentContainerStyle={styles.modalScrollContent}>
                 <ThemedText type="subtitle" style={styles.detailTitle}>
-                  {selectedExercise.Name}
+                  {selectedExercise.name}
                 </ThemedText>
 
                 {(() => {
-                  const mgIds = selectedExercise.MuscleGroupIDs ?? (selectedExercise as any).muscle_group_ids;
+                  const mgIds = selectedExercise.muscle_group_ids;
                   if (mgIds && mgIds.length > 0) {
-                    const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean);
+                    const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter((name): name is string => name !== undefined);
                     if (names.length > 0) {
                       return (
                         <View style={styles.detailSection}>
@@ -544,27 +547,27 @@ export default function ExercisesScreen() {
                   return null;
                 })()}
 
-                {selectedExercise.Notes ? (
+                {selectedExercise.notes ? (
                   <View style={styles.detailSection}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
                       NOTES
                     </ThemedText>
                     <ThemedView type="backgroundElement" style={styles.detailTextBox}>
                       <ThemedText type="default">
-                        {selectedExercise.Notes}
+                        {selectedExercise.notes}
                       </ThemedText>
                     </ThemedView>
                   </View>
                 ) : null}
 
-                {selectedExercise.Instructions ? (
+                {selectedExercise.instructions ? (
                   <View style={styles.detailSection}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
                       INSTRUCTIONS
                     </ThemedText>
                     <ThemedView type="backgroundElement" style={styles.detailTextBox}>
                       <ThemedText type="default" style={styles.instructionsText}>
-                        {selectedExercise.Instructions}
+                        {selectedExercise.instructions}
                       </ThemedText>
                     </ThemedView>
                   </View>
@@ -645,19 +648,48 @@ export default function ExercisesScreen() {
 
                 <View style={styles.formGroup}>
                   <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    UNIT TYPE *
+                  </ThemedText>
+                  <View style={styles.chipsContainer}>
+                    {repUnits.map((unit) => (
+                      <Pressable
+                        key={unit.ID}
+                        onPress={() => setNewRepUnitId(unit.ID)}
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: newRepUnitId === unit.ID ? '#0A84FF' : theme.backgroundElement,
+                            borderColor: theme.backgroundSelected,
+                          },
+                        ]}>
+                        <ThemedText
+                          type="smallBold"
+                          style={{
+                            color: newRepUnitId === unit.ID ? '#FFFFFF' : theme.text,
+                            fontSize: 12,
+                          }}>
+                          {unit.NamePlural}
+                        </ThemedText>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                     MUSCLE GROUP
                   </ThemedText>
                   <View style={styles.chipsContainer}>
-                    {MUSCLE_GROUPS.map((group) => {
-                      const isSelected = selectedMuscleGroupIds.includes(group.id);
+                    {muscleGroups.map((group) => {
+                      const isSelected = selectedMuscleGroupIds.includes(group.ID);
                       return (
                         <Pressable
-                          key={group.id}
+                          key={group.ID}
                           onPress={() => {
                             if (isSelected) {
-                              setSelectedMuscleGroupIds(selectedMuscleGroupIds.filter(id => id !== group.id));
+                              setSelectedMuscleGroupIds(selectedMuscleGroupIds.filter(id => id !== group.ID));
                             } else {
-                              setSelectedMuscleGroupIds([...selectedMuscleGroupIds, group.id]);
+                              setSelectedMuscleGroupIds([...selectedMuscleGroupIds, group.ID]);
                             }
                           }}
                           style={[
@@ -673,7 +705,7 @@ export default function ExercisesScreen() {
                               color: isSelected ? '#FFFFFF' : theme.text,
                               fontSize: 12,
                             }}>
-                            {group.name}
+                            {group.Name}
                           </ThemedText>
                         </Pressable>
                       );

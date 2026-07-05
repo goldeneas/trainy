@@ -35,8 +35,12 @@ func EnableExerciseController(router *gin.Engine, exerciseService *service.Exerc
 		v1.GET("/instance/:id/set_info", c.GetPlannedSetInfosByPlannedExerciseID)
 		v1.DELETE("/instance/:id", c.DeletePlannedExercise)
 
-		// RepUnit route
+		// RepUnit routes
+		v1.GET("/unit", c.GetAllRepUnits)
 		v1.GET("/unit/:id", c.GetRepUnitByID)
+
+		// MuscleGroup routes
+		v1.GET("/muscle", c.GetAllMuscleGroups)
 	}
 }
 
@@ -54,6 +58,7 @@ func (c *ExerciseController) CreateExercise(ctx *gin.Context) {
 		Notes:        m.Notes,
 		ImageID:      m.ImageID,
 		Instructions: m.Instructions,
+		RepUnitID:    m.RepUnitID,
 	}
 
 	id, err := c.service.RegisterExercise(&ex, m.MuscleGroupIDs)
@@ -99,16 +104,14 @@ func (c *ExerciseController) RegisterPlannedExercise(ctx *gin.Context) {
 		RoutineID:  m.RoutineID,
 	}
 
-	infos := make([]model.PlannedSetInfo, 0, len(m.PlannedSetInfos))
-	for _, info := range m.PlannedSetInfos {
-		m := model.PlannedSetInfo{
+	infos := make([]model.PlannedSetInfo, len(m.PlannedSetInfos))
+	for i, info := range m.PlannedSetInfos {
+		infos[i] = model.PlannedSetInfo{
 			Ord:               info.Ord,
 			PlannedExerciseID: info.PlannedExerciseID,
 			Reps:              info.Reps,
 			Notes:             info.Notes,
 		}
-
-		infos = append(infos, m)
 	}
 
 	id, err := c.service.RegisterPlannedExercise(&pe, infos)
@@ -149,5 +152,17 @@ func (c *ExerciseController) GetPlannedSetInfosByPlannedExerciseID(ctx *gin.Cont
 func (c *ExerciseController) GetRepUnitByID(ctx *gin.Context) {
 	httpw.GetByID(ctx, func(id int64) (*model.RepUnit, error) {
 		return c.service.GetRepUnitByID(id)
+	})
+}
+
+func (c *ExerciseController) GetAllRepUnits(ctx *gin.Context) {
+	httpw.GetAll(ctx, func() ([]model.RepUnit, error) {
+		return c.service.GetAllRepUnits()
+	})
+}
+
+func (c *ExerciseController) GetAllMuscleGroups(ctx *gin.Context) {
+	httpw.GetAll(ctx, func() ([]model.MuscleGroup, error) {
+		return c.service.GetAllMuscleGroups()
 	})
 }

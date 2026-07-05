@@ -14,8 +14,8 @@ func NewSQLiteExerciseDAO() *SQLiteExerciseDAO {
 }
 
 func (d *SQLiteExerciseDAO) InsertExercise(dbtx sqlw.DBTX, m *model.Exercise) (int64, error) {
-	res, err := dbtx.Exec(`INSERT INTO Exercise(name, notes, instructions, image_id)
-		VALUES (?, ?, ?, ?)`, m.Name, m.Notes, m.Instructions, m.ImageID)
+	res, err := dbtx.Exec(`INSERT INTO Exercise(name, notes, instructions, image_id, rep_unit_id)
+		VALUES (?, ?, ?, ?, ?)`, m.Name, m.Notes, m.Instructions, m.ImageID, m.RepUnitID)
 
 	if err != nil {
 		return 0, err
@@ -61,9 +61,9 @@ func (d *SQLiteExerciseDAO) InsertExerciseMuscleGroup(dbtx sqlw.DBTX,
 
 func (d *SQLiteExerciseDAO) GetExerciseByID(dbtx sqlw.DBTX, id int64) (*model.Exercise, error) {
 	var m model.Exercise
-	row := dbtx.QueryRow(`SELECT id, name, notes, instructions, image_id
+	row := dbtx.QueryRow(`SELECT id, name, notes, instructions, image_id, rep_unit_id
 		FROM Exercise WHERE id = ?`, id)
-	err := row.Scan(&m.ID, &m.Name, &m.Notes, &m.Instructions, &m.ImageID)
+	err := row.Scan(&m.ID, &m.Name, &m.Notes, &m.Instructions, &m.ImageID, &m.RepUnitID)
 
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (d *SQLiteExerciseDAO) GetPlannedExerciseByID(dbtx sqlw.DBTX, id int64) (*m
 
 func (d *SQLiteExerciseDAO) GetRepUnitByID(dbtx sqlw.DBTX, id int64) (*model.RepUnit, error) {
 	var m model.RepUnit
-	row := dbtx.QueryRow(`SELECT id, name_singular, name_plural WHERE id = ?`, id)
+	row := dbtx.QueryRow(`SELECT id, name_singular, name_plural FROM RepUnit WHERE id = ?`, id)
 	err := row.Scan(&m.ID, &m.NameSingular, &m.NamePlural)
 
 	if err != nil {
@@ -119,8 +119,8 @@ func (s *SQLiteExerciseDAO) GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id 
 
 func (d *SQLiteExerciseDAO) GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.Exercise) error {
-		return rows.Scan(&t.ID, &t.Name, &t.Notes, &t.Instructions, &t.ImageID)
-	}, "SELECT id, name, notes, instructions, image_id FROM Exercise")
+		return rows.Scan(&t.ID, &t.Name, &t.Notes, &t.Instructions, &t.ImageID, &t.RepUnitID)
+	}, "SELECT id, name, notes, instructions, image_id, rep_unit_id FROM Exercise")
 }
 
 func (d *SQLiteExerciseDAO) GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error) {
@@ -154,4 +154,16 @@ func (d *SQLiteExerciseDAO) DeletePlannedSetInfoByID(dbtx sqlw.DBTX, id int64) e
 func (d *SQLiteExerciseDAO) DeleteExerciseMuscleGroupByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM ExerciseMuscleGroup WHERE id = ?", id)
 	return err
+}
+
+func (d *SQLiteExerciseDAO) GetAllRepUnits(dbtx sqlw.DBTX) ([]model.RepUnit, error) {
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.RepUnit) error {
+		return rows.Scan(&t.ID, &t.NameSingular, &t.NamePlural)
+	}, "SELECT id, name_singular, name_plural FROM RepUnit")
+}
+
+func (d *SQLiteExerciseDAO) GetAllMuscleGroups(dbtx sqlw.DBTX) ([]model.MuscleGroup, error) {
+	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.MuscleGroup) error {
+		return rows.Scan(&t.ID, &t.Name)
+	}, "SELECT id, name FROM MuscleGroup")
 }

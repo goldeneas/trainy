@@ -35,19 +35,11 @@ import {
   FullRoutine,
   FullActualRoutine,
   Exercise,
+  MuscleGroup,
   getApiBaseUrl,
   setApiBaseUrl,
 } from '@/services/api';
 
-const MUSCLE_GROUPS = [
-  { id: 1, name: 'Chest' },
-  { id: 2, name: 'Back' },
-  { id: 3, name: 'Legs' },
-  { id: 4, name: 'Shoulders' },
-  { id: 5, name: 'Arms' },
-  { id: 6, name: 'Core' },
-  { id: 7, name: 'Other' },
-];
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -140,6 +132,8 @@ export default function WorkoutsScreen() {
   const [routines, setRoutines] = useState<FullRoutine[]>([]);
   const [history, setHistory] = useState<FullActualRoutine[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [repUnits, setRepUnits] = useState<{ [id: number]: { name_singular: string; name_plural: string } }>({});
+  const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -246,14 +240,24 @@ export default function WorkoutsScreen() {
     if (showLoading) setLoading(true);
     try {
       await api.initializeApi();
-      const [routinesData, historyData, exercisesData] = await Promise.all([
+      const [routinesData, historyData, exercisesData, u1, u2, musclesData] = await Promise.all([
         api.getFullRoutines(),
         api.getFullActualRoutines(),
         api.getExercises(),
+        api.getRepUnit(1).catch(() => ({ ID: 1, NameSingular: 'Rep', NamePlural: 'Reps' })),
+        api.getRepUnit(2).catch(() => ({ ID: 2, NameSingular: 'Second', NamePlural: 'Seconds' })),
+        api.getMuscleGroups().catch(() => [] as MuscleGroup[]),
       ]);
       setRoutines(routinesData || []);
       setHistory(historyData || []);
       setExercises(exercisesData || []);
+      setRepUnits({
+        [u1.ID]: { name_singular: u1.NameSingular, name_plural: u1.NamePlural },
+        [u2.ID]: { name_singular: u2.NameSingular, name_plural: u2.NamePlural },
+      });
+      if (musclesData && musclesData.length > 0) {
+        setMuscleGroups(musclesData);
+      }
     } catch (error: any) {
       console.error(error);
       Alert.alert('Error', error.message || 'Failed to sync with server');
@@ -1070,11 +1074,11 @@ export default function WorkoutsScreen() {
                               style={styles.routineExerciseCard}>
                               <View style={styles.peCardTop}>
                                 <View style={{ flex: 1 }}>
-                                  <ThemedText type="smallBold">{pe.exercise?.Name || 'Exercise'}</ThemedText>
+                                  <ThemedText type="smallBold">{pe.exercise?.name || 'Exercise'}</ThemedText>
                                   {(() => {
-                                    const mgIds = pe.exercise?.MuscleGroupIDs ?? (pe.exercise as any)?.muscle_group_ids;
+                                    const mgIds = pe.exercise?.muscle_group_ids;
                                     if (mgIds && mgIds.length > 0) {
-                                      const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                                      const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
                                       return names ? (
                                         <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
                                           {names}
@@ -1103,7 +1107,7 @@ export default function WorkoutsScreen() {
                                     Set {set.Ord}:
                                   </ThemedText>
                                   <ThemedText type="smallBold" style={{ marginHorizontal: Spacing.one }}>
-                                    {set.Reps} Reps
+                                    {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
                                   </ThemedText>
                                   {set.Notes ? (
                                     <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontStyle: 'italic' }}>
@@ -1159,8 +1163,8 @@ export default function WorkoutsScreen() {
                                 }}
                                 onChangeText={(text) => {
                                   setDropdownSearchQuery(text);
-                                  const currentSelected = exercises.find(e => e.ID === selectedExerciseId);
-                                  if (currentSelected && currentSelected.Name !== text) {
+                                  const currentSelected = exercises.find(e => e.id === selectedExerciseId);
+                                  if (currentSelected && currentSelected.name !== text) {
                                     setSelectedExerciseId(null);
                                   }
                                 }}
@@ -1199,7 +1203,7 @@ export default function WorkoutsScreen() {
                                   contentContainerStyle={{ paddingVertical: Spacing.one }}>
                                   {(() => {
                                     const filtered = exercises.filter(e =>
-                                      e.Name.toLowerCase().includes(dropdownSearchQuery.toLowerCase())
+                                      e.name.toLowerCase().includes(dropdownSearchQuery.toLowerCase())
                                     );
                                     if (filtered.length === 0) {
                                       return (
@@ -1211,23 +1215,23 @@ export default function WorkoutsScreen() {
                                       );
                                     }
                                     return filtered.map(ex => {
-                                      const isSelected = selectedExerciseId === ex.ID;
+                                      const isSelected = selectedExerciseId === ex.id;
                                       return (
                                         <Pressable
-                                          key={ex.ID}
+                                          key={ex.id}
                                           onPress={() => {
-                                            setSelectedExerciseId(ex.ID);
-                                            setDropdownSearchQuery(ex.Name);
+                                            setSelectedExerciseId(ex.id);
+                                            setDropdownSearchQuery(ex.name);
                                           }}
                                           style={styles.dropdownItem}>
                                           <View style={{ flex: 1 }}>
                                             <ThemedText type="smallBold" style={isSelected ? { color: '#0A84FF' } : undefined}>
-                                              {ex.Name}
+                                              {ex.name}
                                             </ThemedText>
                                             {(() => {
-                                              const mgIds = ex.MuscleGroupIDs ?? (ex as any).muscle_group_ids;
+                                              const mgIds = ex.muscle_group_ids;
                                               if (mgIds && mgIds.length > 0) {
-                                                const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                                                const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
                                                 return names ? (
                                                   <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
                                                     {names}
@@ -1292,34 +1296,43 @@ export default function WorkoutsScreen() {
                           </Pressable>
                         </View>
 
-                        {plannedSets.map((s, idx) => (
-                          <ThemedView
-                            key={idx}
-                            type="backgroundElement"
-                            style={styles.setBuilderRow}>
-                            <ThemedText type="smallBold" style={styles.setNumberLabel}>
-                              {idx + 1}
-                            </ThemedText>
-                            <TextInput
-                              placeholder="Reps"
-                              keyboardType="numeric"
-                              value={s.reps}
-                              placeholderTextColor={theme.textSecondary}
-                              onChangeText={(val) => {
-                                const newSets = [...plannedSets];
-                                newSets[idx].reps = val;
-                                setPlannedSets(newSets);
-                              }}
-                              style={[
-                                styles.inputField,
-                                styles.setRepsInput,
-                                {
-                                  backgroundColor: theme.background,
-                                  color: theme.text,
-                                  borderColor: theme.backgroundSelected,
-                                },
-                              ]}
-                            />
+                        {(() => {
+                          const selectedEx = exercises.find(ex => ex.id === selectedExerciseId);
+                          const unitName = selectedEx ? (repUnits[selectedEx.rep_unit_id]?.name_plural || 'Reps') : 'Reps';
+
+                          return plannedSets.map((s, idx) => (
+                            <ThemedView
+                              key={idx}
+                              type="backgroundElement"
+                              style={styles.setBuilderRow}>
+                              <ThemedText type="smallBold" style={styles.setNumberLabel}>
+                                {idx + 1}
+                              </ThemedText>
+                              <TextInput
+                                placeholder={unitName}
+                                keyboardType="numeric"
+                                value={s.reps}
+                                placeholderTextColor={theme.textSecondary}
+                                onChangeText={(val) => {
+                                  const newSets = [...plannedSets];
+                                  newSets[idx].reps = val;
+                                  setPlannedSets(newSets);
+                                }}
+                                style={[
+                                  styles.inputField,
+                                  styles.setRepsInput,
+                                  {
+                                    backgroundColor: theme.background,
+                                    color: theme.text,
+                                    borderColor: theme.backgroundSelected,
+                                  },
+                                ]}
+                              />
+                              <View style={{ justifyContent: 'center', minWidth: 32, marginHorizontal: 4 }}>
+                                <ThemedText style={{ fontSize: 10, fontWeight: 'bold', color: theme.textSecondary }}>
+                                  {unitName}
+                                </ThemedText>
+                              </View>
                             <TextInput
                               placeholder="Notes (e.g. Heavy)"
                               value={s.notes}
@@ -1352,7 +1365,7 @@ export default function WorkoutsScreen() {
                               />
                             </Pressable>
                           </ThemedView>
-                        ))}
+                        ))})()}
                       </View>
                     </ScrollView>
                   )}
@@ -1415,12 +1428,12 @@ export default function WorkoutsScreen() {
                   type="backgroundElement"
                   style={styles.workoutExerciseBlock}>
                   <ThemedText type="default" style={{ fontWeight: 'bold', marginBottom: Spacing.one }}>
-                    {pe.exercise?.Name}
+                    {pe.exercise?.name}
                   </ThemedText>
                   {(() => {
-                    const mgIds = pe.exercise?.MuscleGroupIDs ?? (pe.exercise as any)?.muscle_group_ids;
+                    const mgIds = pe.exercise?.muscle_group_ids;
                     if (mgIds && mgIds.length > 0) {
-                      const names = mgIds.map((id: number) => MUSCLE_GROUPS.find(g => g.id === id)?.name).filter(Boolean).join(', ');
+                      const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
                       return names ? (
                         <ThemedText type="small" style={{ color: '#0A84FF', marginBottom: Spacing.one }}>
                           {names}
@@ -1438,7 +1451,9 @@ export default function WorkoutsScreen() {
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thSet}>SET</ThemedText>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thPlanned}>PLANNED</ThemedText>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thWeight}>WEIGHT</ThemedText>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thReps}>REPS</ThemedText>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thReps}>
+                      {(repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps').toUpperCase()}
+                    </ThemedText>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thLog}>LOG</ThemedText>
                   </View>
 
@@ -1453,8 +1468,8 @@ export default function WorkoutsScreen() {
                           log.completed && { backgroundColor: 'rgba(48, 209, 88, 0.15)' },
                         ]}>
                         <ThemedText type="smallBold" style={styles.tdSet}>{set.Ord}</ThemedText>
-                        <ThemedText type="small" themeColor="textSecondary" style={styles.tdPlanned}>
-                          {set.Reps} {set.Notes ? `(${set.Notes})` : ''}
+                         <ThemedText type="small" themeColor="textSecondary" style={styles.tdPlanned}>
+                           {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || ''} {set.Notes ? `(${set.Notes})` : ''}
                         </ThemedText>
                         <TextInput
                           placeholder="0"
@@ -1480,7 +1495,7 @@ export default function WorkoutsScreen() {
                           ]}
                         />
                         <TextInput
-                          placeholder="Reps"
+                          placeholder={repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
                           keyboardType="numeric"
                           placeholderTextColor={theme.textSecondary}
                           value={log.reps}
@@ -1917,7 +1932,7 @@ export default function WorkoutsScreen() {
                               {set.Weight} kg
                             </ThemedText>
                             <ThemedText type="small" style={{ flex: 1 }}>
-                              {set.ActualReps} Reps completed
+                              {set.ActualReps} {repUnits[set.repUnitId]?.name_plural || 'Reps'}
                             </ThemedText>
                           </View>
                         ))}

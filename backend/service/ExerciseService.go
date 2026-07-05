@@ -109,6 +109,7 @@ func (s *ExerciseService) GetExerciseByID(id int64) (*dto_response.Exercise, err
 		Notes:          exercise.Notes,
 		Instructions:   exercise.Instructions,
 		ImageID:        exercise.ImageID,
+		RepUnitID:      exercise.RepUnitID,
 		MuscleGroupIDs: muscleGroupIDs,
 	}, nil
 }
@@ -155,6 +156,7 @@ func (s *ExerciseService) GetAllExercises() ([]dto_response.Exercise, error) {
 			Notes:          exercise.Notes,
 			Instructions:   exercise.Instructions,
 			ImageID:        exercise.ImageID,
+			RepUnitID:      exercise.RepUnitID,
 			MuscleGroupIDs: muscleGroupIDs,
 		})
 	}
@@ -172,4 +174,12 @@ func (s *ExerciseService) DeleteExerciseByID(id int64) error {
 
 func (s *ExerciseService) DeletePlannedExerciseByID(id int64) error {
 	return s.exerciseDAO.DeletePlannedExerciseByID(s.db, id)
+}
+
+func (s *ExerciseService) GetAllRepUnits() ([]model.RepUnit, error) {
+	return s.exerciseDAO.GetAllRepUnits(s.db)
+}
+
+func (s *ExerciseService) GetAllMuscleGroups() ([]model.MuscleGroup, error) {
+	return s.exerciseDAO.GetAllMuscleGroups(s.db)
 }

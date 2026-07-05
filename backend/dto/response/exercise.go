@@ -1,10 +1,11 @@
 package dto_response
 
 type Exercise struct {
-	ID             int64
-	Name           string
-	Notes          string
-	Instructions   string
-	ImageID        *int64
-	MuscleGroupIDs []int64
+	ID             int64   `json:"id"`
+	Name           string  `json:"name"`
+	Notes          string  `json:"notes"`
+	Instructions   string  `json:"instructions"`
+	ImageID        *int64  `json:"image_id"`
+	RepUnitID      int64   `json:"rep_unit_id"`
+	MuscleGroupIDs []int64 `json:"muscle_group_ids"`
 }

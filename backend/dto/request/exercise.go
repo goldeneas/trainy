@@ -5,6 +5,7 @@ type CreateExercise struct {
 	Notes          string  `json:"notes"`
 	Instructions   string  `json:"instructions"`
 	ImageID        *int64  `json:"image_id"`
+	RepUnitID      int64   `json:"rep_unit_id"`
 	MuscleGroupIDs []int64 `json:"muscle_group_ids"`
 }
 

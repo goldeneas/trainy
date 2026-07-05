@@ -45,12 +45,24 @@ export const getApiBaseUrl = () => {
 // --- DATA TYPES & DTOs ---
 
 export interface Exercise {
+  id: number;
+  name: string;
+  notes: string;
+  instructions: string;
+  image_id: number | null;
+  rep_unit_id: number;
+  muscle_group_ids?: number[] | null;
+}
+
+export interface RepUnit {
+  ID: number;
+  NameSingular: string;
+  NamePlural: string;
+}
+
+export interface MuscleGroup {
   ID: number;
   Name: string;
-  Notes: string;
-  Instructions: string;
-  ImageID: number | null;
-  MuscleGroupIDs?: number[] | null;
 }
 
 export interface PlannedExercise {
@@ -107,6 +119,7 @@ export interface CreateExerciseDto {
   notes: string;
   instructions: string;
   image_id?: number | null;
+  rep_unit_id: number;
   muscle_group_ids?: number[] | null;
 }
 
@@ -156,6 +169,7 @@ export interface FullRoutine extends Routine {
 export interface FullActualSetInfo extends ActualSetInfo {
   plannedSetInfo: PlannedSetInfo | undefined;
   exerciseName: string;
+  repUnitId: number;
 }
 
 export interface FullActualRoutine extends ActualRoutine {
@@ -215,6 +229,9 @@ export const api = {
     request<{ message: string }>(`/v1/exercise/${id}`, {
       method: 'DELETE',
     }),
+  getRepUnit: (id: number) => request<RepUnit>(`/v1/exercise/unit/${id}`),
+  getRepUnits: () => request<RepUnit[]>('/v1/exercise/unit'),
+  getMuscleGroups: () => request<MuscleGroup[]>('/v1/exercise/muscle'),
 
   // Planned Exercise Endpoints
   getPlannedExercises: () => request<PlannedExercise[]>('/v1/exercise/instance'),
@@ -276,7 +293,7 @@ export const api = {
     
     const plannedExercises: FullPlannedExercise[] = await Promise.all(
       routinePlanned.map(async pe => {
-        const exercise = allExercises.find(e => e.ID === pe.ExerciseID);
+        const exercise = allExercises.find(e => e.id === pe.ExerciseID);
         const sets = await this.getPlannedExerciseSets(pe.ID);
         return {
           ...pe,
@@ -314,7 +331,7 @@ export const api = {
     const fullRoutines: FullRoutine[] = routines.map(r => {
       const routinePlanned = allPlanned.filter(pe => pe.RoutineID === r.ID);
       const plannedExercises: FullPlannedExercise[] = routinePlanned.map(pe => {
-        const exercise = allExercises.find(e => e.ID === pe.ExerciseID);
+        const exercise = allExercises.find(e => e.id === pe.ExerciseID);
         const sets = plannedSetsMap.get(pe.ID) || [];
         return {
           ...pe,
@@ -348,16 +365,17 @@ export const api = {
       )
     );
 
-    // Build a map of planned set info ID -> exerciseName & PlannedSetInfo object
-    const plannedSetMap: { [setId: number]: { exerciseName: string; set: PlannedSetInfo } } = {};
+    // Build a map of planned set info ID -> exerciseName, repUnitId & PlannedSetInfo object
+    const plannedSetMap: { [setId: number]: { exerciseName: string; repUnitId: number; set: PlannedSetInfo } } = {};
     plannedSetsList.forEach(({ peId, sets }) => {
       const pe = plannedExercises.find(p => p.ID === peId);
       if (!pe) return;
-      const ex = exercises.find(e => e.ID === pe.ExerciseID);
-      const exerciseName = ex ? ex.Name : 'Exercise';
+      const ex = exercises.find(e => e.id === pe.ExerciseID);
+      const exerciseName = ex ? ex.name : 'Exercise';
+      const repUnitId = ex ? ex.rep_unit_id : 1;
 
       sets.forEach(s => {
-        plannedSetMap[s.ID] = { exerciseName, set: s };
+        plannedSetMap[s.ID] = { exerciseName, repUnitId, set: s };
       });
     });
 
@@ -380,6 +398,7 @@ export const api = {
 
           const match = plannedSetMap[plannedSetInfoId];
           const exerciseName = match ? match.exerciseName : 'Exercise';
+          const repUnitId = match ? match.repUnitId : 1;
           const plannedSet = match ? match.set : undefined;
 
           actualSets.push({
@@ -390,6 +409,7 @@ export const api = {
             ActualReps: actualReps,
             plannedSetInfo: plannedSet,
             exerciseName,
+            repUnitId,
           });
         }
 

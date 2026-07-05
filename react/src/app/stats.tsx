@@ -221,7 +221,7 @@ export default function StatsScreen() {
                     label: `W${item.week_iso}`,
                     topLabelComponent: isSelected ? () => (
                       <ThemedText style={{ fontSize: 9, color: theme.textSecondary, marginBottom: 4, fontWeight: 'bold' }}>
-                        {item.hours.toFixed(1)}h
+                        {item.hours.toFixed(1)}
                       </ThemedText>
                     ) : undefined,
                   };

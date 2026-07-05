@@ -6,6 +6,7 @@ type Exercise struct {
 	Notes        string
 	Instructions string
 	ImageID      *int64
+	RepUnitID    int64
 }
 
 type PlannedExercise struct {
@@ -20,7 +21,6 @@ type PlannedSetInfo struct {
 	ID                int64
 	Ord               int
 	PlannedExerciseID int64
-	RepUnitID         int64
 	Reps              int
 	Notes             string
 }
@@ -35,4 +35,9 @@ type RepUnit struct {
 	ID           int64
 	NameSingular string
 	NamePlural   string
+}
+
+type MuscleGroup struct {
+	ID   int64
+	Name string
 }
