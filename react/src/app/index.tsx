@@ -848,10 +848,10 @@ export default function WorkoutsScreen() {
                   transform: [{ translateY: createRoutineSwipe.translateY }]
                 }
               ]}>
-              <View {...createRoutineSwipe.panHandlers} style={styles.dragHandleContainer}>
-                <View style={styles.dragHandle} />
-              </View>
-              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
+              <View {...createRoutineSwipe.panHandlers}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
+                </View>
                 <View style={styles.modalHeader}>
                   <Pressable
                     onPress={createRoutineSwipe.close}
@@ -865,6 +865,8 @@ export default function WorkoutsScreen() {
                     <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
                   </Pressable>
                 </View>
+              </View>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
                 <View style={styles.modalFormBody}>
                   <View style={styles.formGroup}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
@@ -934,40 +936,42 @@ export default function WorkoutsScreen() {
                   transform: [{ translateY: routineDetailSwipe.translateY }]
                 }
               ]}>
-              <View {...routineDetailSwipe.panHandlers} style={styles.dragHandleContainer}>
-                <View style={styles.dragHandle} />
-              </View>
-              <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+              <View {...routineDetailSwipe.panHandlers}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
+                </View>
                 <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={() => {
-                    if (isAddExerciseToRoutineVisible) {
-                      setIsAddExerciseToRoutineVisible(false);
-                      setDropdownSearchQuery('');
-                      setSelectedExerciseId(null);
-                    } else {
-                      routineDetailSwipe.close();
-                    }
-                  }}
-                  style={styles.modalHeaderButton}>
-                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>
-                    {isAddExerciseToRoutineVisible ? 'Back' : 'Close'}
-                  </ThemedText>
-                </Pressable>
-                <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
-                  {isAddExerciseToRoutineVisible ? 'Add Exercise' : 'Workout Plan'}
-                </ThemedText>
-                {isAddExerciseToRoutineVisible ? (
-                  <Pressable onPress={handleAddExerciseToRoutine} style={styles.modalHeaderButton}>
-                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                  <Pressable
+                    onPress={() => {
+                      if (isAddExerciseToRoutineVisible) {
+                        setIsAddExerciseToRoutineVisible(false);
+                        setDropdownSearchQuery('');
+                        setSelectedExerciseId(null);
+                      } else {
+                        routineDetailSwipe.close();
+                      }
+                    }}
+                    style={styles.modalHeaderButton}>
+                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>
+                      {isAddExerciseToRoutineVisible ? 'Back' : 'Close'}
+                    </ThemedText>
                   </Pressable>
-                ) : (
-                  <View style={{ minWidth: 60 }} />
-                )}
+                  <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
+                    {isAddExerciseToRoutineVisible ? 'Add Exercise' : 'Workout Plan'}
+                  </ThemedText>
+                  {isAddExerciseToRoutineVisible ? (
+                    <Pressable onPress={handleAddExerciseToRoutine} style={styles.modalHeaderButton}>
+                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                    </Pressable>
+                  ) : (
+                    <View style={{ minWidth: 60 }} />
+                  )}
+                </View>
               </View>
 
               {selectedRoutine && (
-                <View style={{ flex: 1 }}>
+                <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+                  <View style={{ flex: 1 }}>
                   {!isAddExerciseToRoutineVisible ? (
                     <ScrollView
                       style={styles.modalScrollBody}
@@ -1301,8 +1305,8 @@ export default function WorkoutsScreen() {
                     </ScrollView>
                   )}
                 </View>
+                </Pressable>
               )}
-              </Pressable>
             </Animated.View>
           </View>
         </KeyboardAvoidingView>
@@ -1506,27 +1510,29 @@ export default function WorkoutsScreen() {
                 transform: [{ translateY: historyDetailSwipe.translateY }]
               }
             ]}>
-            <View {...historyDetailSwipe.panHandlers} style={styles.dragHandleContainer}>
-              <View style={styles.dragHandle} />
-            </View>
-            <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+            <View {...historyDetailSwipe.panHandlers}>
+              <View style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
+              </View>
               <View style={styles.modalHeader}>
-              <Pressable
-                onPress={historyDetailSwipe.close}
-                style={styles.modalHeaderButton}>
-                <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>Close</ThemedText>
-              </Pressable>
-              <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
-                Workout Log Summary
-              </ThemedText>
-              <Pressable
-                onPress={() => selectedHistory && handleDeleteHistory(selectedHistory.ID)}
-                style={styles.modalHeaderButton}>
-                <ThemedText type="link" style={{ color: '#FF3B30' }}>Delete</ThemedText>
-              </Pressable>
+                <Pressable
+                  onPress={historyDetailSwipe.close}
+                  style={styles.modalHeaderButton}>
+                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>Close</ThemedText>
+                </Pressable>
+                <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
+                  Workout Log Summary
+                </ThemedText>
+                <Pressable
+                  onPress={() => selectedHistory && handleDeleteHistory(selectedHistory.ID)}
+                  style={styles.modalHeaderButton}>
+                  <ThemedText type="link" style={{ color: '#FF3B30' }}>Delete</ThemedText>
+                </Pressable>
+              </View>
             </View>
 
             {selectedHistory && (
+              <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
               <ScrollView
                 style={styles.modalScrollBody}
                 contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
@@ -1598,8 +1604,8 @@ export default function WorkoutsScreen() {
                   )}
                 </View>
               </ScrollView>
+              </Pressable>
             )}
-            </Pressable>
           </Animated.View>
         </View>
       </Modal>
@@ -1624,61 +1630,62 @@ export default function WorkoutsScreen() {
                   transform: [{ translateY: settingsSwipe.translateY }]
                 }
               ]}>
-              <View {...settingsSwipe.panHandlers} style={styles.dragHandleContainer}>
-                <View style={styles.dragHandle} />
-              </View>
-              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
-                <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={settingsSwipe.close}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                </Pressable>
-                <ThemedText type="smallBold" style={styles.modalTitle}>
-                  Settings
-                </ThemedText>
-                <Pressable
-                  onPress={async () => {
-                    if (!tempServerUrl.trim()) {
-                      Alert.alert('Error', 'Server address is required');
-                      return;
-                    }
-
-                    setApiBaseUrl(tempServerUrl.trim());
-                    settingsSwipe.close();
-                    fetchData(true);
-                  }}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                </Pressable>
-              </View>
-
-              <ScrollView style={styles.modalFormBody}>
-                <View style={styles.formGroup}>
-                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                    SERVER API BASE URL
-                  </ThemedText>
-                  <TextInput
-                    placeholder="e.g. http://localhost:8080"
-                    placeholderTextColor={theme.textSecondary}
-                    value={tempServerUrl}
-                    onChangeText={setTempServerUrl}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    style={[
-                      styles.inputField,
-                      {
-                        backgroundColor: theme.backgroundElement,
-                        color: theme.text,
-                        borderColor: theme.backgroundSelected,
-                      },
-                    ]}
-                  />
-                  <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two, lineHeight: 18 }}>
-                    Change the connection address of the backend service. Default is http://localhost:8080.
-                  </ThemedText>
+              <View {...settingsSwipe.panHandlers}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
                 </View>
-              </ScrollView>
+                <View style={styles.modalHeader}>
+                  <Pressable
+                    onPress={settingsSwipe.close}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                  </Pressable>
+                  <ThemedText type="smallBold" style={styles.modalTitle}>
+                    Settings
+                  </ThemedText>
+                  <Pressable
+                    onPress={async () => {
+                      if (!tempServerUrl.trim()) {
+                        Alert.alert('Error', 'Server address is required');
+                        return;
+                      }
+
+                      setApiBaseUrl(tempServerUrl.trim());
+                      settingsSwipe.close();
+                      fetchData(true);
+                    }}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                  </Pressable>
+                </View>
+              </View>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                <ScrollView style={styles.modalFormBody}>
+                  <View style={styles.formGroup}>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                      SERVER API BASE URL
+                    </ThemedText>
+                    <TextInput
+                      placeholder="e.g. http://localhost:8080"
+                      placeholderTextColor={theme.textSecondary}
+                      value={tempServerUrl}
+                      onChangeText={setTempServerUrl}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      style={[
+                        styles.inputField,
+                        {
+                          backgroundColor: theme.backgroundElement,
+                          color: theme.text,
+                          borderColor: theme.backgroundSelected,
+                        },
+                      ]}
+                    />
+                    <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two, lineHeight: 18 }}>
+                      Change the connection address of the backend service. Default is http://localhost:8080.
+                    </ThemedText>
+                  </View>
+                </ScrollView>
               </Pressable>
             </Animated.View>
           </View>

@@ -260,8 +260,11 @@ export default function ExercisesScreen() {
         const name = row[0];
         const notes = row[1] || '';
         const instructions = row[2] || '';
-        const muscleGroupIdVal = row[3] ? parseInt(row[3].trim(), 10) : null;
-        const muscleGroupId = (muscleGroupIdVal && !isNaN(muscleGroupIdVal)) ? muscleGroupIdVal : null;
+        const muscleGroupField = row[3] || '';
+        const muscleGroupIds: number[] = muscleGroupField
+          .split(/[;|,\s]+/)
+          .map(val => parseInt(val.trim(), 10))
+          .filter(id => !isNaN(id));
         const imageIdVal = row[4] ? parseInt(row[4].trim(), 10) : null;
         const imageId = (imageIdVal && !isNaN(imageIdVal)) ? imageIdVal : null;
 
@@ -269,7 +272,7 @@ export default function ExercisesScreen() {
           name,
           notes,
           instructions,
-          muscle_group_ids: muscleGroupId ? [muscleGroupId] : [],
+          muscle_group_ids: muscleGroupIds,
           image_id: imageId,
         });
         successCount++;
@@ -468,37 +471,39 @@ export default function ExercisesScreen() {
             style={[
               styles.modalContent,
               {
-                maxHeight: '85%',
+                height: '80%',
                 backgroundColor: theme.background,
                 transform: [{ translateY: detailSwipe.translateY }]
               }
             ]}>
-            <View {...detailSwipe.panHandlers} style={styles.dragHandleContainer}>
-              <View style={styles.dragHandle} />
-            </View>
-            <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
+            <View {...detailSwipe.panHandlers}>
+              <View style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
+              </View>
               <View style={styles.modalHeader}>
-              <Pressable
-                onPress={detailSwipe.close}
-                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>Close</ThemedText>
-              </Pressable>
-              <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
-                Exercise Details
-              </ThemedText>
-              <Pressable
-                onPress={() => {
-                  if (selectedExercise) {
-                    handleDeleteExercise(selectedExercise.ID, selectedExercise.Name);
-                  }
-                }}
-                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                <ThemedText type="link" style={{ color: '#FF3B30' }}>Delete</ThemedText>
-              </Pressable>
+                <Pressable
+                  onPress={detailSwipe.close}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>Close</ThemedText>
+                </Pressable>
+                <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
+                  Exercise Details
+                </ThemedText>
+                <Pressable
+                  onPress={() => {
+                    if (selectedExercise) {
+                      handleDeleteExercise(selectedExercise.ID, selectedExercise.Name);
+                    }
+                  }}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  <ThemedText type="link" style={{ color: '#FF3B30' }}>Delete</ThemedText>
+                </Pressable>
+              </View>
             </View>
 
             {selectedExercise && (
-              <ScrollView style={styles.modalScrollBody} contentContainerStyle={styles.modalScrollContent}>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                <ScrollView style={styles.modalScrollBody} contentContainerStyle={styles.modalScrollContent}>
                 <ThemedText type="subtitle" style={styles.detailTitle}>
                   {selectedExercise.Name}
                 </ThemedText>
@@ -565,8 +570,8 @@ export default function ExercisesScreen() {
                   </View>
                 ) : null}
               </ScrollView>
+              </Pressable>
             )}
-            </Pressable>
           </Animated.View>
         </View>
       </Modal>
@@ -590,32 +595,33 @@ export default function ExercisesScreen() {
                   transform: [{ translateY: addExerciseSwipe.translateY }]
                 }
               ]}>
-              <View {...addExerciseSwipe.panHandlers} style={styles.dragHandleContainer}>
-                <View style={styles.dragHandle} />
-              </View>
-              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
+              <View {...addExerciseSwipe.panHandlers}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
+                </View>
                 <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={addExerciseSwipe.close}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                </Pressable>
-                <ThemedText type="smallBold" style={styles.modalTitle}>
-                  New Exercise
-                </ThemedText>
-                <Pressable
-                  onPress={handleCreateExercise}
-                  disabled={isSubmitting}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#0A84FF" />
-                  ) : (
-                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                  )}
-                </Pressable>
+                  <Pressable
+                    onPress={addExerciseSwipe.close}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                  </Pressable>
+                  <ThemedText type="smallBold" style={styles.modalTitle}>
+                    New Exercise
+                  </ThemedText>
+                  <Pressable
+                    onPress={handleCreateExercise}
+                    disabled={isSubmitting}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    {isSubmitting ? (
+                      <ActivityIndicator size="small" color="#0A84FF" />
+                    ) : (
+                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                    )}
+                  </Pressable>
+                </View>
               </View>
-
-              <ScrollView style={styles.modalFormBody}>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                <ScrollView style={styles.modalFormBody}>
                 <View style={styles.formGroup}>
                   <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                     NAME *
@@ -746,57 +752,58 @@ export default function ExercisesScreen() {
                   transform: [{ translateY: importCSVSwipe.translateY }]
                 }
               ]}>
-              <View {...importCSVSwipe.panHandlers} style={styles.dragHandleContainer}>
-                <View style={styles.dragHandle} />
-              </View>
-              <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+              <View {...importCSVSwipe.panHandlers}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
+                </View>
                 <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={importCSVSwipe.close}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                </Pressable>
-                <ThemedText type="smallBold" style={styles.modalTitle}>
-                  Import CSV
-                </ThemedText>
-                <Pressable
-                  onPress={handleImportCSV}
-                  disabled={isImporting}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  {isImporting ? (
-                    <ActivityIndicator size="small" color="#0A84FF" />
-                  ) : (
-                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Import</ThemedText>
-                  )}
-                </Pressable>
+                  <Pressable
+                    onPress={importCSVSwipe.close}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                  </Pressable>
+                  <ThemedText type="smallBold" style={styles.modalTitle}>
+                    Import CSV
+                  </ThemedText>
+                  <Pressable
+                    onPress={handleImportCSV}
+                    disabled={isImporting}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    {isImporting ? (
+                      <ActivityIndicator size="small" color="#0A84FF" />
+                    ) : (
+                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Import</ThemedText>
+                    )}
+                  </Pressable>
+                </View>
               </View>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                <ScrollView style={styles.modalFormBody}>
+                  <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
+                    CSV format: name,notes,instructions,muscle_group_ids,image_id
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
+                    Example (multiple muscle group IDs separated by semicolons):{"\n"}
+                    Bench Press,Chest builder,Keep bar straight,1;5,null
+                  </ThemedText>
 
-              <ScrollView style={styles.modalFormBody}>
-                <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
-                  CSV format: name,notes,instructions,muscle_group_id,image_id
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
-                  Example:{"\n"}
-                  Bench Press,Chest builder,Keep bar straight,1,null
-                </ThemedText>
-
-                <TextInput
-                  placeholder="Paste CSV text here..."
-                  placeholderTextColor={theme.textSecondary}
-                  value={csvInput}
-                  onChangeText={setCsvInput}
-                  multiline
-                  style={[
-                    styles.inputField,
-                    styles.importCsvInput,
-                    {
-                      backgroundColor: theme.backgroundElement,
-                      color: theme.text,
-                      borderColor: theme.backgroundSelected,
-                    },
-                  ]}
-                />
-              </ScrollView>
+                  <TextInput
+                    placeholder="Paste CSV text here..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={csvInput}
+                    onChangeText={setCsvInput}
+                    multiline
+                    style={[
+                      styles.inputField,
+                      styles.importCsvInput,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
+                </ScrollView>
               </Pressable>
             </Animated.View>
           </View>
