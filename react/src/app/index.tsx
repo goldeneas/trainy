@@ -174,8 +174,13 @@ export default function WorkoutsScreen() {
   const [workoutLogs, setWorkoutLogs] = useState<{
     [setInfoId: number]: { weight: string; reps: string; completed: boolean };
   }>({});
-  const [restTimerSeconds, setRestTimerSeconds] = useState(0);
+  const [restTimerSeconds, setRestTimerSeconds] = useState(45);
   const [restTimerActive, setRestTimerActive] = useState(false);
+  const [isCustomTimerModalVisible, setIsCustomTimerModalVisible] = useState(false);
+  const [timerTab, setTimerTab] = useState<'timer' | 'stopwatch'>('timer');
+  const [stopwatchTime, setStopwatchTime] = useState(0);
+  const [stopwatchActive, setStopwatchActive] = useState(false);
+  const [timerInitialDuration, setTimerInitialDuration] = useState(45);
   // Settings Modal State
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [tempServerUrl, setTempServerUrl] = useState('');
@@ -206,6 +211,10 @@ export default function WorkoutsScreen() {
   const settingsSwipe = useBottomSheet(isSettingsVisible, () => {
     setTempServerUrl('');
     setIsSettingsVisible(false);
+  });
+
+  const customTimerSwipe = useBottomSheet(isCustomTimerModalVisible, () => {
+    setIsCustomTimerModalVisible(false);
   });
 
   useEffect(() => {
@@ -312,6 +321,35 @@ export default function WorkoutsScreen() {
       if (interval) clearInterval(interval);
     };
   }, [restTimerActive, triggerRestTimerEndEffects]);
+
+  // Stopwatch ticking
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (stopwatchActive) {
+      const startTime = Date.now() - stopwatchTime;
+      interval = setInterval(() => {
+        setStopwatchTime(Date.now() - startTime);
+      }, 10);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stopwatchActive]);
+
+  const formatStopwatch = (ms: number) => {
+    const min = Math.floor(ms / 60000);
+    const sec = Math.floor((ms % 60000) / 1000);
+    const cent = Math.floor((ms % 1000) / 10);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(min)}:${pad(sec)}.${pad(cent)}`;
+  };
+
+  const formatTimer = (totalSeconds: number) => {
+    const min = Math.floor(totalSeconds / 60);
+    const sec = totalSeconds % 60;
+    return `${min}:${String(sec).padStart(2, '0')}`;
+  };
 
 
 
@@ -1332,11 +1370,26 @@ export default function WorkoutsScreen() {
                   Duration: {formatDuration(workoutDuration)}
                 </ThemedText>
               </View>
-              <Pressable
-                onPress={handleCancelWorkout}
-                style={[styles.modalHeaderButton, { minWidth: 70 }]}>
-                <ThemedText type="link" style={{ color: '#FF3B30', fontWeight: 'bold' }}>Discard</ThemedText>
-              </Pressable>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.four }}>
+                <Pressable
+                  onPress={() => setIsCustomTimerModalVisible(true)}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed, { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }]}>
+                  <SymbolView
+                    name="timer"
+                    tintColor={theme.textSecondary}
+                    size={26}
+                  />
+                </Pressable>
+                <Pressable
+                  onPress={handleCancelWorkout}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed, { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }]}>
+                  <SymbolView
+                    name="trash.fill"
+                    tintColor="#FF3B30"
+                    size={24}
+                  />
+                </Pressable>
+              </View>
             </View>
 
             {/* Active Workout Scroll Area */}
@@ -1490,6 +1543,217 @@ export default function WorkoutsScreen() {
               <ThemedText style={styles.primaryActionButtonText}>Finish Workout</ThemedText>
             </Pressable>
           </View>
+
+          {/* MODAL: Custom Rest Timer (Bottom Sheet) */}
+          <Modal
+            animationType="none"
+            transparent={true}
+            visible={isCustomTimerModalVisible}
+            onRequestClose={customTimerSwipe.close}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}>
+              <View style={styles.modalOverlay}>
+                <Pressable style={StyleSheet.absoluteFill} onPress={customTimerSwipe.close} />
+                <Animated.View 
+                  style={[
+                    styles.modalContent,
+                    {
+                      height: '60%',
+                      backgroundColor: theme.background,
+                      transform: [{ translateY: customTimerSwipe.translateY }]
+                    }
+                  ]}>
+                  <View {...customTimerSwipe.panHandlers}>
+                    <View style={styles.dragHandleContainer}>
+                      <View style={styles.dragHandle} />
+                    </View>
+                    <View style={styles.modalHeader}>
+                      <Pressable
+                        onPress={customTimerSwipe.close}
+                        style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                        <ThemedText type="link" themeColor="textSecondary">Close</ThemedText>
+                      </Pressable>
+                      <ThemedText type="smallBold" style={styles.modalTitle}>
+                        Clock & Timer
+                      </ThemedText>
+                      <View style={styles.modalHeaderButton} />
+                    </View>
+                  </View>
+
+                  {/* Segmented Control */}
+                  <View style={styles.segmentedContainer}>
+                    <Pressable 
+                      onPress={() => setTimerTab('timer')}
+                      style={[
+                        styles.segmentedTab, 
+                        timerTab === 'timer' && { backgroundColor: theme.backgroundSelected }
+                      ]}>
+                      <ThemedText type="smallBold" style={{ color: timerTab === 'timer' ? '#0A84FF' : theme.textSecondary }}>
+                        Timer
+                      </ThemedText>
+                    </Pressable>
+                    <Pressable 
+                      onPress={() => setTimerTab('stopwatch')}
+                      style={[
+                        styles.segmentedTab, 
+                        timerTab === 'stopwatch' && { backgroundColor: theme.backgroundSelected }
+                      ]}>
+                      <ThemedText type="smallBold" style={{ color: timerTab === 'stopwatch' ? '#0A84FF' : theme.textSecondary }}>
+                        Stopwatch
+                      </ThemedText>
+                    </Pressable>
+                  </View>
+
+                  <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                    <ScrollView 
+                      style={styles.modalFormBody}
+                      contentContainerStyle={{ paddingBottom: 40 }}>
+                      {timerTab === 'timer' ? (
+                        <View style={{ alignItems: 'center', width: '100%' }}>
+                          {/* Timer Tab Circle display with base-aligned side controls */}
+                          {(() => {
+                            const elapsedPercentage = timerInitialDuration > 0 
+                              ? (timerInitialDuration - restTimerSeconds) / timerInitialDuration 
+                              : 0;
+                            return (
+                              <View style={styles.timerCircleRow}>
+                                <Pressable
+                                  onPress={() => {
+                                    setRestTimerSeconds((prev) => {
+                                      const newVal = Math.max(0, prev - 15);
+                                      if (restTimerActive) {
+                                        setTimerInitialDuration((d) => Math.max(newVal, d - 15));
+                                      } else {
+                                        setTimerInitialDuration(newVal);
+                                      }
+                                      if (newVal === 0) setRestTimerActive(false);
+                                      return newVal;
+                                    });
+                                  }}
+                                  style={({ pressed }) => [styles.sideAdjustBtn, pressed && styles.pressed]}>
+                                  <ThemedText type="smallBold" style={{ color: '#0A84FF', fontSize: 15 }}>-15s</ThemedText>
+                                </Pressable>
+
+                                <View style={styles.circleContainer}>
+                                  <View style={[styles.circleOutline, { borderColor: '#8E8E93' }]} />
+                                  <View style={[styles.circleOutline, { borderColor: '#0A84FF', opacity: 1 - elapsedPercentage }]} />
+                                  <View style={styles.circleContent}>
+                                    <ThemedText style={{ color: theme.text, fontSize: 38, fontWeight: '700', lineHeight: 46, textAlign: 'center' }}>
+                                      {formatTimer(restTimerSeconds)}
+                                    </ThemedText>
+                                  </View>
+                                </View>
+
+                                <Pressable
+                                  onPress={() => {
+                                    setRestTimerSeconds((prev) => {
+                                      const newVal = prev + 15;
+                                      if (restTimerActive) {
+                                        setTimerInitialDuration((d) => d + 15);
+                                      } else {
+                                        setTimerInitialDuration(newVal);
+                                      }
+                                      return newVal;
+                                    });
+                                  }}
+                                  style={({ pressed }) => [styles.sideAdjustBtn, pressed && styles.pressed]}>
+                                  <ThemedText type="smallBold" style={{ color: '#0A84FF', fontSize: 15 }}>+15s</ThemedText>
+                                </Pressable>
+                              </View>
+                            );
+                          })()}
+
+                          {/* Primary start/stop/pause button */}
+                          <Pressable
+                            onPress={() => {
+                              if (restTimerActive) {
+                                setRestTimerActive(false);
+                              } else {
+                                if (restTimerSeconds > 0) {
+                                  setRestTimerActive(true);
+                                }
+                              }
+                            }}
+                            style={({ pressed }) => [
+                              styles.primaryTimerBtn,
+                              { 
+                                backgroundColor: restTimerActive 
+                                  ? theme.backgroundElement 
+                                  : '#0A84FF' 
+                              },
+                              pressed && styles.pressed
+                            ]}>
+                            <ThemedText style={{ 
+                              color: restTimerActive ? '#0A84FF' : '#FFFFFF', 
+                              fontWeight: 'bold', 
+                              fontSize: 16 
+                            }}>
+                              {restTimerActive ? 'Pause Timer' : 'Start Timer'}
+                            </ThemedText>
+                          </Pressable>
+                        </View>
+                      ) : (
+                        <View style={{ alignItems: 'center', width: '100%' }}>
+                          {/* Stopwatch Tab Circle display with spacers to center the circle */}
+                          <View style={styles.timerCircleRow}>
+                            <View style={styles.sideAdjustBtn} />
+                            
+                            <View style={styles.circleContainer}>
+                              <View style={[styles.circleOutline, { borderColor: '#8E8E93' }]} />
+                              <View style={styles.circleContent}>
+                                <ThemedText style={{ color: theme.text, fontSize: 30, fontWeight: '700', lineHeight: 36, textAlign: 'center' }}>
+                                  {formatStopwatch(stopwatchTime)}
+                                </ThemedText>
+                              </View>
+                            </View>
+
+                            <View style={styles.sideAdjustBtn} />
+                          </View>
+
+                          {/* Row 2: Reset and Start/Pause Buttons */}
+                          <View style={styles.btnRow}>
+                            <Pressable
+                              onPress={() => {
+                                setStopwatchActive(false);
+                                setStopwatchTime(0);
+                              }}
+                              style={({ pressed }) => [
+                                styles.controlBtn,
+                                { backgroundColor: theme.backgroundElement },
+                                pressed && styles.pressed
+                              ]}>
+                              <ThemedText style={[styles.controlBtnText, { color: theme.text }]}>Reset</ThemedText>
+                            </Pressable>
+
+                            <Pressable
+                              onPress={() => setStopwatchActive(!stopwatchActive)}
+                              style={({ pressed }) => [
+                                styles.controlBtn,
+                                { 
+                                  backgroundColor: stopwatchActive 
+                                    ? theme.backgroundElement 
+                                    : '#0A84FF' 
+                                },
+                                pressed && styles.pressed
+                              ]}>
+                              <ThemedText 
+                                style={[
+                                  styles.controlBtnText, 
+                                  { color: stopwatchActive ? '#0A84FF' : '#FFFFFF' }
+                                ]}>
+                                {stopwatchActive ? 'Pause' : stopwatchTime > 0 ? 'Resume' : 'Start'}
+                              </ThemedText>
+                            </Pressable>
+                          </View>
+                        </View>
+                      )}
+                    </ScrollView>
+                  </Pressable>
+                </Animated.View>
+              </View>
+            </KeyboardAvoidingView>
+          </Modal>
         </ThemedView>
         </KeyboardAvoidingView>
       </Modal>
@@ -2209,5 +2473,184 @@ const styles = StyleSheet.create({
   },
   checkboxBtnCompleted: {
     // Styling when completed
+  },
+  dialogOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialogCard: {
+    width: '85%',
+    maxWidth: 340,
+    borderRadius: 16,
+    padding: Spacing.four,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  dialogHeader: {
+    alignItems: 'center',
+    marginBottom: Spacing.three,
+  },
+  dialogTitle: {
+    fontWeight: 'bold',
+  },
+  dialogSectionLabel: {
+    marginTop: Spacing.two,
+    marginBottom: Spacing.two,
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
+  presetGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    marginBottom: Spacing.three,
+  },
+  presetChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 60,
+  },
+  timePickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.four,
+    marginBottom: Spacing.four,
+  },
+  pickerColumn: {
+    flex: 1,
+    height: 160,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  columnLabel: {
+    textAlign: 'center',
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0,0,0,0.02)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+    fontSize: 10,
+    letterSpacing: 0.8,
+  },
+  pickerScroll: {
+    flex: 1,
+  },
+  pickerItem: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stopTimerBtn: {
+    backgroundColor: '#FF3B30',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.two,
+    width: '100%',
+  },
+  timerIndicatorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+    borderRadius: 8,
+    marginBottom: Spacing.three,
+  },
+  segmentedContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(120, 120, 128, 0.12)',
+    borderRadius: 8,
+    padding: 2,
+    marginHorizontal: Spacing.three,
+    marginVertical: Spacing.two,
+  },
+  segmentedTab: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleContainer: {
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    position: 'relative',
+    marginVertical: Spacing.three,
+    overflow: 'hidden',
+  },
+  circleContent: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  timerCircleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    width: '100%',
+    marginVertical: Spacing.three,
+  },
+  sideAdjustBtn: {
+    width: 60,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  circleOutline: {
+    position: 'absolute',
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    borderWidth: 3,
+  },
+  btnRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+    width: '100%',
+    marginTop: Spacing.three,
+  },
+  controlBtn: {
+    height: 48,
+    borderRadius: 12,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  controlBtnText: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  primaryTimerBtn: {
+    width: '100%',
+    height: 50,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.three,
   },
 });
