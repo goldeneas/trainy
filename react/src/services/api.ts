@@ -10,17 +10,26 @@ const DEFAULT_HOST = Platform.select({
 });
 
 let apiBaseUrl = DEFAULT_HOST;
+let initPromise: Promise<void> | null = null;
 
-// Asynchronously load the saved server URL from storage on startup.
-AsyncStorage.getItem('saved_server_url')
-  .then((savedUrl) => {
-    if (savedUrl) {
-      apiBaseUrl = savedUrl;
-    }
-  })
-  .catch((err) => {
-    console.warn('Failed to load saved server URL:', err);
-  });
+// Export an initialization helper that screens/functions can await.
+// It will only execute the AsyncStorage lookup once.
+export const initializeApi = (): Promise<void> => {
+  if (initPromise) return initPromise;
+  initPromise = AsyncStorage.getItem('saved_server_url')
+    .then((savedUrl) => {
+      if (savedUrl) {
+        apiBaseUrl = savedUrl;
+      }
+    })
+    .catch((err) => {
+      console.warn('Failed to load saved server URL:', err);
+    });
+  return initPromise;
+};
+
+// Start initialization in background immediately
+initializeApi().catch(() => {});
 
 export const setApiBaseUrl = (url: string) => {
   apiBaseUrl = url;
@@ -185,6 +194,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  initializeApi,
   // Exercise Endpoints
   getExercises: () => request<Exercise[]>('/v1/exercise'),
   getExerciseById: (id: number) => request<Exercise>(`/v1/exercise/${id}`),

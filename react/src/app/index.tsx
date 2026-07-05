@@ -60,9 +60,36 @@ Notifications.setNotificationHandler({
 
 const getNow = () => Date.now();
 
-function useSwipeToClose(onClose: () => void, visible: boolean) {
-  const { translateY, panHandlers } = useMemo(() => {
-    const animVal = new Animated.Value(0);
+function useBottomSheet(visible: boolean, onClose: () => void) {
+  const translateY = useMemo(() => new Animated.Value(800), []);
+
+  const animateOpen = useCallback(() => {
+    translateY.setValue(800);
+    Animated.spring(translateY, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 8,
+    }).start();
+  }, [translateY]);
+
+  const animateClose = useCallback(() => {
+    Animated.timing(translateY, {
+      toValue: 800,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      onClose();
+    });
+  }, [translateY, onClose]);
+
+  useEffect(() => {
+    if (visible) {
+      animateOpen();
+    }
+  }, [visible, animateOpen]);
+
+  const panHandlers = useMemo(() => {
     const pr = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
@@ -70,20 +97,20 @@ function useSwipeToClose(onClose: () => void, visible: boolean) {
       },
       onPanResponderMove: (evt, gestureState) => {
         if (gestureState.dy > 0) {
-          animVal.setValue(gestureState.dy);
+          translateY.setValue(gestureState.dy);
         }
       },
       onPanResponderRelease: (evt, gestureState) => {
         if (gestureState.dy > 120 || gestureState.vy > 0.8) {
-          Animated.timing(animVal, {
+          Animated.timing(translateY, {
             toValue: 800,
-            duration: 250,
+            duration: 220,
             useNativeDriver: true,
           }).start(() => {
             onClose();
           });
         } else {
-          Animated.spring(animVal, {
+          Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
             tension: 40,
@@ -92,16 +119,10 @@ function useSwipeToClose(onClose: () => void, visible: boolean) {
         }
       },
     });
-    return { translateY: animVal, panHandlers: pr.panHandlers };
-  }, [onClose]);
+    return pr.panHandlers;
+  }, [translateY, onClose]);
 
-  useEffect(() => {
-    if (visible) {
-      translateY.setValue(0);
-    }
-  }, [visible, translateY]);
-
-  return { translateY, panHandlers };
+  return { translateY, panHandlers, close: animateClose };
 }
 
 export default function WorkoutsScreen() {
@@ -161,14 +182,14 @@ export default function WorkoutsScreen() {
   // Audio player and notifications setup
   const player = useAudioPlayer('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
 
-  // Swipe gesture controllers for Bottom Sheets
-  const createRoutineSwipe = useSwipeToClose(() => {
+  // Bottom Sheet gesture controllers
+  const createRoutineSwipe = useBottomSheet(isAddRoutineVisible, () => {
     setNewRoutineName('');
     setNewRoutineDesc('');
     setIsAddRoutineVisible(false);
-  }, isAddRoutineVisible);
+  });
 
-  const routineDetailSwipe = useSwipeToClose(() => {
+  const routineDetailSwipe = useBottomSheet(isRoutineDetailVisible, () => {
     if (isAddExerciseToRoutineVisible) {
       setIsAddExerciseToRoutineVisible(false);
       setDropdownSearchQuery('');
@@ -176,16 +197,16 @@ export default function WorkoutsScreen() {
     } else {
       setIsRoutineDetailVisible(false);
     }
-  }, isRoutineDetailVisible);
+  });
 
-  const historyDetailSwipe = useSwipeToClose(() => {
+  const historyDetailSwipe = useBottomSheet(isHistoryDetailVisible, () => {
     setIsHistoryDetailVisible(false);
-  }, isHistoryDetailVisible);
+  });
 
-  const settingsSwipe = useSwipeToClose(() => {
+  const settingsSwipe = useBottomSheet(isSettingsVisible, () => {
     setTempServerUrl('');
     setIsSettingsVisible(false);
-  }, isSettingsVisible);
+  });
 
   useEffect(() => {
     async function requestPermissions() {
@@ -204,6 +225,7 @@ export default function WorkoutsScreen() {
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
+      await api.initializeApi();
       const [routinesData, historyData, exercisesData] = await Promise.all([
         api.getFullRoutines(),
         api.getFullActualRoutines(),
@@ -312,7 +334,7 @@ export default function WorkoutsScreen() {
       });
       setNewRoutineName('');
       setNewRoutineDesc('');
-      setIsAddRoutineVisible(false);
+      createRoutineSwipe.close();
       fetchData();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to create routine');
@@ -536,7 +558,7 @@ export default function WorkoutsScreen() {
           onPress: async () => {
             try {
               await api.deleteActualRoutine(logId);
-              setIsHistoryDetailVisible(false);
+              historyDetailSwipe.close();
               setSelectedHistory(null);
               fetchData();
             } catch (error: any) {
@@ -585,6 +607,9 @@ export default function WorkoutsScreen() {
               <Pressable
                 onPress={() => {
                   setSelectedRoutineId(item.ID);
+                  setIsAddExerciseToRoutineVisible(false);
+                  setDropdownSearchQuery('');
+                  setSelectedExerciseId(null);
                   setIsRoutineDetailVisible(true);
                 }}
                 style={({ pressed }) => [
@@ -694,7 +719,9 @@ export default function WorkoutsScreen() {
                 />
               </Pressable>
               <Pressable
-                onPress={() => setIsAddRoutineVisible(true)}
+                onPress={() => {
+                  setIsAddRoutineVisible(true);
+                }}
                 style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
                 <SymbolView
                   tintColor="#0A84FF"
@@ -804,15 +831,15 @@ export default function WorkoutsScreen() {
 
       {/* MODAL: Create Routine */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={isAddRoutineVisible}
-        onRequestClose={() => setIsAddRoutineVisible(false)}>
+        onRequestClose={createRoutineSwipe.close}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}>
           <View style={styles.modalOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsAddRoutineVisible(false)} />
+            <Pressable style={StyleSheet.absoluteFill} onPress={createRoutineSwipe.close} />
             <Animated.View 
               style={[
                 styles.modalContent,
@@ -827,11 +854,7 @@ export default function WorkoutsScreen() {
               <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
                 <View style={styles.modalHeader}>
                   <Pressable
-                    onPress={() => {
-                      setNewRoutineName('');
-                      setNewRoutineDesc('');
-                      setIsAddRoutineVisible(false);
-                    }}
+                    onPress={createRoutineSwipe.close}
                     style={styles.modalHeaderButton}>
                     <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
                   </Pressable>
@@ -893,15 +916,15 @@ export default function WorkoutsScreen() {
 
       {/* MODAL: Routine Detail */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={isRoutineDetailVisible}
-        onRequestClose={() => setIsRoutineDetailVisible(false)}>
+        onRequestClose={routineDetailSwipe.close}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}>
           <View style={styles.modalOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsRoutineDetailVisible(false)} />
+            <Pressable style={StyleSheet.absoluteFill} onPress={routineDetailSwipe.close} />
             <Animated.View 
               style={[
                 styles.modalContent,
@@ -923,7 +946,7 @@ export default function WorkoutsScreen() {
                       setDropdownSearchQuery('');
                       setSelectedExerciseId(null);
                     } else {
-                      setIsRoutineDetailVisible(false);
+                      routineDetailSwipe.close();
                     }
                   }}
                   style={styles.modalHeaderButton}>
@@ -1468,12 +1491,12 @@ export default function WorkoutsScreen() {
 
       {/* MODAL: Workout History Log Detail */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={isHistoryDetailVisible}
-        onRequestClose={() => setIsHistoryDetailVisible(false)}>
+        onRequestClose={historyDetailSwipe.close}>
         <View style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsHistoryDetailVisible(false)} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={historyDetailSwipe.close} />
           <Animated.View 
             style={[
               styles.modalContent,
@@ -1489,7 +1512,7 @@ export default function WorkoutsScreen() {
             <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
               <View style={styles.modalHeader}>
               <Pressable
-                onPress={() => setIsHistoryDetailVisible(false)}
+                onPress={historyDetailSwipe.close}
                 style={styles.modalHeaderButton}>
                 <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>Close</ThemedText>
               </Pressable>
@@ -1583,15 +1606,15 @@ export default function WorkoutsScreen() {
 
       {/* Settings Modal */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={isSettingsVisible}
-        onRequestClose={() => setIsSettingsVisible(false)}>
+        onRequestClose={settingsSwipe.close}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}>
           <View style={styles.modalOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsSettingsVisible(false)} />
+            <Pressable style={StyleSheet.absoluteFill} onPress={settingsSwipe.close} />
             <Animated.View 
               style={[
                 styles.modalContent,
@@ -1607,10 +1630,7 @@ export default function WorkoutsScreen() {
               <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
                 <View style={styles.modalHeader}>
                 <Pressable
-                  onPress={() => {
-                    setTempServerUrl('');
-                    setIsSettingsVisible(false);
-                  }}
+                  onPress={settingsSwipe.close}
                   style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
                   <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
                 </Pressable>
@@ -1625,7 +1645,7 @@ export default function WorkoutsScreen() {
                     }
 
                     setApiBaseUrl(tempServerUrl.trim());
-                    setIsSettingsVisible(false);
+                    settingsSwipe.close();
                     fetchData(true);
                   }}
                   style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
@@ -1848,7 +1868,6 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   modalHeaderButton: {
-    paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.two,
     minWidth: 60,
   },

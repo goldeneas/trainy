@@ -56,9 +56,36 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-function useSwipeToClose(onClose: () => void, visible: boolean) {
-  const { translateY, panHandlers } = useMemo(() => {
-    const animVal = new Animated.Value(0);
+function useBottomSheet(visible: boolean, onClose: () => void) {
+  const translateY = useMemo(() => new Animated.Value(800), []);
+
+  const animateOpen = useCallback(() => {
+    translateY.setValue(800);
+    Animated.spring(translateY, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 8,
+    }).start();
+  }, [translateY]);
+
+  const animateClose = useCallback(() => {
+    Animated.timing(translateY, {
+      toValue: 800,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      onClose();
+    });
+  }, [translateY, onClose]);
+
+  useEffect(() => {
+    if (visible) {
+      animateOpen();
+    }
+  }, [visible, animateOpen]);
+
+  const panHandlers = useMemo(() => {
     const pr = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
@@ -66,20 +93,20 @@ function useSwipeToClose(onClose: () => void, visible: boolean) {
       },
       onPanResponderMove: (evt, gestureState) => {
         if (gestureState.dy > 0) {
-          animVal.setValue(gestureState.dy);
+          translateY.setValue(gestureState.dy);
         }
       },
       onPanResponderRelease: (evt, gestureState) => {
         if (gestureState.dy > 120 || gestureState.vy > 0.8) {
-          Animated.timing(animVal, {
+          Animated.timing(translateY, {
             toValue: 800,
-            duration: 250,
+            duration: 220,
             useNativeDriver: true,
           }).start(() => {
             onClose();
           });
         } else {
-          Animated.spring(animVal, {
+          Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
             tension: 40,
@@ -88,16 +115,10 @@ function useSwipeToClose(onClose: () => void, visible: boolean) {
         }
       },
     });
-    return { translateY: animVal, panHandlers: pr.panHandlers };
-  }, [onClose]);
+    return pr.panHandlers;
+  }, [translateY, onClose]);
 
-  useEffect(() => {
-    if (visible) {
-      translateY.setValue(0);
-    }
-  }, [visible, translateY]);
-
-  return { translateY, panHandlers };
+  return { translateY, panHandlers, close: animateClose };
 }
 
 export default function ExercisesScreen() {
@@ -127,24 +148,25 @@ export default function ExercisesScreen() {
   const [isImporting, setIsImporting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Swipe gesture controllers for Bottom Sheets
-  const detailSwipe = useSwipeToClose(() => setIsDetailModalVisible(false), isDetailModalVisible);
-  const addExerciseSwipe = useSwipeToClose(() => {
+  // Bottom Sheet gesture controllers
+  const detailSwipe = useBottomSheet(isDetailModalVisible, () => setIsDetailModalVisible(false));
+  const addExerciseSwipe = useBottomSheet(isAddModalVisible, () => {
     setNewName('');
     setNewNotes('');
     setNewInstructions('');
     setSelectedMuscleGroupIds([]);
     setIsAddModalVisible(false);
-  }, isAddModalVisible);
-  const importCSVSwipe = useSwipeToClose(() => {
+  });
+  const importCSVSwipe = useBottomSheet(isImportModalVisible, () => {
     setCsvInput('');
     setIsImportModalVisible(false);
-  }, isImportModalVisible);
+  });
 
   // Fetch exercises
   const fetchExercises = useCallback(async (showLoadingIndicator = false) => {
     if (showLoadingIndicator) setLoading(true);
     try {
+      await api.initializeApi();
       const data = await api.getExercises();
       setExercises(data || []);
     } catch (error: any) {
@@ -196,7 +218,7 @@ export default function ExercisesScreen() {
       setNewNotes('');
       setNewInstructions('');
       setSelectedMuscleGroupIds([]);
-      setIsAddModalVisible(false);
+      addExerciseSwipe.close();
       
       // Refresh
       fetchExercises();
@@ -254,7 +276,7 @@ export default function ExercisesScreen() {
       }
 
       setCsvInput('');
-      setIsImportModalVisible(false);
+      importCSVSwipe.close();
       fetchExercises();
       Alert.alert('Success', `Successfully imported ${successCount} exercises!`);
     } catch (error: any) {
@@ -277,7 +299,7 @@ export default function ExercisesScreen() {
           onPress: async () => {
             try {
               await api.deleteExercise(id);
-              setIsDetailModalVisible(false);
+              detailSwipe.close();
               setSelectedExercise(null);
               fetchExercises();
             } catch (error: any) {
@@ -345,7 +367,9 @@ export default function ExercisesScreen() {
         </ThemedText>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
           <Pressable
-            onPress={() => setIsImportModalVisible(true)}
+            onPress={() => {
+              setIsImportModalVisible(true);
+            }}
             style={({ pressed }) => [styles.importButton, styles.addButton, pressed && styles.pressed]}>
             <SymbolView
               tintColor={theme.textSecondary}
@@ -354,7 +378,9 @@ export default function ExercisesScreen() {
             />
           </Pressable>
           <Pressable
-            onPress={() => setIsAddModalVisible(true)}
+            onPress={() => {
+              setIsAddModalVisible(true);
+            }}
             style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
             <SymbolView
               tintColor="#0A84FF" // Apple active blue
@@ -432,12 +458,12 @@ export default function ExercisesScreen() {
 
       {/* Detail Modal */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={isDetailModalVisible}
-        onRequestClose={() => setIsDetailModalVisible(false)}>
+        onRequestClose={detailSwipe.close}>
         <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsDetailModalVisible(false)} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={detailSwipe.close} />
           <Animated.View 
             style={[
               styles.modalContent,
@@ -453,7 +479,7 @@ export default function ExercisesScreen() {
             <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
               <View style={styles.modalHeader}>
               <Pressable
-                onPress={() => setIsDetailModalVisible(false)}
+                onPress={detailSwipe.close}
                 style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
                 <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>Close</ThemedText>
               </Pressable>
@@ -547,15 +573,15 @@ export default function ExercisesScreen() {
 
       {/* Add Modal */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={isAddModalVisible}
-        onRequestClose={() => setIsAddModalVisible(false)}>
+        onRequestClose={addExerciseSwipe.close}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}>
           <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsAddModalVisible(false)} />
+            <Pressable style={StyleSheet.absoluteFill} onPress={addExerciseSwipe.close} />
             <Animated.View 
               style={[
                 styles.modalContent,
@@ -570,13 +596,7 @@ export default function ExercisesScreen() {
               <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
                 <View style={styles.modalHeader}>
                 <Pressable
-                  onPress={() => {
-                    setNewName('');
-                    setNewNotes('');
-                    setNewInstructions('');
-                    setSelectedMuscleGroupIds([]);
-                    setIsAddModalVisible(false);
-                  }}
+                  onPress={addExerciseSwipe.close}
                   style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
                   <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
                 </Pressable>
@@ -708,15 +728,15 @@ export default function ExercisesScreen() {
 
       {/* CSV Import Modal */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={isImportModalVisible}
-        onRequestClose={() => setIsImportModalVisible(false)}>
+        onRequestClose={importCSVSwipe.close}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}>
           <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsImportModalVisible(false)} />
+            <Pressable style={StyleSheet.absoluteFill} onPress={importCSVSwipe.close} />
             <Animated.View 
               style={[
                 styles.modalContent,
@@ -732,10 +752,7 @@ export default function ExercisesScreen() {
               <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
                 <View style={styles.modalHeader}>
                 <Pressable
-                  onPress={() => {
-                    setCsvInput('');
-                    setIsImportModalVisible(false);
-                  }}
+                  onPress={importCSVSwipe.close}
                   style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
                   <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
                 </Pressable>
@@ -927,7 +944,6 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   modalHeaderButton: {
-    paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.two,
     minWidth: 60,
   },
