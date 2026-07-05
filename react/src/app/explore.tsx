@@ -816,7 +816,7 @@ export default function ExercisesScreen() {
                     CSV format: name,notes,instructions,muscle_group_ids,image_id
                   </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
-                    Example (multiple muscle group IDs separated by semicolons):{"\n"}
+                    Example:{"\n"}
                     Bench Press,Chest builder,Keep bar straight,1;5,null
                   </ThemedText>
 
