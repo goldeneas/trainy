@@ -391,46 +391,72 @@ export default function ExercisesScreen() {
       <Swipeable
         renderLeftActions={() => renderSwipeActions(item)}
         containerStyle={styles.swipeContainer}>
-        <Pressable
-          onPress={() => {
-            setSelectedExercise(item);
-            setIsDetailModalVisible(true);
-          }}
-          style={({ pressed }) => [
-            styles.exerciseCard,
-            { backgroundColor: cardBg },
-            pressed && styles.cardPressed,
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: cardBg, marginBottom: 0 },
           ]}>
-          <View style={styles.exerciseCardHeader}>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="smallBold" style={styles.exerciseName}>
+          <View style={styles.cardHeader}>
+            <View style={{ flex: 1, marginRight: Spacing.two }}>
+              <ThemedText type="smallBold" style={styles.cardTitle}>
                 {item.name}
               </ThemedText>
-              {(() => {
-                const mgIds = item.muscle_group_ids;
-                if (mgIds && mgIds.length > 0) {
-                  const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                  return names ? (
-                    <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
+              <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.cardSubtitle}>
+                {item.notes || "No description provided"}
+              </ThemedText>
+            </View>
+            <View style={styles.cardActions}>
+              <Pressable
+                onPress={() => {
+                  handleStartEditExercise(item);
+                }}
+                style={({ pressed }) => [
+                  styles.cardActionBtn,
+                  pressed && styles.pressed,
+                ]}>
+                <SymbolView 
+                  tintColor="#8E8E93" 
+                  name="slider.horizontal.3" 
+                  size={22} 
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setSelectedExercise(item);
+                  setIsDetailModalVisible(true);
+                }}
+                style={({ pressed }) => [
+                  styles.cardActionCircleBtn,
+                  pressed && styles.pressed,
+                ]}>
+                <SymbolView tintColor="#0A84FF" name="chevron.right.circle.fill" size={28} />
+              </Pressable>
+            </View>
+          </View>
+
+          {(() => {
+            const mgIds = item.muscle_group_ids;
+            if (mgIds && mgIds.length > 0) {
+              const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+              if (names) {
+                return (
+                  <View style={styles.cardFooter}>
+                    <SymbolView
+                      tintColor="#0A84FF"
+                      name="dumbbell.fill"
+                      size={14}
+                      style={{ marginRight: Spacing.one }}
+                    />
+                    <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
                       {names}
                     </ThemedText>
-                  ) : null;
-                }
-                return null;
-              })()}
-            </View>
-            <SymbolView
-              tintColor={theme.textSecondary}
-              name="chevron.right"
-              size={14}
-            />
-          </View>
-          {item.notes ? (
-            <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.exerciseNotes}>
-              {item.notes}
-            </ThemedText>
-          ) : null}
-        </Pressable>
+                  </View>
+                );
+              }
+            }
+            return null;
+          })()}
+        </View>
       </Swipeable>
     );
   };
@@ -556,21 +582,9 @@ export default function ExercisesScreen() {
                 <View style={styles.dragHandle} />
               </View>
               <View style={styles.modalHeader}>
-                <View style={{ width: 30 }} />
-
                 <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
                   Exercise Details
                 </ThemedText>
-
-                <Pressable
-                  onPress={() => {
-                    if (selectedExercise) {
-                      handleStartEditExercise(selectedExercise);
-                    }
-                  }}
-                  style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
-                  <SymbolView name="square.and.pencil" tintColor="#0A84FF" size={22} />
-                </Pressable>
               </View>
             </View>
 
@@ -994,23 +1008,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
   },
-  exerciseCard: {
+  card: {
     padding: Spacing.three,
-    borderRadius: 12, // Rounded iOS card style
+    borderRadius: 12,
     borderWidth: Platform.OS === 'web' ? 1 : 0,
     borderColor: 'rgba(0,0,0,0.05)',
   },
-  exerciseCardHeader: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  exerciseName: {
+  cardTitle: {
     fontSize: 18,
   },
-  exerciseNotes: {
+  cardSubtitle: {
     marginTop: Spacing.one,
     fontSize: 14,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  cardActionBtn: {
+    padding: Spacing.one,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardActionCircleBtn: {
+    padding: Spacing.one,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.one,
   },
   swipeContainer: {
     marginBottom: Spacing.two,

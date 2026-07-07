@@ -137,7 +137,7 @@ func (d *SQLiteExerciseDAO) GetAllExerciseMuscleGroupIDs(dbtx sqlw.DBTX, exercis
 }
 
 func (d *SQLiteExerciseDAO) UpdateExerciseByID(dbtx sqlw.DBTX, id int64, info *model.Exercise) error {
-	_, err := dbtx.Exec(`UPDATE Exercise SET Name = ?, Notes = ?, Instructions = ?, ImageID = ?, RepUnitID = ? WHERE id = ?`, info.Name, info.Notes, info.Instructions, info.ImageID, info.RepUnitID, id)
+	_, err := dbtx.Exec(`UPDATE Exercise SET name = ?, notes = ?, instructions = ?, image_id = ?, rep_unit_id = ? WHERE id = ?`, info.Name, info.Notes, info.Instructions, info.ImageID, info.RepUnitID, id)
 	return err
 }
 
