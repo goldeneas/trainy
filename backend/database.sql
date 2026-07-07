@@ -5,6 +5,32 @@ CREATE TABLE IF NOT EXISTS Image (
     path TEXT
 );
 
+CREATE TABLE IF NOT EXISTS GymLocation (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    altitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    rating INTEGER,
+
+    CHECK (rating >= 0 AND rating <= 5)
+);
+
+CREATE TABLE IF NOT EXISTS GymEquipment (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+);
+
+CREATE TABLE IF NOT EXISTS GymLocationEquipment (
+    id INTEGER PRIMARY KEY,
+    gym_location_id INTEGER NOT NULL,
+    gym_equipment_id INTEGER NOT NULL,
+
+    FOREIGN KEY (gym_location_id) REFERENCES GymLocation(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (gym_equipment_id) REFERENCES GymEquipment(id)
+        ON DELETE RESTRICT,
+);
+
 CREATE TABLE IF NOT EXISTS MuscleGroup (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL
@@ -107,13 +133,27 @@ CREATE TABLE IF NOT EXISTS ActualSetInfo (
         ON DELETE CASCADE
 );
 
-INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (1, 'Chest');
-INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (2, 'Back');
-INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (3, 'Legs');
-INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (4, 'Shoulders');
-INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (5, 'Arms');
-INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (6, 'Core');
-INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES (7, 'Other');
+INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES 
+    (1, 'Chest'),
+    (2, 'Back'),
+    (3, 'Legs'),
+    (4, 'Shoulders'),
+    (5, 'Arms'),
+    (6, 'Core'),
+    (7, 'Other');
 
-INSERT OR IGNORE INTO RepUnit (id, name_singular, name_plural) VALUES (1, 'Rep', 'Reps');
-INSERT OR IGNORE INTO RepUnit (id, name_singular, name_plural) VALUES (2, 'Sec', 'Secs');
+INSERT OR IGNORE INTO RepUnit (id, name_singular, name_plural) VALUES 
+    (1, 'Rep', 'Reps'),
+    (2, 'Sec', 'Secs');
+
+INSERT OR IGNORE INTO GymEquipment (id, name) VALUES 
+    (1, 'Pull-up Bar'),
+    (2, 'Parallel Bars'),
+    (3, 'Stall Bars'),
+    (4, 'Horizontal Ladder'),
+    (5, 'Gymnastic Rings'),
+    (6, 'Ab Bench'),
+    (7, 'Dip Bars'),
+    (8, 'Push-up Board'),
+    (9, 'Trapeze Bar'),
+    (10, 'Climbing Rope');
