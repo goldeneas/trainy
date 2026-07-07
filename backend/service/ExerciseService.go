@@ -126,6 +126,39 @@ func (s *ExerciseService) GetSetInfoByID(id int64) (*model.PlannedSetInfo, error
 	return s.exerciseDAO.GetPlannedSetInfoByID(s.db, id)
 }
 
+func (s *ExerciseService) UpdateExerciseByID(id int64, info *model.Exercise, muscleGroups []int64) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	err = s.exerciseDAO.UpdateExerciseByID(tx, id, info)
+	if err != nil {
+		return err
+	}
+
+	err = s.exerciseDAO.DeleteExerciseMuscleGroupsByExerciseID(tx, id)
+	if err != nil {
+		return err
+	}
+
+	for _, groupID := range muscleGroups {
+		group := model.ExerciseMuscleGroup{
+			ExerciseID:    id,
+			MuscleGroupID: groupID,
+		}
+
+		_, err = s.exerciseDAO.InsertExerciseMuscleGroup(tx, &group)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (s *ExerciseService) GetAllSetInfoByPlannedExerciseID(id int64) ([]model.PlannedSetInfo, error) {
 	return s.exerciseDAO.GetAllSetInfoByPlannedExerciseID(s.db, id)
 }

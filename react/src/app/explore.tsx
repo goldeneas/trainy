@@ -18,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 
@@ -142,6 +143,8 @@ export default function ExercisesScreen() {
   const [isImporting, setIsImporting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [editingExerciseId, setEditingExerciseId] = useState<number | null>(null);
+
   // Bottom Sheet gesture controllers
   const detailSwipe = useBottomSheet(isDetailModalVisible, () => setIsDetailModalVisible(false));
   const addExerciseSwipe = useBottomSheet(isAddModalVisible, () => {
@@ -149,6 +152,8 @@ export default function ExercisesScreen() {
     setNewNotes('');
     setNewInstructions('');
     setSelectedMuscleGroupIds([]);
+    setNewRepUnitId(1);
+    setEditingExerciseId(null);
     setIsAddModalVisible(false);
   });
   const importCSVSwipe = useBottomSheet(isImportModalVisible, () => {
@@ -230,6 +235,55 @@ export default function ExercisesScreen() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Handle update
+  const handleUpdateExercise = async () => {
+    if (editingExerciseId === null) return;
+    if (!newName.trim()) {
+      Alert.alert('Error', 'Exercise name is required');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.updateExercise(editingExerciseId, {
+        name: newName.trim(),
+        notes: newNotes.trim(),
+        instructions: newInstructions.trim(),
+        rep_unit_id: newRepUnitId,
+        muscle_group_ids: selectedMuscleGroupIds,
+      });
+      
+      // Reset form
+      setNewName('');
+      setNewNotes('');
+      setNewInstructions('');
+      setSelectedMuscleGroupIds([]);
+      setNewRepUnitId(1);
+      setEditingExerciseId(null);
+      addExerciseSwipe.close();
+      
+      // Refresh
+      fetchExercises();
+      Alert.alert('Success', 'Exercise updated successfully');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update exercise');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Start edit mode
+  const handleStartEditExercise = (ex: Exercise) => {
+    setEditingExerciseId(ex.id);
+    setNewName(ex.name);
+    setNewNotes(ex.notes || '');
+    setNewInstructions(ex.instructions || '');
+    setNewRepUnitId(ex.rep_unit_id);
+    setSelectedMuscleGroupIds(ex.muscle_group_ids || []);
+    setIsDetailModalVisible(false); // Close detail modal
+    setIsAddModalVisible(true); // Open form modal
   };
 
   // Handle CSV Import
@@ -317,55 +371,73 @@ export default function ExercisesScreen() {
     );
   };
 
+  const renderSwipeActions = (exercise: Exercise) => (
+    <View style={styles.swipeActionContainer}>
+      <Pressable
+        onPress={() => handleDeleteExercise(exercise.id, exercise.name)}
+        style={({ pressed }) => [
+          styles.deleteSwipeBtn,
+          pressed && styles.pressed,
+        ]}>
+        <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+      </Pressable>
+    </View>
+  );
+
   const renderExerciseItem = ({ item }: { item: Exercise }) => {
     const cardBg = theme.backgroundElement;
 
     return (
-      <Pressable
-        onPress={() => {
-          setSelectedExercise(item);
-          setIsDetailModalVisible(true);
-        }}
-        style={({ pressed }) => [
-          styles.exerciseCard,
-          { backgroundColor: cardBg },
-          pressed && styles.cardPressed,
-        ]}>
-        <View style={styles.exerciseCardHeader}>
-          <View style={{ flex: 1 }}>
-            <ThemedText type="smallBold" style={styles.exerciseName}>
-              {item.name}
-            </ThemedText>
-            {(() => {
-              const mgIds = item.muscle_group_ids;
-              if (mgIds && mgIds.length > 0) {
-                const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                return names ? (
-                  <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
-                    {names}
-                  </ThemedText>
-                ) : null;
-              }
-              return null;
-            })()}
+      <Swipeable
+        renderLeftActions={() => renderSwipeActions(item)}
+        containerStyle={styles.swipeContainer}>
+        <Pressable
+          onPress={() => {
+            setSelectedExercise(item);
+            setIsDetailModalVisible(true);
+          }}
+          style={({ pressed }) => [
+            styles.exerciseCard,
+            { backgroundColor: cardBg },
+            pressed && styles.cardPressed,
+          ]}>
+          <View style={styles.exerciseCardHeader}>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="smallBold" style={styles.exerciseName}>
+                {item.name}
+              </ThemedText>
+              {(() => {
+                const mgIds = item.muscle_group_ids;
+                if (mgIds && mgIds.length > 0) {
+                  const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                  return names ? (
+                    <ThemedText type="small" style={{ color: '#0A84FF', marginTop: Spacing.half }}>
+                      {names}
+                    </ThemedText>
+                  ) : null;
+                }
+                return null;
+              })()}
+            </View>
+            <SymbolView
+              tintColor={theme.textSecondary}
+              name="chevron.right"
+              size={14}
+            />
           </View>
-          <SymbolView
-            tintColor={theme.textSecondary}
-            name="chevron.right"
-            size={14}
-          />
-        </View>
-        {item.notes ? (
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.exerciseNotes}>
-            {item.notes}
-          </ThemedText>
-        ) : null}
-      </Pressable>
+          {item.notes ? (
+            <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.exerciseNotes}>
+              {item.notes}
+            </ThemedText>
+          ) : null}
+        </Pressable>
+      </Swipeable>
     );
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header Bar */}
       <View style={styles.header}>
         <ThemedText type="subtitle" style={styles.headerTitle}>
@@ -484,22 +556,20 @@ export default function ExercisesScreen() {
                 <View style={styles.dragHandle} />
               </View>
               <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={detailSwipe.close}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>Close</ThemedText>
-                </Pressable>
+                <View style={{ width: 30 }} />
+
                 <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
                   Exercise Details
                 </ThemedText>
+
                 <Pressable
                   onPress={() => {
                     if (selectedExercise) {
-                      handleDeleteExercise(selectedExercise.id, selectedExercise.name);
+                      handleStartEditExercise(selectedExercise);
                     }
                   }}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  <ThemedText type="link" style={{ color: '#FF3B30' }}>Delete</ThemedText>
+                  style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
+                  <SymbolView name="square.and.pencil" tintColor="#0A84FF" size={22} />
                 </Pressable>
               </View>
             </View>
@@ -610,10 +680,10 @@ export default function ExercisesScreen() {
                     <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
                   </Pressable>
                   <ThemedText type="smallBold" style={styles.modalTitle}>
-                    New Exercise
+                    {editingExerciseId !== null ? 'Edit Exercise' : 'New Exercise'}
                   </ThemedText>
                   <Pressable
-                    onPress={handleCreateExercise}
+                    onPress={editingExerciseId !== null ? handleUpdateExercise : handleCreateExercise}
                     disabled={isSubmitting}
                     style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
                     {isSubmitting ? (
@@ -843,6 +913,7 @@ export default function ExercisesScreen() {
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
+  </GestureHandlerRootView>
   );
 }
 
@@ -926,7 +997,6 @@ const styles = StyleSheet.create({
   exerciseCard: {
     padding: Spacing.three,
     borderRadius: 12, // Rounded iOS card style
-    marginBottom: Spacing.two,
     borderWidth: Platform.OS === 'web' ? 1 : 0,
     borderColor: 'rgba(0,0,0,0.05)',
   },
@@ -941,6 +1011,25 @@ const styles = StyleSheet.create({
   exerciseNotes: {
     marginTop: Spacing.one,
     fontSize: 14,
+  },
+  swipeContainer: {
+    marginBottom: Spacing.two,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  swipeActionContainer: {
+    width: 80,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteSwipeBtn: {
+    backgroundColor: '#FF3B30',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   // Modal Styles
   modalOverlay: {

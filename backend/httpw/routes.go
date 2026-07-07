@@ -24,6 +24,29 @@ func GetByID[T any](ctx *gin.Context, getter func(id int64) (T, error)) {
 	ctx.JSON(http.StatusOK, res)
 }
 
+func UpdateByID[T any](ctx *gin.Context, updater func(id int64, info *T) error) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
+		return
+	}
+
+	var m T
+	if err := ctx.ShouldBindJSON(&m); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = updater(id, &m)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
 func DeleteByID(ctx *gin.Context, deleter func(id int64) error) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

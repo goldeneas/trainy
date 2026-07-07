@@ -26,6 +26,7 @@ func EnableExerciseController(router *gin.Engine, exerciseService *service.Exerc
 		v1.POST("", c.CreateExercise)
 		v1.GET("", c.GetAllExercises)
 		v1.GET("/:id", c.GetExerciseByID)
+		v1.PUT("/:id", c.UpdateExerciseByID)
 		v1.DELETE("/:id", c.DeleteExerciseByID)
 
 		// PlannedExercise routes
@@ -85,6 +86,20 @@ func (c *ExerciseController) GetExerciseByID(ctx *gin.Context) {
 func (c *ExerciseController) DeleteExerciseByID(ctx *gin.Context) {
 	httpw.DeleteByID(ctx, func(id int64) error {
 		return c.service.DeleteExerciseByID(id)
+	})
+}
+
+func (c *ExerciseController) UpdateExerciseByID(ctx *gin.Context) {
+	httpw.UpdateByID(ctx, func(id int64, info *dto_request.UpdateExercise) error {
+		ex := model.Exercise{
+			Name:         info.Name,
+			Notes:        info.Notes,
+			Instructions: info.Instructions,
+			ImageID:      info.ImageID,
+			RepUnitID:    info.RepUnitID,
+		}
+
+		return c.service.UpdateExerciseByID(id, &ex, info.MuscleGroupIDs)
 	})
 }
 

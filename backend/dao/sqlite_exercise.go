@@ -136,6 +136,11 @@ func (d *SQLiteExerciseDAO) GetAllExerciseMuscleGroupIDs(dbtx sqlw.DBTX, exercis
 	}, `SELECT muscle_group_id FROM ExerciseMuscleGroup WHERE exercise_id = ?`, exerciseID)
 }
 
+func (d *SQLiteExerciseDAO) UpdateExerciseByID(dbtx sqlw.DBTX, id int64, info *model.Exercise) error {
+	_, err := dbtx.Exec(`UPDATE Exercise SET Name = ?, Notes = ?, Instructions = ?, ImageID = ?, RepUnitID = ? WHERE id = ?`, info.Name, info.Notes, info.Instructions, info.ImageID, info.RepUnitID, id)
+	return err
+}
+
 func (d *SQLiteExerciseDAO) DeleteExerciseByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM Exercise WHERE id = ?", id)
 	return err
@@ -153,6 +158,11 @@ func (d *SQLiteExerciseDAO) DeletePlannedSetInfoByID(dbtx sqlw.DBTX, id int64) e
 
 func (d *SQLiteExerciseDAO) DeleteExerciseMuscleGroupByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM ExerciseMuscleGroup WHERE id = ?", id)
+	return err
+}
+
+func (d *SQLiteExerciseDAO) DeleteExerciseMuscleGroupsByExerciseID(dbtx sqlw.DBTX, exerciseID int64) error {
+	_, err := dbtx.Exec("DELETE FROM ExerciseMuscleGroup WHERE exercise_id = ?", exerciseID)
 	return err
 }
 

@@ -23,8 +23,11 @@ type ExerciseDAO interface {
 	GetAllRepUnits(dbtx sqlw.DBTX) ([]model.RepUnit, error)
 	GetAllMuscleGroups(dbtx sqlw.DBTX) ([]model.MuscleGroup, error)
 
+	UpdateExerciseByID(dbtx sqlw.DBTX, id int64, info *model.Exercise) error
+
 	DeleteExerciseByID(dbtx sqlw.DBTX, id int64) error
 	DeletePlannedExerciseByID(dbtx sqlw.DBTX, id int64) error
 	DeletePlannedSetInfoByID(dbtx sqlw.DBTX, id int64) error
 	DeleteExerciseMuscleGroupByID(dbtx sqlw.DBTX, id int64) error
+	DeleteExerciseMuscleGroupsByExerciseID(dbtx sqlw.DBTX, exerciseID int64) error
 }

@@ -123,6 +123,15 @@ export interface CreateExerciseDto {
   muscle_group_ids?: number[] | null;
 }
 
+export interface UpdateExerciseDto {
+  name: string;
+  notes: string;
+  instructions: string;
+  image_id?: number | null;
+  rep_unit_id: number;
+  muscle_group_ids?: number[] | null;
+}
+
 export interface PlannedSetInfoCreate {
   ord: number;
   reps: number;
@@ -228,6 +237,11 @@ export const api = {
   deleteExercise: (id: number) => 
     request<{ message: string }>(`/v1/exercise/${id}`, {
       method: 'DELETE',
+    }),
+  updateExercise: (id: number, data: UpdateExerciseDto) =>
+    request<void>(`/v1/exercise/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
     }),
   getRepUnit: (id: number) => request<RepUnit>(`/v1/exercise/unit/${id}`),
   getRepUnits: () => request<RepUnit[]>('/v1/exercise/unit'),

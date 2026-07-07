@@ -710,44 +710,61 @@ export default function WorkoutsScreen() {
       minute: '2-digit',
     });
 
+    const renderSwipeActions = () => (
+      <View style={styles.swipeActionContainer}>
+        <Pressable
+          onPress={() => handleDeleteHistory(item.ID)}
+          style={({ pressed }) => [
+            styles.deleteSwipeBtn,
+            pressed && styles.pressed,
+          ]}>
+          <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+        </Pressable>
+      </View>
+    );
+
     return (
-      <Pressable
-        onPress={() => {
-          setSelectedHistory(item);
-          setIsHistoryDetailVisible(true);
-        }}
-        style={({ pressed }) => [
-          styles.card,
-          { backgroundColor: theme.backgroundElement },
-          pressed && styles.cardPressed,
-        ]}>
-        <View style={styles.cardHeader}>
-          <View>
-            <ThemedText type="smallBold" style={styles.cardTitle}>
-              {item.routineName}
-            </ThemedText>
+      <Swipeable
+        renderLeftActions={renderSwipeActions}
+        containerStyle={styles.swipeContainer}>
+        <Pressable
+          onPress={() => {
+            setSelectedHistory(item);
+            setIsHistoryDetailVisible(true);
+          }}
+          style={({ pressed }) => [
+            styles.card,
+            { backgroundColor: theme.backgroundElement, marginBottom: 0 },
+            pressed && styles.cardPressed,
+          ]}>
+          <View style={styles.cardHeader}>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="smallBold" style={styles.cardTitle}>
+                {item.routineName}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {formattedDate}
+              </ThemedText>
+            </View>
+            <SymbolView
+              tintColor={theme.textSecondary}
+              name="chevron.right"
+              size={14}
+            />
+          </View>
+          <View style={styles.cardFooter}>
+            <SymbolView
+              tintColor="#0A84FF"
+              name="checkmark.circle.fill"
+              size={14}
+              style={{ marginRight: Spacing.one }}
+            />
             <ThemedText type="small" themeColor="textSecondary">
-              {formattedDate}
+              Completed {item.actualSets.length} sets
             </ThemedText>
           </View>
-          <SymbolView
-            tintColor={theme.textSecondary}
-            name="chevron.right"
-            size={14}
-          />
-        </View>
-        <View style={styles.cardFooter}>
-          <SymbolView
-            tintColor="#0A84FF"
-            name="checkmark.circle.fill"
-            size={14}
-            style={{ marginRight: Spacing.one }}
-          />
-          <ThemedText type="small" themeColor="textSecondary">
-            Completed {item.actualSets.length} sets
-          </ThemedText>
-        </View>
-      </Pressable>
+        </Pressable>
+      </Swipeable>
     );
   };
 
@@ -997,21 +1014,21 @@ export default function WorkoutsScreen() {
                   <View style={styles.dragHandle} />
                 </View>
                 <View style={styles.modalHeader}>
-                  <Pressable
-                    onPress={() => {
-                      if (isAddExerciseToRoutineVisible) {
+                  {isAddExerciseToRoutineVisible ? (
+                    <Pressable
+                      onPress={() => {
                         setIsAddExerciseToRoutineVisible(false);
                         setDropdownSearchQuery('');
                         setSelectedExerciseId(null);
-                      } else {
-                        routineDetailSwipe.close();
-                      }
-                    }}
-                    style={styles.modalHeaderButton}>
-                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>
-                      {isAddExerciseToRoutineVisible ? 'Back' : 'Close'}
-                    </ThemedText>
-                  </Pressable>
+                      }}
+                      style={styles.modalHeaderButton}>
+                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>
+                        Back
+                      </ThemedText>
+                    </Pressable>
+                  ) : (
+                    <View style={{ minWidth: 60 }} />
+                  )}
                   <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
                     {isAddExerciseToRoutineVisible ? 'Add Exercise' : 'Workout Plan'}
                   </ThemedText>
@@ -1597,11 +1614,7 @@ export default function WorkoutsScreen() {
                       <View style={styles.dragHandle} />
                     </View>
                     <View style={styles.modalHeader}>
-                      <Pressable
-                        onPress={customTimerSwipe.close}
-                        style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                        <ThemedText type="link"  style={{ color: '#0A84FF' }}>Close</ThemedText>
-                      </Pressable>
+                      <View style={styles.modalHeaderButton} />
                       <ThemedText type="smallBold" style={styles.modalTitle}>
                         Clock & Timer
                       </ThemedText>
@@ -1852,19 +1865,13 @@ export default function WorkoutsScreen() {
                 <View style={styles.dragHandle} />
               </View>
               <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={historyDetailSwipe.close}
-                  style={styles.modalHeaderButton}>
-                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>Close</ThemedText>
-                </Pressable>
+                <View style={{ width: 30 }} />
+
                 <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
                   Workout Log Summary
                 </ThemedText>
-                <Pressable
-                  onPress={() => selectedHistory && handleDeleteHistory(selectedHistory.ID)}
-                  style={styles.modalHeaderButton}>
-                  <ThemedText type="link" style={{ color: '#FF3B30' }}>Delete</ThemedText>
-                </Pressable>
+
+                <View style={{ width: 30 }} />
               </View>
             </View>
 

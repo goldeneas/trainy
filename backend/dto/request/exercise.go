@@ -9,6 +9,15 @@ type CreateExercise struct {
 	MuscleGroupIDs []int64 `json:"muscle_group_ids"`
 }
 
+type UpdateExercise struct {
+	Name           string  `json:"name"`
+	Notes          string  `json:"notes"`
+	Instructions   string  `json:"instructions"`
+	ImageID        *int64  `json:"image_id"`
+	RepUnitID      int64   `json:"rep_unit_id"`
+	MuscleGroupIDs []int64 `json:"muscle_group_ids"`
+}
+
 type RegisterPlannedExercise struct {
 	RestTime        *int             `json:"rest_time"`
 	TimeUnitID      *int64           `json:"time_unit_id"`
