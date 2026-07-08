@@ -150,6 +150,24 @@ export default function GymsScreen() {
   const [editAltitude, setEditAltitude] = useState('');
   const [editLongitude, setEditLongitude] = useState('');
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredGymLocations = useMemo(() => {
+    if (!searchQuery.trim()) return gymLocations;
+    const q = searchQuery.toLowerCase().trim();
+    return gymLocations.filter((item) => {
+      const matchesName = item.Name.toLowerCase().includes(q);
+      const linkedEquipNames = locationEquipments
+        .filter((le) => le.GymLocationID === item.ID)
+        .map((le) => equipmentList.find((eq) => eq.ID === le.GymEquipmentID)?.Name || '')
+        .filter(Boolean);
+      const matchesEquipment = linkedEquipNames.some((name) =>
+        name.toLowerCase().includes(q)
+      );
+      return matchesName || matchesEquipment;
+    });
+  }, [gymLocations, searchQuery, locationEquipments, equipmentList]);
+
   const fetchData = async () => {
     try {
       const [locs, equips, links] = await Promise.all([
@@ -508,13 +526,53 @@ export default function GymsScreen() {
           </Pressable>
         </View>
 
-        {loading ? (
+        {/* Search Input */}
+        <View style={[styles.searchContainer, { backgroundColor: theme.backgroundElement }]}>
+          <SymbolView
+            tintColor={theme.textSecondary}
+            name="magnifyingglass"
+            size={16}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            placeholder="Search gyms or equipment..."
+            placeholderTextColor={theme.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={[styles.searchInput, { color: theme.text }]}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery('')} style={styles.clearSearch}>
+              <SymbolView
+                tintColor={theme.textSecondary}
+                name="xmark.circle.fill"
+                size={16}
+              />
+            </Pressable>
+          ) : null}
+        </View>
+
+        {loading && gymLocations.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#0A84FF" />
           </View>
+        ) : filteredGymLocations.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <SymbolView
+              tintColor={theme.textSecondary}
+              name={searchQuery ? "magnifyingglass" : "map.fill"}
+              size={48}
+              style={{ marginBottom: Spacing.two, opacity: 0.6 }}
+            />
+            <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
+              {searchQuery ? 'No gyms match your search' : 'No gym locations found in your area.'}
+            </ThemedText>
+          </View>
         ) : (
           <FlatList
-            data={gymLocations}
+            data={filteredGymLocations}
             keyExtractor={(item) => item.ID.toString()}
             renderItem={renderGymItem}
             contentContainerStyle={[
@@ -528,19 +586,6 @@ export default function GymsScreen() {
                 tintColor="#0A84FF"
                 colors={['#0A84FF']}
               />
-            }
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <SymbolView
-                  tintColor={theme.textSecondary}
-                  name="map"
-                  size={48}
-                  style={styles.emptyIcon}
-                />
-                <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
-                  No gym locations found in your area.
-                </ThemedText>
-              </View>
             }
           />
         )}
@@ -976,6 +1021,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing.three,
+    marginVertical: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    height: 38,
+    borderRadius: 10,
+  },
+  searchIcon: {
+    marginRight: Spacing.two,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    padding: 0,
+  },
+  clearSearch: {
+    padding: Spacing.one,
   },
   listContainer: {
     paddingHorizontal: Spacing.three,
