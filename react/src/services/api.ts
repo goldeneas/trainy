@@ -186,6 +186,37 @@ export interface FullActualRoutine extends ActualRoutine {
   actualSets: FullActualSetInfo[];
 }
 
+export interface GymLocation {
+  ID: number;
+  Name: string;
+  Altitude: number;
+  Longitude: number;
+  Rating: number | null;
+}
+
+export interface GymEquipment {
+  ID: number;
+  Name: string;
+}
+
+export interface GymLocationEquipment {
+  ID: number;
+  GymLocationID: number;
+  GymEquipmentID: number;
+}
+
+export interface CreateGymLocationDto {
+  name: string;
+  altitude: number;
+  longitude: number;
+  rating?: number | null;
+}
+
+export interface CreateGymLocationEquipmentDto {
+  gym_location_id: number;
+  gym_equipment_id: number;
+}
+
 // --- API METHODS ---
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -294,6 +325,36 @@ export const api = {
   getStatsTotalWorkouts: () => request<number>('/v1/stats/workouts'),
   getStatsMuscleDistribution: () => request<MuscleGroupDistribution[]>('/v1/stats/distribution/monthly'),
   getStatsWeeklyHours: () => request<WeeklyWorkoutHourDistribution[]>('/v1/stats/weekly/hours'),
+
+  // Gym & Equipment Endpoints
+  getGymLocations: () => request<GymLocation[]>('/v1/gym'),
+  getGymLocationById: (id: number) => request<GymLocation>(`/v1/gym/${id}`),
+  createGymLocation: (data: CreateGymLocationDto) =>
+    request<number>('/v1/gym', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateGymLocation: (id: number, data: CreateGymLocationDto) =>
+    request<void>(`/v1/gym/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteGymLocation: (id: number) =>
+    request<void>(`/v1/gym/${id}`, {
+      method: 'DELETE',
+    }),
+  getGymEquipment: () => request<GymEquipment[]>('/v1/equipment'),
+  getGymEquipmentById: (id: number) => request<GymEquipment>(`/v1/equipment/${id}`),
+  getGymLocationEquipments: () => request<GymLocationEquipment[]>('/v1/location_equipment'),
+  createGymLocationEquipment: (data: CreateGymLocationEquipmentDto) =>
+    request<number>('/v1/location_equipment', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  deleteGymLocationEquipment: (id: number) =>
+    request<void>(`/v1/location_equipment/${id}`, {
+      method: 'DELETE',
+    }),
 
   // Composite helpers for easier UI integration
   async getFullRoutine(routineId: number): Promise<FullRoutine> {

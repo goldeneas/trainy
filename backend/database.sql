@@ -5,6 +5,12 @@ CREATE TABLE IF NOT EXISTS Image (
     path TEXT
 );
 
+CREATE TABLE IF NOT EXISTS RepUnit (
+    id INTEGER PRIMARY KEY,
+    name_singular STRING NOT NULL,
+    name_plural STRING NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS GymLocation (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -17,7 +23,7 @@ CREATE TABLE IF NOT EXISTS GymLocation (
 
 CREATE TABLE IF NOT EXISTS GymEquipment (
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS GymLocationEquipment (
@@ -28,7 +34,7 @@ CREATE TABLE IF NOT EXISTS GymLocationEquipment (
     FOREIGN KEY (gym_location_id) REFERENCES GymLocation(id)
         ON DELETE CASCADE,
     FOREIGN KEY (gym_equipment_id) REFERENCES GymEquipment(id)
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS MuscleGroup (
@@ -79,12 +85,6 @@ CREATE TABLE IF NOT EXISTS PlannedExercise (
         ON DELETE CASCADE,
     FOREIGN KEY (time_unit_id) REFERENCES TimeUnit(id)
         ON DELETE RESTRICT
-);
-
-CREATE TABLE IF NOT EXISTS RepUnit (
-    id INTEGER PRIMARY KEY,
-    name_singular STRING NOT NULL,
-    name_plural STRING NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS PlannedSetInfo (

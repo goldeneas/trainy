@@ -28,6 +28,14 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="gyms">
+        <NativeTabs.Trigger.Label>Gyms</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf="map.fill"
+          md="map"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="stats">
         <NativeTabs.Trigger.Label>Stats</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
