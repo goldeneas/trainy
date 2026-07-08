@@ -1043,8 +1043,7 @@ export default function WorkoutsScreen() {
               </View>
 
               {selectedRoutine && (
-                <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
-                  <View style={{ flex: 1 }}>
+                <View style={{ flex: 1 }}>
                   {!isAddExerciseToRoutineVisible ? (
                     <ScrollView
                       style={styles.modalScrollBody}
@@ -1139,8 +1138,9 @@ export default function WorkoutsScreen() {
                       </View>
                     </ScrollView>
                   ) : (
-                    <ScrollView 
-                      style={styles.modalFormBody}
+                    <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                      <ScrollView 
+                        style={styles.modalFormBody}
                       contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
                       {/* Exercise Selector */}
                       <View style={styles.formGroup}>
@@ -1385,9 +1385,9 @@ export default function WorkoutsScreen() {
                         ))})()}
                       </View>
                     </ScrollView>
+                    </Pressable>
                   )}
                 </View>
-                </Pressable>
               )}
             </Animated.View>
           </View>

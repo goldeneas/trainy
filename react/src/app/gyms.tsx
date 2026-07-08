@@ -911,12 +911,17 @@ export default function GymsScreen() {
 
               {selectedGym && (
                 <ScrollView style={styles.modalScrollBody} contentContainerStyle={styles.modalScrollContent}>
-                  <ThemedText type="subtitle" style={styles.detailTitle}>
+                  <ThemedText
+                    type="subtitle"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.5}
+                    style={styles.detailTitle}>
                     {selectedGym.Name}
                   </ThemedText>
 
                   {/* Rating display (Interactive) */}
-                  <View style={[styles.detailSection, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <View style={[styles.detailSection, { flexDirection: 'row', alignItems: 'center', marginBottom: 20 }]}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={{ marginRight: 8 }}>
                       Rating:
                     </ThemedText>
@@ -940,25 +945,17 @@ export default function GymsScreen() {
                     </View>
                   </View>
 
-                  {/* Coordinates Info */}
+                  {/* Location Info */}
                   <View style={styles.detailSection}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.one }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.sectionLabel, { marginBottom: 0 }]}>
-                        Location Coordinates
+                        Location
                       </ThemedText>
                       <Pressable
                         onPress={handleOpenMap}
                         style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
                         <SymbolView tintColor="#0A84FF" name="arrow.up.right.square" size={20} />
                       </Pressable>
-                    </View>
-                    <View style={[styles.detailTextBox, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-                      <SymbolView tintColor="#0A84FF" name="location.fill" size={16} style={{ marginRight: 8 }} />
-                      <ThemedText style={{ fontSize: 15 }}>
-                        Latitude: {selectedGym.Altitude.toFixed(6)}
-                        {'\n'}
-                        Longitude: {selectedGym.Longitude.toFixed(6)}
-                      </ThemedText>
                     </View>
                   </View>
 
@@ -1255,10 +1252,9 @@ const styles = StyleSheet.create({
   detailTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.two,
   },
   detailSection: {
-    marginBottom: Spacing.four,
   },
   sectionLabel: {
     fontSize: 12,
