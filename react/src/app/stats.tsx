@@ -236,14 +236,8 @@ export default function StatsScreen() {
                 const chartGridWidth = containerWidth;
                 
                 const barWidth = 20;
-                const numBars = stackData.length;
-                const totalBarsWidth = numBars * barWidth;
                 
-                // available space for intermediate gaps between bars
-                const availableSpacingWidth = chartGridWidth - totalBarsWidth - (2 * sideMargin);
-                const spacing = numBars > 1 
-                  ? availableSpacingWidth / (numBars - 1) 
-                  : 30;
+                const spacing = 20; // Fixed spacing to align bars sequentially from the left
 
                 return (
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}>

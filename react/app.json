@@ -11,7 +11,8 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.goldeneas.trainy",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show nearby gyms and calculate distances."
       }
     },
     "android": {
@@ -37,7 +38,13 @@
           "imageWidth": 76
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-location",
+        {
+          "locationWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show nearby gyms and calculate distances."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
