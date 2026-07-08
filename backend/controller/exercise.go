@@ -22,30 +22,24 @@ func EnableExerciseController(router *gin.Engine, exerciseService *service.Exerc
 
 	v1 := router.Group("/v1/exercise")
 	{
-		// Exercise routes
 		v1.POST("", c.CreateExercise)
 		v1.GET("", c.GetAllExercises)
 		v1.GET("/:id", c.GetExerciseByID)
 		v1.PUT("/:id", c.UpdateExerciseByID)
 		v1.DELETE("/:id", c.DeleteExerciseByID)
 
-		// PlannedExercise routes
 		v1.POST("/instance", c.RegisterPlannedExercise)
 		v1.GET("/instance", c.GetAllPlannedExercises)
 		v1.GET("/instance/:id", c.GetPlannedExerciseByID)
 		v1.GET("/instance/:id/set_info", c.GetPlannedSetInfosByPlannedExerciseID)
 		v1.DELETE("/instance/:id", c.DeletePlannedExercise)
 
-		// RepUnit routes
 		v1.GET("/unit", c.GetAllRepUnits)
 		v1.GET("/unit/:id", c.GetRepUnitByID)
 
-		// MuscleGroup routes
 		v1.GET("/muscle", c.GetAllMuscleGroups)
 	}
 }
-
-// Exercise Handlers
 
 func (c *ExerciseController) CreateExercise(ctx *gin.Context) {
 	var m dto_request.CreateExercise
@@ -103,8 +97,6 @@ func (c *ExerciseController) UpdateExerciseByID(ctx *gin.Context) {
 	})
 }
 
-// PlannedExercise Handlers
-
 func (c *ExerciseController) RegisterPlannedExercise(ctx *gin.Context) {
 	var m dto_request.RegisterPlannedExercise
 	if err := ctx.ShouldBindJSON(&m); err != nil {
@@ -161,8 +153,6 @@ func (c *ExerciseController) GetPlannedSetInfosByPlannedExerciseID(ctx *gin.Cont
 		return c.service.GetAllSetInfoByPlannedExerciseID(id)
 	})
 }
-
-// Unit routes
 
 func (c *ExerciseController) GetRepUnitByID(ctx *gin.Context) {
 	httpw.GetByID(ctx, func(id int64) (*model.RepUnit, error) {

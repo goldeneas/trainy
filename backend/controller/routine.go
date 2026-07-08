@@ -21,13 +21,11 @@ func EnableRoutineController(router *gin.Engine, routineService *service.Routine
 
 	v1 := router.Group("/v1/routine")
 	{
-		// Routine routes
 		v1.POST("", c.CreateRoutine)
 		v1.GET("", c.GetAllRoutines)
 		v1.GET("/:id", c.GetRoutineByID)
 		v1.DELETE("/:id", c.DeleteRoutineByID)
 
-		// ActualRoutine routes
 		v1.POST("/instance", c.RegisterActualRoutine)
 		v1.GET("/instance", c.GetAllActualRoutines)
 		v1.GET("/instance/:id", c.GetActualRoutineByID)
@@ -35,8 +33,6 @@ func EnableRoutineController(router *gin.Engine, routineService *service.Routine
 		v1.DELETE("/instance/:id", c.DeleteActualRoutineByID)
 	}
 }
-
-// Routine Handlers
 
 func (c *RoutineController) CreateRoutine(ctx *gin.Context) {
 	var request dto_request.CreateRoutine
@@ -77,8 +73,6 @@ func (c *RoutineController) DeleteRoutineByID(ctx *gin.Context) {
 		return c.service.DeleteRoutineByID(id)
 	})
 }
-
-// ActualRoutine Handlers
 
 func (c *RoutineController) RegisterActualRoutine(ctx *gin.Context) {
 	var request dto_request.RegisterActualRoutine

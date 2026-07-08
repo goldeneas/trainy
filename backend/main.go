@@ -32,16 +32,20 @@ func main() {
 	exerciseDAO := dao.NewSQLiteExerciseDAO()
 	routineDAO := dao.NewSQLiteRoutineDAO()
 	statsDAO := dao.NewSQLiteStatsDAO()
+	gymDAO := dao.NewSQLiteGymDAO()
 
 	exerciseService := service.NewExerciseService(db, exerciseDAO)
 	routineService := service.NewRoutineService(db, routineDAO)
 	statsService := service.NewStatsService(db, statsDAO)
+	gymService := service.NewGymService(db, gymDAO)
 
 	r := gin.Default()
 
 	controller.EnableExerciseController(r, exerciseService)
 	controller.EnableRoutineController(r, routineService)
 	controller.EnableStatsController(r, statsService)
+	controller.EnableGymController(r, gymService)
 
 	r.Run()
 }
+

@@ -2026,7 +2026,7 @@ export default function WorkoutsScreen() {
                       ]}
                     />
                     <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two, lineHeight: 18 }}>
-                      Change the connection address of the backend service. Default is http://localhost:8080.
+                      Change the connection address of the backend service.
                     </ThemedText>
                   </View>
                 </ScrollView>
