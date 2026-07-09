@@ -56,6 +56,22 @@ CREATE TABLE IF NOT EXISTS Exercise (
         ON DELETE RESTRICT
 );
 
+CREATE TABLE IF NOT EXISTS ExerciseProgression (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ExerciseProgressionEntry (
+    id INTEGER PRIMARY KEY,
+    exercise_id INTEGER NOT NULL,
+    exercise_progression_id INTEGER NOT NULL,
+
+    FOREIGN KEY (exercise_id) REFERENCES Exercise(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (exercise_progression_id) REFERENCES ExerciseProgression(id)
+        ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS ExerciseMuscleGroup (
     id INTEGER PRIMARY KEY,
     exercise_id INTEGER,
@@ -132,6 +148,8 @@ CREATE TABLE IF NOT EXISTS ActualSetInfo (
     FOREIGN KEY (set_info_id) REFERENCES PlannedSetInfo(id)
         ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS 
 
 INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES 
     (1, 'Chest'),
