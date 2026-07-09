@@ -227,8 +227,8 @@ export default function GymsScreen() {
       Alert.alert('Error', 'Please enter a name.');
       return;
     }
-    const altNum = parseFloat(altitude);
-    const lonNum = parseFloat(longitude);
+    const altNum = parseFloat(altitude.replace(',', '.'));
+    const lonNum = parseFloat(longitude.replace(',', '.'));
     if (isNaN(altNum) || isNaN(lonNum)) {
       Alert.alert('Error', 'Please enter valid coordinate numbers.');
       return;
@@ -375,8 +375,8 @@ export default function GymsScreen() {
       Alert.alert('Error', 'Please enter a name.');
       return;
     }
-    const altNum = parseFloat(editAltitude);
-    const lonNum = parseFloat(editLongitude);
+    const altNum = parseFloat(editAltitude.replace(',', '.'));
+    const lonNum = parseFloat(editLongitude.replace(',', '.'));
     if (isNaN(altNum) || isNaN(lonNum)) {
       Alert.alert('Error', 'Please enter valid coordinate numbers.');
       return;
@@ -657,14 +657,14 @@ export default function GymsScreen() {
                   <View style={styles.coordRowInputs}>
                     <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two }]}>
                       <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                        Latitude / Altitude
+                        Latitude
                       </ThemedText>
                       <TextInput
                         value={altitude}
                         onChangeText={setAltitude}
                         placeholder="e.g. 45.4642"
                         placeholderTextColor={theme.textSecondary}
-                        keyboardType="numeric"
+                        keyboardType="decimal-pad"
                         style={[
                           styles.textInput,
                           {
@@ -685,7 +685,7 @@ export default function GymsScreen() {
                         onChangeText={setLongitude}
                         placeholder="e.g. 9.1900"
                         placeholderTextColor={theme.textSecondary}
-                        keyboardType="numeric"
+                        keyboardType="decimal-pad"
                         style={[
                           styles.textInput,
                           {
@@ -785,7 +785,7 @@ export default function GymsScreen() {
                             onChangeText={setEditAltitude}
                             placeholder="Latitude"
                             placeholderTextColor={theme.textSecondary}
-                            keyboardType="numeric"
+                            keyboardType="decimal-pad"
                             style={[
                               styles.textInput,
                               {
@@ -806,7 +806,7 @@ export default function GymsScreen() {
                             onChangeText={setEditLongitude}
                             placeholder="Longitude"
                             placeholderTextColor={theme.textSecondary}
-                            keyboardType="numeric"
+                            keyboardType="decimal-pad"
                             style={[
                               styles.textInput,
                               {
