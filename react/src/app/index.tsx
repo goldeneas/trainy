@@ -11,7 +11,6 @@ import {
   Platform,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -24,6 +23,7 @@ import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler'
 import { useFocusEffect } from 'expo-router';
 import { useAudioPlayer } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
+import * as Haptics from 'expo-haptics';
 import Svg, { Circle } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
@@ -292,6 +292,10 @@ export default function WorkoutsScreen() {
   }, [isWorkoutActive, workoutStartTime]);
 
   const triggerRestTimerEndEffects = useCallback(() => {
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
+
     try {
       Vibration.vibrate([0, 500, 100, 500]);
     } catch {}
@@ -770,7 +774,7 @@ export default function WorkoutsScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
       {/* Header with Segmented Control */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -2035,7 +2039,7 @@ export default function WorkoutsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+    </View>
     </GestureHandlerRootView>
   );
 }

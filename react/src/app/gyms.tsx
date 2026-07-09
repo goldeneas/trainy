@@ -11,11 +11,11 @@ import {
   Platform,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
+  InteractionManager,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import * as Location from 'expo-location';
@@ -128,6 +128,14 @@ export default function GymsScreen() {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isTransitionReady, setIsTransitionReady] = useState(false);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setIsTransitionReady(true);
+    });
+    return () => task.cancel();
+  }, []);
 
   // Modals visibility
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -153,20 +161,32 @@ export default function GymsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredGymLocations = useMemo(() => {
-    if (!searchQuery.trim()) return gymLocations;
-    const q = searchQuery.toLowerCase().trim();
-    return gymLocations.filter((item) => {
-      const matchesName = item.Name.toLowerCase().includes(q);
-      const linkedEquipNames = locationEquipments
-        .filter((le) => le.GymLocationID === item.ID)
-        .map((le) => equipmentList.find((eq) => eq.ID === le.GymEquipmentID)?.Name || '')
-        .filter(Boolean);
-      const matchesEquipment = linkedEquipNames.some((name) =>
-        name.toLowerCase().includes(q)
-      );
-      return matchesName || matchesEquipment;
-    });
-  }, [gymLocations, searchQuery, locationEquipments, equipmentList]);
+    let result = gymLocations;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = gymLocations.filter((item) => {
+        const matchesName = item.Name.toLowerCase().includes(q);
+        const linkedEquipNames = locationEquipments
+          .filter((le) => le.GymLocationID === item.ID)
+          .map((le) => equipmentList.find((eq) => eq.ID === le.GymEquipmentID)?.Name || '')
+          .filter(Boolean);
+        const matchesEquipment = linkedEquipNames.some((name) =>
+          name.toLowerCase().includes(q)
+        );
+        return matchesName || matchesEquipment;
+      });
+    }
+
+    if (userLocation) {
+      return [...result].sort((a, b) => {
+        const distA = calculateDistance(userLocation.latitude, userLocation.longitude, a.Altitude, a.Longitude);
+        const distB = calculateDistance(userLocation.latitude, userLocation.longitude, b.Altitude, b.Longitude);
+        return distA - distB;
+      });
+    }
+
+    return result;
+  }, [gymLocations, searchQuery, locationEquipments, equipmentList, userLocation]);
 
   const fetchData = async () => {
     try {
@@ -271,8 +291,8 @@ export default function GymsScreen() {
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-        setAltitude(loc.coords.latitude.toString());
-        setLongitude(loc.coords.longitude.toString());
+        setAltitude(loc.coords.latitude.toString().replace('.', ','));
+        setLongitude(loc.coords.longitude.toString().replace('.', ','));
       }
     } catch (err) {
       console.warn('Failed to autodetect position on add modal open:', err);
@@ -364,8 +384,8 @@ export default function GymsScreen() {
   const handleOpenConfigureGym = (gym: GymLocation) => {
     setSelectedGym(gym);
     setEditName(gym.Name);
-    setEditAltitude(gym.Altitude.toString());
-    setEditLongitude(gym.Longitude.toString());
+    setEditAltitude(gym.Altitude.toString().replace('.', ','));
+    setEditLongitude(gym.Longitude.toString().replace('.', ','));
     setIsDefineEquipModalVisible(true);
   };
 
@@ -408,8 +428,8 @@ export default function GymsScreen() {
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      setEditAltitude(loc.coords.latitude.toString());
-      setEditLongitude(loc.coords.longitude.toString());
+      setEditAltitude(loc.coords.latitude.toString().replace('.', ','));
+      setEditLongitude(loc.coords.longitude.toString().replace('.', ','));
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to detect location');
     } finally {
@@ -458,7 +478,7 @@ export default function GymsScreen() {
                       )
                     )
                   ) : (
-                    `${item.Altitude.toFixed(4)}, ${item.Longitude.toFixed(4)}`
+                    `${item.Altitude.toFixed(4).replace('.', ',')}, ${item.Longitude.toFixed(4).replace('.', ',')}`
                   )}
                 </ThemedText>
               </View>
@@ -512,12 +532,12 @@ export default function GymsScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
         
         {/* Header Bar */}
         <View style={styles.header}>
           <ThemedText type="subtitle" style={styles.headerTitle}>
-            Gym Locations
+            Gyms
           </ThemedText>
           <Pressable
             onPress={handleOpenAddModal}
@@ -554,7 +574,7 @@ export default function GymsScreen() {
           ) : null}
         </View>
 
-        {loading && gymLocations.length === 0 ? (
+        {!isTransitionReady || (loading && gymLocations.length === 0) ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#0A84FF" />
           </View>
@@ -991,7 +1011,7 @@ export default function GymsScreen() {
             </Animated.View>
           </View>
         </Modal>
-      </SafeAreaView>
+      </View>
     </GestureHandlerRootView>
   );
 }
@@ -1004,12 +1024,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.two,
   },
   headerTitle: {
-    fontSize: 28,
     fontWeight: 'bold',
+    fontSize: 34,
   },
   addButton: {
     padding: Spacing.one,

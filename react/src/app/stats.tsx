@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  InteractionManager,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
@@ -37,6 +37,14 @@ export default function StatsScreen() {
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isTransitionReady, setIsTransitionReady] = useState(false);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setIsTransitionReady(true);
+    });
+    return () => task.cancel();
+  }, []);
 
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -108,14 +116,14 @@ export default function StatsScreen() {
   }, [muscleDistribution]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
       <View style={styles.header}>
         <ThemedText type="subtitle" style={styles.headerTitle}>
           Stats
         </ThemedText>
       </View>
 
-      {loading ? (
+      {!isTransitionReady || loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#0A84FF" />
         </View>
@@ -330,7 +338,7 @@ export default function StatsScreen() {
           </ThemedView>
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

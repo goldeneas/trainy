@@ -11,11 +11,11 @@ import {
   Platform,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
+  InteractionManager,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
@@ -122,6 +122,14 @@ export default function ExercisesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isTransitionReady, setIsTransitionReady] = useState(false);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setIsTransitionReady(true);
+    });
+    return () => task.cancel();
+  }, []);
 
   // Modals state
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -463,7 +471,7 @@ export default function ExercisesScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
       {/* Header Bar */}
       <View style={styles.header}>
         <ThemedText type="subtitle" style={styles.headerTitle}>
@@ -524,7 +532,7 @@ export default function ExercisesScreen() {
       </View>
 
       {/* Main Content */}
-      {loading && exercises.length === 0 ? (
+      {!isTransitionReady || (loading && exercises.length === 0) ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#0A84FF" />
         </View>
@@ -926,7 +934,7 @@ export default function ExercisesScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+    </View>
   </GestureHandlerRootView>
   );
 }
