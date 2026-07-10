@@ -217,6 +217,19 @@ export interface CreateGymLocationEquipmentDto {
   gym_equipment_id: number;
 }
 
+export interface ExerciseProgression {
+  id: number;
+  name: string;
+  notes: string | null;
+  entry_ids: number[];
+}
+
+export interface ExerciseProgressionEntry {
+  ID: number;
+  ExerciseID: number;
+  ExerciseProgressionID: number;
+}
+
 // --- API METHODS ---
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -353,6 +366,33 @@ export const api = {
     }),
   deleteGymLocationEquipment: (id: number) =>
     request<void>(`/v1/location_equipment/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Exercise Progression Endpoints
+  getExerciseProgressions: () => request<ExerciseProgression[]>('/v1/progression'),
+  getExerciseProgressionEntries: () => request<ExerciseProgressionEntry[]>('/v1/progression_entry'),
+  createExerciseProgression: (data: { name: string; notes: string }) =>
+    request<number>('/v1/progression', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateExerciseProgression: (id: number, data: { name: string; notes: string }) =>
+    request<void>(`/v1/progression/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteExerciseProgression: (id: number) =>
+    request<void>(`/v1/progression/${id}`, {
+      method: 'DELETE',
+    }),
+  createExerciseProgressionEntry: (data: { exercise_id: number, exercise_progression_id: number }) =>
+    request<number>('/v1/progression_entry', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  deleteExerciseProgressionEntry: (id: number) =>
+    request<void>(`/v1/progression_entry/${id}`, {
       method: 'DELETE',
     }),
 

@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS Exercise (
 
 CREATE TABLE IF NOT EXISTS ExerciseProgression (
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL
+    name TEXT NOT NULL,
+    notes TEXT
 );
 
 CREATE TABLE IF NOT EXISTS ExerciseProgressionEntry (
@@ -148,8 +149,6 @@ CREATE TABLE IF NOT EXISTS ActualSetInfo (
     FOREIGN KEY (set_info_id) REFERENCES PlannedSetInfo(id)
         ON DELETE CASCADE
 );
-
-CREATE TABLE IF NOT EXISTS 
 
 INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES 
     (1, 'Chest'),

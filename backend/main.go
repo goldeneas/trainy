@@ -33,11 +33,13 @@ func main() {
 	routineDAO := dao.NewSQLiteRoutineDAO()
 	statsDAO := dao.NewSQLiteStatsDAO()
 	gymDAO := dao.NewSQLiteGymDAO()
+	progressionDAO := dao.NewSQLiteProgressionDAO()
 
 	exerciseService := service.NewExerciseService(db, exerciseDAO)
 	routineService := service.NewRoutineService(db, routineDAO)
 	statsService := service.NewStatsService(db, statsDAO)
 	gymService := service.NewGymService(db, gymDAO)
+	progressionService := service.NewProgressionService(db, progressionDAO)
 
 	r := gin.Default()
 
@@ -45,6 +47,7 @@ func main() {
 	controller.EnableRoutineController(r, routineService)
 	controller.EnableStatsController(r, statsService)
 	controller.EnableGymController(r, gymService)
+	controller.EnableProgressionController(r, progressionService)
 
 	r.Run()
 }

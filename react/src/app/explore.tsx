@@ -26,7 +26,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { api, Exercise, MuscleGroup, RepUnit } from '@/services/api';
+import { api, Exercise, MuscleGroup, RepUnit, ExerciseProgression, ExerciseProgressionEntry } from '@/services/api';
 
 
 function parseCSVLine(line: string): string[] {
@@ -124,6 +124,25 @@ export default function ExercisesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isTransitionReady, setIsTransitionReady] = useState(false);
 
+  const [progressions, setProgressions] = useState<ExerciseProgression[]>([]);
+  const [progressionEntries, setProgressionEntries] = useState<ExerciseProgressionEntry[]>([]);
+  const [activeSegment, setActiveSegment] = useState<'library' | 'progressions'>('library');
+  const [expandedProgIds, setExpandedProgIds] = useState<number[]>([]);
+
+  // Add progression states
+  const [newProgName, setNewProgName] = useState('');
+  const [newProgNotes, setNewProgNotes] = useState('');
+  const [isAddProgModalVisible, setIsAddProgModalVisible] = useState(false);
+
+  // Edit progression states
+  const [isEditProgModalVisible, setIsEditProgModalVisible] = useState(false);
+  const [editingProgName, setEditingProgName] = useState('');
+  const [editingProgNotes, setEditingProgNotes] = useState('');
+  const [selectedProgression, setSelectedProgression] = useState<ExerciseProgression | null>(null);
+  const [progSearchQuery, setProgSearchQuery] = useState('');
+  const [isProgSearchFocused, setIsProgSearchFocused] = useState(false);
+  const [localExerciseIds, setLocalExerciseIds] = useState<number[]>([]);
+
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
       setIsTransitionReady(true);
@@ -168,26 +187,198 @@ export default function ExercisesScreen() {
     setCsvInput('');
     setIsImportModalVisible(false);
   });
+  const addProgSwipe = useBottomSheet(isAddProgModalVisible, () => {
+    setIsAddProgModalVisible(false);
+    setNewProgName('');
+    setNewProgNotes('');
+  });
+  const editProgSwipe = useBottomSheet(isEditProgModalVisible, () => {
+    setIsEditProgModalVisible(false);
+    setSelectedProgression(null);
+    setEditingProgName('');
+    setEditingProgNotes('');
+    setProgSearchQuery('');
+    setIsProgSearchFocused(false);
+    setLocalExerciseIds([]);
+  });
 
   // Fetch exercises
   const fetchExercises = useCallback(async (showLoadingIndicator = false) => {
     if (showLoadingIndicator) setLoading(true);
     try {
       await api.initializeApi();
-      const [exsData, unitsData, musclesData] = await Promise.all([
+      const [exsData, unitsData, musclesData, progressionsData, entriesData] = await Promise.all([
         api.getExercises(),
         api.getRepUnits().catch(() => [] as RepUnit[]),
         api.getMuscleGroups().catch(() => [] as MuscleGroup[]),
+        api.getExerciseProgressions().catch(() => [] as ExerciseProgression[]),
+        api.getExerciseProgressionEntries().catch(() => [] as ExerciseProgressionEntry[]),
       ]);
       setExercises(exsData || []);
       if (unitsData && unitsData.length > 0) setRepUnits(unitsData);
       if (musclesData && musclesData.length > 0) setMuscleGroups(musclesData);
+      setProgressions(progressionsData || []);
+      setProgressionEntries(entriesData || []);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to load exercises');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
+  }, []);
+
+  const getProgressionExercises = useCallback((prog: ExerciseProgression) => {
+    return prog.entry_ids.map((entryId) => {
+      const entry = progressionEntries.find((e) => e.ID === entryId);
+      if (!entry) return null;
+      return exercises.find((e) => e.id === entry.ExerciseID);
+    }).filter((e): e is Exercise => !!e);
+  }, [progressionEntries, exercises]);
+
+  const filteredProgressions = useMemo(() => {
+    if (!searchQuery.trim()) return progressions;
+    const query = searchQuery.toLowerCase();
+    return progressions.filter((prog) => {
+      if (prog.name.toLowerCase().includes(query)) return true;
+      const progExs = getProgressionExercises(prog);
+      return progExs.some((ex) => ex.name.toLowerCase().includes(query));
+    });
+  }, [progressions, searchQuery, getProgressionExercises]);
+
+
+  const exercisesNotInProg = useMemo(() => {
+    return exercises.filter((ex) => !localExerciseIds.includes(ex.id));
+  }, [localExerciseIds, exercises]);
+
+  const localExercises = useMemo(() => {
+    return localExerciseIds.map((id) => exercises.find((ex) => ex.id === id)).filter((ex): ex is Exercise => !!ex);
+  }, [localExerciseIds, exercises]);
+
+  const searchedExercisesNotInProg = useMemo(() => {
+    if (!progSearchQuery.trim()) return [];
+    const query = progSearchQuery.toLowerCase();
+    return exercisesNotInProg.filter((ex) =>
+      ex.name.toLowerCase().includes(query)
+    );
+  }, [exercisesNotInProg, progSearchQuery]);
+
+  const toggleExpand = useCallback((id: number) => {
+    setExpandedProgIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }, []);
+
+  const handleStartEditProgression = useCallback((prog: ExerciseProgression) => {
+    setSelectedProgression(prog);
+    setEditingProgName(prog.name);
+    setEditingProgNotes(prog.notes || '');
+    
+    // Map initial entry IDs to exercise IDs in sequence order
+    const initialExIds = prog.entry_ids.map((entryId) => {
+      const entry = progressionEntries.find((e) => e.ID === entryId);
+      return entry ? entry.ExerciseID : null;
+    }).filter((id): id is number => id !== null);
+
+    setLocalExerciseIds(initialExIds);
+    setIsEditProgModalVisible(true);
+  }, [progressionEntries]);
+
+  const handleCreateProgression = useCallback(async () => {
+    if (!newProgName.trim()) {
+      Alert.alert('Error', 'Please enter a name.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await api.createExerciseProgression({ name: newProgName.trim(), notes: newProgNotes.trim() });
+      await fetchExercises();
+      addProgSwipe.close();
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to create progression');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [newProgName, newProgNotes, fetchExercises, addProgSwipe]);
+
+  const handleSaveProgressionEdits = useCallback(async () => {
+    if (!selectedProgression) return;
+    if (!editingProgName.trim()) {
+      Alert.alert('Error', 'Please enter a name.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // 1. Update progression name and notes
+      await api.updateExerciseProgression(selectedProgression.id, {
+        name: editingProgName.trim(),
+        notes: editingProgNotes.trim(),
+      });
+
+      // 2. Synchronize progression entries:
+      const currentEntries = progressionEntries.filter(
+        (e) => e.ExerciseProgressionID === selectedProgression.id
+      );
+
+      // Find entries that are in currentEntries but NOT in localExerciseIds (to delete)
+      const entriesToDelete = currentEntries.filter(
+        (entry) => !localExerciseIds.includes(entry.ExerciseID)
+      );
+
+      // Find exercise IDs in localExerciseIds that are NOT in currentEntries (to create)
+      const idsToCreate = localExerciseIds.filter(
+        (id) => !currentEntries.some((entry) => entry.ExerciseID === id)
+      );
+
+      // Perform deletions and creations in parallel
+      await Promise.all([
+        ...entriesToDelete.map((entry) => api.deleteExerciseProgressionEntry(entry.ID)),
+        ...idsToCreate.map((id) =>
+          api.createExerciseProgressionEntry({
+            exercise_id: id,
+            exercise_progression_id: selectedProgression.id,
+          })
+        ),
+      ]);
+
+      await fetchExercises();
+      editProgSwipe.close();
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to save changes');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [selectedProgression, editingProgName, editingProgNotes, localExerciseIds, progressionEntries, fetchExercises, editProgSwipe]);
+
+  const handleDeleteProgressionConfirm = useCallback((prog: ExerciseProgression) => {
+    Alert.alert(
+      'Delete Progression',
+      `Are you sure you want to delete "${prog.name}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.deleteExerciseProgression(prog.id);
+              await fetchExercises();
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to delete progression');
+            }
+          }
+        }
+      ]
+    );
+  }, [fetchExercises]);
+
+  const handleAddLocalExercise = useCallback((exerciseId: number) => {
+    setLocalExerciseIds((prev) => [...prev, exerciseId]);
+    setProgSearchQuery('');
+  }, []);
+
+  const handleRemoveLocalExercise = useCallback((exerciseId: number) => {
+    setLocalExerciseIds((prev) => prev.filter((id) => id !== exerciseId));
   }, []);
 
   useFocusEffect(
@@ -469,6 +660,130 @@ export default function ExercisesScreen() {
     );
   };
 
+  const renderProgressionSwipeActions = (prog: ExerciseProgression) => (
+    <View style={styles.swipeActionContainer}>
+      <Pressable
+        onPress={() => handleDeleteProgressionConfirm(prog)}
+        style={({ pressed }) => [
+          styles.deleteSwipeBtn,
+          pressed && styles.pressed,
+        ]}>
+        <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+      </Pressable>
+    </View>
+  );
+
+  const renderProgressionItem = ({ item }: { item: ExerciseProgression }) => {
+    const cardBg = theme.backgroundElement;
+    const progExercises = getProgressionExercises(item);
+    const isExpanded = expandedProgIds.includes(item.id);
+
+    return (
+      <Swipeable
+        renderLeftActions={() => renderProgressionSwipeActions(item)}
+        containerStyle={styles.swipeContainer}>
+        <View style={[styles.card, { backgroundColor: cardBg, marginBottom: 0 }]}>
+          <View style={styles.cardHeader}>
+            <Pressable
+              onPress={() => toggleExpand(item.id)}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1, marginRight: Spacing.two }}>
+                <ThemedText type="smallBold" style={styles.cardTitle}>
+                  {item.name}
+                </ThemedText>
+                {item.notes ? (
+                  <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2, marginBottom: 4 }} numberOfLines={2}>
+                    {item.notes}
+                  </ThemedText>
+                ) : null}
+                <ThemedText type="small" themeColor="textSecondary" style={styles.cardSubtitle}>
+                  {progExercises.length} {progExercises.length === 1 ? 'Level' : 'Levels'} Progression
+                </ThemedText>
+              </View>
+            </Pressable>
+            <View style={styles.cardActions}>
+              <Pressable
+                onPress={() => handleStartEditProgression(item)}
+                style={({ pressed }) => [
+                  styles.cardActionBtn,
+                  pressed && styles.pressed,
+                ]}>
+                <SymbolView 
+                  tintColor="#8E8E93" 
+                  name="slider.horizontal.3" 
+                  size={22} 
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => toggleExpand(item.id)}
+                style={({ pressed }) => [
+                  styles.cardActionCircleBtn,
+                  pressed && styles.pressed,
+                ]}>
+                <SymbolView
+                  tintColor="#0A84FF"
+                  name={isExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill"}
+                  size={28}
+                />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* List of progression steps */}
+          {isExpanded && (
+            <View style={styles.progressionStepsContainer}>
+              {progExercises.map((ex, index) => {
+                const isLast = index === progExercises.length - 1;
+                const muscleNames = ex.muscle_group_ids
+                  ? ex.muscle_group_ids.map(id => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ')
+                  : '';
+
+                return (
+                  <Pressable
+                    key={ex.id}
+                    onPress={() => {
+                      setSelectedExercise(ex);
+                      setIsDetailModalVisible(true);
+                    }}
+                    style={({ pressed }) => [
+                      styles.progressionStepRow,
+                      pressed && styles.pressed
+                    ]}>
+                    
+                    {/* Step indicator (circle with number and vertical connecting line) */}
+                    <View style={{ alignItems: 'center', marginRight: Spacing.three, alignSelf: 'stretch' }}>
+                      <View style={[styles.stepCircle, { backgroundColor: theme.backgroundSelected }]}>
+                        <ThemedText type="smallBold" style={styles.stepCircleText}>
+                          {index + 1}
+                        </ThemedText>
+                      </View>
+                      {!isLast && <View style={[styles.stepLine, { backgroundColor: theme.textSecondary, opacity: 0.2 }]} />}
+                    </View>
+
+                    {/* Step content */}
+                    <View style={styles.stepContentCol}>
+                      <ThemedText type="default" style={styles.stepExerciseName}>
+                        {ex.name}
+                      </ThemedText>
+                      {muscleNames ? (
+                        <ThemedText type="small" themeColor="textSecondary" style={styles.stepMuscleText}>
+                          {muscleNames}
+                        </ThemedText>
+                      ) : null}
+                    </View>
+
+                    {/* Chevron icon indicator */}
+                    <SymbolView tintColor={theme.textSecondary} name="chevron.right" size={14} style={{ opacity: 0.6 }} />
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </View>
+      </Swipeable>
+    );
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
@@ -478,27 +793,79 @@ export default function ExercisesScreen() {
           Exercises
         </ThemedText>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+          {activeSegment === 'library' ? (
+            <>
+              <Pressable
+                onPress={() => {
+                  setIsImportModalVisible(true);
+                }}
+                style={({ pressed }) => [styles.importButton, styles.addButton, pressed && styles.pressed]}>
+                <SymbolView
+                  tintColor={theme.textSecondary}
+                  name="square.and.arrow.up.fill"
+                  size={28}
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setIsAddModalVisible(true);
+                }}
+                style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+                <SymbolView
+                  tintColor="#0A84FF" // Apple active blue
+                  name="plus.circle.fill"
+                  size={28}
+                />
+              </Pressable>
+            </>
+          ) : (
+            <Pressable
+              onPress={() => {
+                setIsAddProgModalVisible(true);
+              }}
+              style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+              <SymbolView
+                tintColor="#0A84FF" // Apple active blue
+                name="plus.circle.fill"
+                size={28}
+              />
+            </Pressable>
+          )}
+        </View>
+      </View>
+
+      {/* Custom iOS-style Segmented Control */}
+      <View style={{ paddingHorizontal: Spacing.three, marginBottom: Spacing.two }}>
+        <View style={[styles.segmentedControl, { backgroundColor: theme.backgroundSelected }]}>
           <Pressable
-            onPress={() => {
-              setIsImportModalVisible(true);
-            }}
-            style={({ pressed }) => [styles.importButton, styles.addButton, pressed && styles.pressed]}>
-            <SymbolView
-              tintColor={theme.textSecondary}
-              name="square.and.arrow.up.fill"
-              size={28}
-            />
+            onPress={() => setActiveSegment('library')}
+            style={[
+              styles.segment,
+              activeSegment === 'library' && [
+                styles.segmentActive,
+                { backgroundColor: theme.backgroundElement },
+              ],
+            ]}>
+            <ThemedText
+              type={activeSegment === 'library' ? 'smallBold' : 'small'}
+              themeColor={activeSegment === 'library' ? 'text' : 'textSecondary'}>
+              Library
+            </ThemedText>
           </Pressable>
           <Pressable
-            onPress={() => {
-              setIsAddModalVisible(true);
-            }}
-            style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-            <SymbolView
-              tintColor="#0A84FF" // Apple active blue
-              name="plus.circle.fill"
-              size={28}
-            />
+            onPress={() => setActiveSegment('progressions')}
+            style={[
+              styles.segment,
+              activeSegment === 'progressions' && [
+                styles.segmentActive,
+                { backgroundColor: theme.backgroundElement },
+              ],
+            ]}>
+            <ThemedText
+              type={activeSegment === 'progressions' ? 'smallBold' : 'small'}
+              themeColor={activeSegment === 'progressions' ? 'text' : 'textSecondary'}>
+              Progressions
+            </ThemedText>
           </Pressable>
         </View>
       </View>
@@ -512,7 +879,7 @@ export default function ExercisesScreen() {
           style={styles.searchIcon}
         />
         <TextInput
-          placeholder="Search exercises..."
+          placeholder={activeSegment === 'library' ? "Search exercises..." : "Search progressions..."}
           placeholderTextColor={theme.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -536,37 +903,399 @@ export default function ExercisesScreen() {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#0A84FF" />
         </View>
-      ) : filteredExercises.length === 0 ? (
-        <View style={styles.centerContainer}>
-          <SymbolView
-            tintColor={theme.textSecondary}
-            name="dumbbell.fill"
-            size={48}
-            style={styles.emptyIcon}
-          />
-          <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
-            {searchQuery ? 'No exercises match your search' : 'No exercises in your library'}
-          </ThemedText>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredExercises}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderExerciseItem}
-          contentContainerStyle={[
-            styles.listContainer,
-            { paddingBottom: safeBottom + Spacing.four },
-          ]}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#0A84FF"
-              colors={['#0A84FF']}
+      ) : activeSegment === 'library' ? (
+        filteredExercises.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <SymbolView
+              tintColor={theme.textSecondary}
+              name="dumbbell.fill"
+              size={48}
+              style={styles.emptyIcon}
             />
-          }
-        />
+            <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
+              {searchQuery ? 'No exercises match your search' : 'No exercises in your library'}
+            </ThemedText>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredExercises}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderExerciseItem}
+            contentContainerStyle={[
+              styles.listContainer,
+              { paddingBottom: safeBottom + Spacing.four },
+            ]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#0A84FF"
+              />
+            }
+          />
+        )
+      ) : (
+        // Progressions Segment
+        filteredProgressions.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <SymbolView
+              tintColor={theme.textSecondary}
+              name="map.fill"
+              size={48}
+              style={styles.emptyIcon}
+            />
+            <ThemedText type="default" themeColor="textSecondary" style={styles.emptyText}>
+              {searchQuery ? 'No progressions match your search' : 'No progressions available'}
+            </ThemedText>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredProgressions}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderProgressionItem}
+            contentContainerStyle={[
+              styles.listContainer,
+              { paddingBottom: safeBottom + Spacing.four },
+            ]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#0A84FF"
+              />
+            }
+          />
+        )
       )}
+
+      {/* Add Progression Modal */}
+      <Modal
+        animationType="none"
+        transparent={true}
+        visible={isAddProgModalVisible}
+        onRequestClose={addProgSwipe.close}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
+          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={addProgSwipe.close} />
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  height: '40%',
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: addProgSwipe.translateY }]
+                }
+              ]}>
+              <View {...addProgSwipe.panHandlers}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
+                </View>
+                <View style={styles.modalHeader}>
+                  <Pressable
+                    onPress={addProgSwipe.close}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                  </Pressable>
+                  <ThemedText type="smallBold" style={styles.modalTitle}>
+                    New Progression
+                  </ThemedText>
+                  <Pressable
+                    onPress={handleCreateProgression}
+                    disabled={isSubmitting}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    {isSubmitting ? (
+                      <ActivityIndicator size="small" color="#0A84FF" />
+                    ) : (
+                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                <ScrollView style={styles.modalFormBody}>
+                  <View style={styles.formGroup}>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                      NAME *
+                    </ThemedText>
+                    <TextInput
+                      placeholder="e.g. Pull-up Progression"
+                      placeholderTextColor={theme.textSecondary}
+                      value={newProgName}
+                      onChangeText={setNewProgName}
+                      style={[
+                        styles.inputField,
+                        {
+                          backgroundColor: theme.backgroundElement,
+                          color: theme.text,
+                          borderColor: theme.backgroundSelected,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <View style={[styles.formGroup, { marginTop: Spacing.three }]}>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                      NOTES
+                    </ThemedText>
+                    <TextInput
+                      placeholder="Short description..."
+                      placeholderTextColor={theme.textSecondary}
+                      value={newProgNotes}
+                      onChangeText={setNewProgNotes}
+                      style={[
+                        styles.inputField,
+                        styles.textAreaField,
+                        {
+                          backgroundColor: theme.backgroundElement,
+                          color: theme.text,
+                          borderColor: theme.backgroundSelected,
+                        },
+                      ]}
+                      multiline
+                      numberOfLines={2}
+                    />
+                  </View>
+                </ScrollView>
+              </Pressable>
+            </Animated.View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Edit Progression Modal */}
+      <Modal
+        animationType="none"
+        transparent={true}
+        visible={isEditProgModalVisible}
+        onRequestClose={editProgSwipe.close}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
+          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={editProgSwipe.close} />
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  height: '80%',
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: editProgSwipe.translateY }]
+                }
+              ]}>
+              <View {...editProgSwipe.panHandlers}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
+                </View>
+                <View style={styles.modalHeader}>
+                  <Pressable
+                    onPress={editProgSwipe.close}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                  </Pressable>
+                  <ThemedText type="smallBold" style={styles.modalTitle}>
+                    Edit Progression
+                  </ThemedText>
+                  <Pressable
+                    onPress={handleSaveProgressionEdits}
+                    disabled={isSubmitting}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    {isSubmitting ? (
+                      <ActivityIndicator size="small" color="#0A84FF" />
+                    ) : (
+                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+
+              <ScrollView 
+                style={styles.modalFormBody}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                onScrollBeginDrag={() => setIsProgSearchFocused(false)}
+                contentContainerStyle={{ paddingBottom: 60 }}
+              >
+                <Pressable onPress={() => { Keyboard.dismiss(); setIsProgSearchFocused(false); }}>
+                  <View>
+                    <View style={styles.formGroup}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        NAME *
+                      </ThemedText>
+                      <TextInput
+                        placeholder="Progression Name"
+                        placeholderTextColor={theme.textSecondary}
+                        value={editingProgName}
+                        onChangeText={setEditingProgName}
+                        style={[
+                          styles.inputField,
+                          {
+                            backgroundColor: theme.backgroundElement,
+                            color: theme.text,
+                            borderColor: theme.backgroundSelected,
+                          },
+                        ]}
+                      />
+                    </View>
+                    <View style={[styles.formGroup, { marginTop: Spacing.three }]}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        NOTES
+                      </ThemedText>
+                      <TextInput
+                        placeholder="Short description..."
+                        placeholderTextColor={theme.textSecondary}
+                        value={editingProgNotes}
+                        onChangeText={setEditingProgNotes}
+                        style={[
+                          styles.inputField,
+                          styles.textAreaField,
+                          {
+                            backgroundColor: theme.backgroundElement,
+                            color: theme.text,
+                            borderColor: theme.backgroundSelected,
+                          },
+                        ]}
+                        multiline
+                        numberOfLines={2}
+                      />
+                    </View>
+
+                    {/* Search and Add Exercise Bar */}
+                    <View style={[styles.formGroup, { marginTop: Spacing.three, zIndex: 10 }]}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        SEARCH AND ADD EXERCISE
+                      </ThemedText>
+                      <View style={styles.dropdownContainer}>
+                        <View style={[
+                          styles.dropdownSearchContainer,
+                          {
+                            backgroundColor: theme.backgroundElement,
+                            borderColor: theme.backgroundSelected,
+                            borderWidth: 1,
+                            borderRadius: 8,
+                          }
+                        ]}>
+                          <SymbolView
+                            name="magnifyingglass"
+                            tintColor={theme.textSecondary}
+                            size={14}
+                            style={styles.dropdownSearchIcon}
+                          />
+                          <TextInput
+                            placeholder="Search exercises to add..."
+                            placeholderTextColor={theme.textSecondary}
+                            value={progSearchQuery}
+                            onChangeText={setProgSearchQuery}
+                            onFocus={() => setIsProgSearchFocused(true)}
+                            style={[styles.dropdownSearchInput, { color: theme.text }]}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                          />
+                          {progSearchQuery ? (
+                            <Pressable 
+                              onPress={() => setProgSearchQuery('')} 
+                              style={styles.dropdownClearSearch}>
+                              <SymbolView
+                                name="xmark.circle.fill"
+                                tintColor={theme.textSecondary}
+                                size={14}
+                              />
+                            </Pressable>
+                          ) : null}
+                        </View>
+
+                        {/* The scrollable list of exercises directly below it, shown conditionally */}
+                        {isProgSearchFocused && progSearchQuery.trim() !== '' && (
+                          <View style={[
+                            styles.dropdownMenu,
+                            {
+                              backgroundColor: theme.backgroundElement,
+                              borderColor: theme.backgroundSelected,
+                              borderWidth: 1,
+                            }
+                          ]}>
+                            <ScrollView 
+                              nestedScrollEnabled={true}
+                              style={styles.dropdownList}
+                              contentContainerStyle={{ paddingVertical: Spacing.one }}>
+                              {searchedExercisesNotInProg.length === 0 ? (
+                                <View style={{ padding: Spacing.three, alignItems: 'center' }}>
+                                  <ThemedText type="small" themeColor="textSecondary">
+                                    No exercises match your search
+                                  </ThemedText>
+                                </View>
+                              ) : (
+                                searchedExercisesNotInProg.map(ex => (
+                                  <Pressable
+                                    key={ex.id}
+                                    onPress={() => handleAddLocalExercise(ex.id)}
+                                    style={({ pressed }) => [
+                                      styles.dropdownItem,
+                                      pressed && styles.pressed,
+                                    ]}>
+                                    <View style={{ flex: 1 }}>
+                                      <ThemedText type="smallBold">
+                                        {ex.name}
+                                      </ThemedText>
+                                      {(() => {
+                                        const mgIds = ex.muscle_group_ids;
+                                        if (mgIds && mgIds.length > 0) {
+                                          const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                          return names ? (
+                                            <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
+                                              {names}
+                                            </ThemedText>
+                                          ) : null;
+                                        }
+                                        return null;
+                                      })()}
+                                    </View>
+                                    <SymbolView
+                                      name="plus.circle.fill"
+                                      tintColor="#0A84FF"
+                                      size={20}
+                                    />
+                                  </Pressable>
+                                ))
+                              )}
+                            </ScrollView>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Exercises currently in progression */}
+                    <View style={[styles.formGroup, { marginTop: Spacing.three }]}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        EXERCISES IN PROGRESSION
+                      </ThemedText>
+                      {localExercises.length === 0 ? (
+                        <ThemedText type="small" themeColor="textSecondary" style={{ fontStyle: 'italic', marginTop: Spacing.one }}>
+                          No exercises in this progression yet.
+                        </ThemedText>
+                      ) : (
+                        localExercises.map((ex, idx) => (
+                          <View key={ex.id} style={styles.editProgItemRow}>
+                            <ThemedText type="smallBold" style={{ color: '#0A84FF', marginRight: Spacing.two, width: 20 }}>
+                              {idx + 1}
+                            </ThemedText>
+                            <ThemedText type="default" style={{ flex: 1 }}>{ex.name}</ThemedText>
+                            <Pressable
+                              onPress={() => handleRemoveLocalExercise(ex.id)}
+                              style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+                              <SymbolView tintColor="#FF3B30" name="trash.fill" size={18} />
+                            </Pressable>
+                          </View>
+                        ))
+                      )}
+                    </View>
+                  </View>
+                </Pressable>
+              </ScrollView>
+              </Animated.View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Detail Modal */}
       <Modal
@@ -1193,5 +1922,145 @@ const styles = StyleSheet.create({
     height: 300,
     textAlignVertical: 'top',
     fontFamily: Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' }),
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    borderRadius: 9,
+    padding: 2,
+    height: 32,
+  },
+  segment: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 7,
+  },
+  segmentActive: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 1,
+      },
+      android: {
+        elevation: 2,
+      },
+      default: {
+        boxShadow: '0px 1px 2px rgba(0,0,0,0.1)',
+      },
+    }),
+  },
+  progressionBadge: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressionStepsContainer: {
+    marginTop: Spacing.three,
+  },
+  progressionStepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+  },
+  stepCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepCircleText: {
+    fontSize: 12,
+    color: '#0A84FF',
+  },
+  stepLine: {
+    width: 2,
+    flex: 1,
+    marginTop: 4,
+  },
+  stepContentCol: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  stepExerciseName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  stepMuscleText: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  addExerciseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  addExercisePlusBtn: {
+    padding: Spacing.one,
+  },
+  editProgItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  deleteProgBtn: {
+    marginTop: Spacing.four,
+    backgroundColor: '#FF3B30',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteProgBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  dropdownContainer: {
+    width: '100%',
+    zIndex: 10,
+    position: 'relative',
+    marginTop: Spacing.one,
+  },
+  dropdownMenu: {
+    marginTop: Spacing.one,
+    borderRadius: 8,
+    borderWidth: 1,
+    maxHeight: 250,
+    overflow: 'hidden',
+  },
+  dropdownSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    height: 44,
+  },
+  dropdownSearchIcon: {
+    marginRight: Spacing.two,
+  },
+  dropdownSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    height: '100%',
+    padding: 0,
+  },
+  dropdownClearSearch: {
+    padding: 4,
+  },
+  dropdownList: {
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
 });
