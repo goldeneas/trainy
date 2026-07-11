@@ -396,6 +396,7 @@ export default function WorkoutsScreen() {
                 sound: true,
               },
               trigger: {
+                type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
                 seconds: restTimerSeconds,
                 repeats: false,
               },
