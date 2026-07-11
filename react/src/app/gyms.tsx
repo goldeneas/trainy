@@ -117,6 +117,43 @@ function formatDistance(distanceKm: number): string {
   return `${distanceKm.toFixed(1)} km`;
 }
 
+async function getUserLocationSafe(): Promise<{ latitude: number; longitude: number } | null> {
+  try {
+    const isEnabled = await Location.hasServicesEnabledAsync();
+    if (!isEnabled) {
+      return null;
+    }
+    let { status } = await Location.getForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      const permissionRes = await Location.requestForegroundPermissionsAsync();
+      status = permissionRes.status;
+    }
+    if (status === 'granted') {
+      try {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        return {
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        };
+      } catch (err) {
+        console.warn('getCurrentPositionAsync failed, trying getLastKnownPositionAsync:', err);
+        const lastKnown = await Location.getLastKnownPositionAsync();
+        if (lastKnown) {
+          return {
+            latitude: lastKnown.coords.latitude,
+            longitude: lastKnown.coords.longitude,
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get user location safely:', error);
+  }
+  return null;
+}
+
 export default function GymsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -199,19 +236,9 @@ export default function GymsScreen() {
       setEquipmentList(equips);
       setLocationEquipments(links);
 
-      // Fetch user location for distance calculations (runs once on open/refresh)
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        setUserLocation({
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        });
-      } else {
-        setUserLocation(null);
-      }
+      // Fetch user location safely for distance calculations (runs once on open/refresh)
+      const userLoc = await getUserLocationSafe();
+      setUserLocation(userLoc);
     } catch (err) {
       console.error('Failed to load gyms data:', err);
     } finally {
@@ -285,17 +312,10 @@ export default function GymsScreen() {
     setRating(0);
     setIsAddModalVisible(true);
 
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        setAltitude(loc.coords.latitude.toString().replace('.', ','));
-        setLongitude(loc.coords.longitude.toString().replace('.', ','));
-      }
-    } catch (err) {
-      console.warn('Failed to autodetect position on add modal open:', err);
+    const userLoc = await getUserLocationSafe();
+    if (userLoc) {
+      setAltitude(userLoc.latitude.toString().replace('.', ','));
+      setLongitude(userLoc.longitude.toString().replace('.', ','));
     }
   };
 
@@ -420,16 +440,16 @@ export default function GymsScreen() {
   const handleAutodetectEditLocation = async () => {
     setLocating(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Permission to access location was denied.');
-        return;
+      const userLoc = await getUserLocationSafe();
+      if (userLoc) {
+        setEditAltitude(userLoc.latitude.toString().replace('.', ','));
+        setEditLongitude(userLoc.longitude.toString().replace('.', ','));
+      } else {
+        Alert.alert(
+          'Location Unavailable',
+          'Could not detect your current location. Please verify that location services are enabled and permission is granted.'
+        );
       }
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      setEditAltitude(loc.coords.latitude.toString().replace('.', ','));
-      setEditLongitude(loc.coords.longitude.toString().replace('.', ','));
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to detect location');
     } finally {
