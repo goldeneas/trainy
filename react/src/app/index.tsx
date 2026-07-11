@@ -528,7 +528,8 @@ export default function WorkoutsScreen() {
   };
 
   // Remove planned exercise handler
-  const handleRemovePlannedExercise = async (peId: number) => {
+  // Remove planned exercise handler
+  const handleRemovePlannedExercise = useCallback(async (peId: number) => {
     Alert.alert(
       'Remove Exercise',
       'Remove this exercise template from the routine?',
@@ -548,7 +549,36 @@ export default function WorkoutsScreen() {
         },
       ]
     );
-  };
+  }, [fetchData]);
+
+  const renderPlannedExerciseSwipeActions = useCallback((peId: number) => (
+    <View style={styles.swipeActionContainer}>
+      <Pressable
+        onPress={() => handleRemovePlannedExercise(peId)}
+        style={({ pressed }) => [
+          styles.deleteSwipeBtn,
+          pressed && styles.pressed,
+        ]}>
+        <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+      </Pressable>
+    </View>
+  ), [handleRemovePlannedExercise]);
+
+  const renderPlannedSetSwipeActions = useCallback((idx: number) => (
+    <View style={styles.swipeActionContainer}>
+      <Pressable
+        onPress={() => {
+          if (plannedSets.length === 1) return;
+          setPlannedSets((prev) => prev.filter((_, i) => i !== idx));
+        }}
+        style={({ pressed }) => [
+          styles.deleteSwipeBtn,
+          pressed && styles.pressed,
+        ]}>
+        <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+      </Pressable>
+    </View>
+  ), [plannedSets.length]);
 
   // Start workout flow
   const handleStartWorkout = (routine: FullRoutine) => {
@@ -1133,7 +1163,7 @@ export default function WorkoutsScreen() {
                       {/* Planned Exercises Section */}
                       <View style={styles.detailSection}>
                         <View style={styles.sectionHeaderRow}>
-                          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                          <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.sectionLabel, { marginLeft: Spacing.one }]}>
                             EXERCISES
                           </ThemedText>
                           <Pressable
@@ -1156,55 +1186,50 @@ export default function WorkoutsScreen() {
                           </ThemedView>
                           ) : (
                           selectedRoutine.plannedExercises.map((pe) => (
-                            <ThemedView
+                            <Swipeable
                               key={pe.ID}
-                              type="backgroundElement"
-                              style={styles.routineExerciseCard}>
-                              <View style={styles.peCardTop}>
-                                <View style={{ flex: 1 }}>
-                                  <ThemedText type="smallBold">{pe.exercise?.name || 'Exercise'}</ThemedText>
-                                  {(() => {
-                                    const mgIds = pe.exercise?.muscle_group_ids;
-                                    if (mgIds && mgIds.length > 0) {
-                                      const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                                      return names ? (
-                                        <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
-                                          {names}
-                                        </ThemedText>
-                                      ) : null;
-                                    }
-                                    return null;
-                                  })()}
-                                  <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
-                                    Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
-                                  </ThemedText>
-                                </View>
-                                <Pressable
-                                  onPress={() => handleRemovePlannedExercise(pe.ID)}
-                                  style={styles.trashBtn}>
-                                  <SymbolView
-                                    tintColor="#FF3B30"
-                                    name="trash"
-                                    size={16}
-                                  />
-                                </Pressable>
-                              </View>
-                              {pe.sets.map((set) => (
-                                <View key={set.ID} style={styles.setPlanRow}>
-                                  <ThemedText type="small" themeColor="textSecondary">
-                                    Set {set.Ord}:
-                                  </ThemedText>
-                                  <ThemedText type="smallBold" style={{ marginHorizontal: Spacing.one }}>
-                                    {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
-                                  </ThemedText>
-                                  {set.Notes ? (
-                                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontStyle: 'italic' }}>
-                                      ({set.Notes})
+                              renderLeftActions={() => renderPlannedExerciseSwipeActions(pe.ID)}
+                              containerStyle={styles.swipeContainer}>
+                              <ThemedView
+                                type="backgroundElement"
+                                style={[styles.routineExerciseCard, { marginBottom: 0 }]}>
+                                <View style={styles.peCardTop}>
+                                  <View style={{ flex: 1 }}>
+                                    <ThemedText type="smallBold">{pe.exercise?.name || 'Exercise'}</ThemedText>
+                                    {(() => {
+                                      const mgIds = pe.exercise?.muscle_group_ids;
+                                      if (mgIds && mgIds.length > 0) {
+                                        const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                        return names ? (
+                                          <ThemedText type="small" style={{ color: '#0A84FF', marginTop: 2 }}>
+                                            {names}
+                                          </ThemedText>
+                                        ) : null;
+                                      }
+                                      return null;
+                                    })()}
+                                    <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
+                                      Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
                                     </ThemedText>
-                                  ) : null}
+                                  </View>
                                 </View>
-                              ))}
-                            </ThemedView>
+                                {pe.sets.map((set) => (
+                                  <View key={set.ID} style={styles.setPlanRow}>
+                                    <ThemedText type="small" themeColor="textSecondary">
+                                      Set {set.Ord}:
+                                    </ThemedText>
+                                    <ThemedText type="smallBold" style={{ marginHorizontal: Spacing.one }}>
+                                      {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
+                                    </ThemedText>
+                                    {set.Notes ? (
+                                      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontStyle: 'italic' }}>
+                                        ({set.Notes})
+                                      </ThemedText>
+                                    ) : null}
+                                  </View>
+                                ))}
+                              </ThemedView>
+                            </Swipeable>
                           ))
                         )}
                       </View>
@@ -1332,13 +1357,11 @@ export default function WorkoutsScreen() {
                                               return null;
                                             })()}
                                           </View>
-                                          {isSelected && (
-                                            <SymbolView
-                                              name="checkmark"
-                                              tintColor="#0A84FF"
-                                              size={14}
-                                            />
-                                          )}
+                                          <SymbolView
+                                            name={isSelected ? "checkmark.circle.fill" : "plus.circle.fill"}
+                                            tintColor={isSelected ? "#30D158" : "#0A84FF"}
+                                            size={22}
+                                          />
                                         </Pressable>
                                       );
                                     });
@@ -1384,9 +1407,10 @@ export default function WorkoutsScreen() {
                             }
                             style={styles.addSetBtn}>
                             <SymbolView
-                              name="plus.circle.fill"
                               tintColor="#0A84FF"
+                              name="plus.circle"
                               size={20}
+                              style={{ marginRight: Spacing.one }}
                             />
                           </Pressable>
                         </View>
@@ -1396,71 +1420,71 @@ export default function WorkoutsScreen() {
                           const unitName = selectedEx ? (repUnits[selectedEx.rep_unit_id]?.name_plural || 'Reps') : 'Reps';
 
                           return plannedSets.map((s, idx) => (
-                            <ThemedView
-                              key={idx}
-                              type="backgroundElement"
-                              style={styles.setBuilderRow}>
-                              <ThemedText type="smallBold" style={styles.setNumberLabel}>
-                                {idx + 1}
-                              </ThemedText>
-                              <TextInput
-                                placeholder={unitName}
-                                keyboardType="numeric"
-                                value={s.reps}
-                                placeholderTextColor={theme.textSecondary}
-                                onChangeText={(val) => {
-                                  const newSets = [...plannedSets];
-                                  newSets[idx].reps = val;
-                                  setPlannedSets(newSets);
-                                }}
-                                style={[
-                                  styles.inputField,
-                                  styles.setRepsInput,
-                                  {
-                                    backgroundColor: theme.background,
-                                    color: theme.text,
-                                    borderColor: theme.backgroundSelected,
-                                  },
-                                ]}
-                              />
-                              <View style={{ justifyContent: 'center', minWidth: 32, marginHorizontal: 4 }}>
-                                <ThemedText style={{ fontSize: 10, fontWeight: 'bold', color: theme.textSecondary }}>
-                                  {unitName}
-                                </ThemedText>
-                              </View>
-                            <TextInput
-                              placeholder="Notes (e.g. Heavy)"
-                              value={s.notes}
-                              placeholderTextColor={theme.textSecondary}
-                              onChangeText={(val) => {
-                                const newSets = [...plannedSets];
-                                newSets[idx].notes = val;
-                                setPlannedSets(newSets);
-                              }}
-                              style={[
-                                styles.inputField,
-                                styles.setNotesInput,
-                                {
-                                  backgroundColor: theme.background,
-                                  color: theme.text,
-                                  borderColor: theme.backgroundSelected,
-                                },
-                              ]}
-                            />
-                            <Pressable
-                              onPress={() => {
-                                if (plannedSets.length === 1) return;
-                                setPlannedSets((prev) => prev.filter((_, i) => i !== idx));
-                              }}
-                              style={styles.setDeleteBtn}>
-                              <SymbolView
-                                tintColor="#FF3B30"
-                                name="minus.circle.fill"
-                                size={18}
-                              />
-                            </Pressable>
-                          </ThemedView>
-                        ))})()}
+                             <Swipeable
+                               key={idx}
+                               renderLeftActions={plannedSets.length > 1 ? () => renderPlannedSetSwipeActions(idx) : undefined}
+                               containerStyle={[styles.swipeContainer, { borderRadius: 8 }]}>
+                               <View
+                                 style={[styles.setBuilderRow, { marginBottom: 0, paddingHorizontal: Spacing.one }]}>
+                                 <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: theme.backgroundSelected, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.one }}>
+                                   <ThemedText type="smallBold" style={{ color: '#0A84FF', fontSize: 11 }}>
+                                     {idx + 1}
+                                   </ThemedText>
+                                 </View>
+                                 <TextInput
+                                   placeholder={unitName}
+                                   keyboardType="numeric"
+                                   value={s.reps}
+                                   placeholderTextColor={theme.textSecondary}
+                                   onChangeText={(val) => {
+                                     const newSets = [...plannedSets];
+                                     newSets[idx].reps = val;
+                                     setPlannedSets(newSets);
+                                   }}
+                                   style={[
+                                     styles.inputField,
+                                     styles.setRepsInput,
+                                     {
+                                       backgroundColor: theme.backgroundElement,
+                                       color: theme.text,
+                                       borderColor: theme.backgroundSelected,
+                                       borderWidth: 1,
+                                       borderRadius: 8,
+                                       height: 38,
+                                     },
+                                   ]}
+                                 />
+                                 <View style={{ justifyContent: 'center', minWidth: 32, marginHorizontal: 4 }}>
+                                   <ThemedText style={{ fontSize: 10, fontWeight: 'bold', color: theme.textSecondary }}>
+                                     {unitName}
+                                   </ThemedText>
+                                 </View>
+                                 <TextInput
+                                   placeholder="Notes (optional)"
+                                   value={s.notes}
+                                   placeholderTextColor={theme.textSecondary}
+                                   onChangeText={(val) => {
+                                     const newSets = [...plannedSets];
+                                     newSets[idx].notes = val;
+                                     setPlannedSets(newSets);
+                                   }}
+                                   style={[
+                                     styles.inputField,
+                                     styles.setNotesInput,
+                                     {
+                                       backgroundColor: theme.backgroundElement,
+                                       color: theme.text,
+                                       borderColor: theme.backgroundSelected,
+                                       borderWidth: 1,
+                                       borderRadius: 8,
+                                       paddingHorizontal: Spacing.two,
+                                       height: 38,
+                                     },
+                                   ]}
+                                 />
+                               </View>
+                             </Swipeable>
+                           ))})()}
                       </View>
                     </ScrollView>
                     </Pressable>

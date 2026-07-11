@@ -951,76 +951,68 @@ export default function GymsScreen() {
 
               {selectedGym && (
                 <ScrollView style={styles.modalScrollBody} contentContainerStyle={styles.modalScrollContent}>
-                  <ThemedText
-                    type="subtitle"
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.5}
-                    style={styles.detailTitle}>
+                  <ThemedText type="subtitle" style={styles.detailTitle}>
                     {selectedGym.Name}
                   </ThemedText>
 
-                  {/* Rating display (Interactive) */}
-                  <View style={[styles.detailSection, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      {Array.from({ length: 5 }).map((_, idx) => {
-                        const val = idx + 1;
-                        const active = selectedGym.Rating !== null && idx < selectedGym.Rating;
-                        return (
-                          <Pressable
-                            key={idx}
-                            onPress={() => handleUpdateRating(val)}
-                            style={({ pressed }) => [pressed && styles.pressed, { padding: 2 }]}>
-                            <SymbolView
-                              tintColor={active ? '#FFD60A' : '#8E8E93'}
-                              name={active ? 'star.fill' : 'star'}
-                              size={20}
-                            />
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </View>
-
-                  {/* Location Info */}
-                  <View style={styles.detailSection}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.sectionLabel, { marginBottom: 0 }]}>
-                        LOCATION
+                  {/* Rating directly below Title, with no label header */}
+                  {/* Rating directly below Title, with no label header */}
+                  {/* Rating display & Maps Shortcut inline */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.four, marginTop: Spacing.half }}>
+                    <View style={{ alignItems: 'flex-start' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {Array.from({ length: 5 }).map((_, idx) => {
+                          const val = idx + 1;
+                          const active = selectedGym.Rating !== null && idx < selectedGym.Rating;
+                          return (
+                            <Pressable
+                              key={idx}
+                              onPress={() => handleUpdateRating(val)}
+                              style={({ pressed }) => [pressed && styles.pressed, { paddingRight: 4 }]}>
+                              <SymbolView
+                                tintColor={active ? '#FFD60A' : '#8E8E93'}
+                                name={active ? 'star.fill' : 'star'}
+                                size={24}
+                              />
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                      <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 4, fontSize: 11, fontStyle: 'italic' }}>
+                        (Tap to change)
                       </ThemedText>
-                      <Pressable
-                        onPress={handleOpenMap}
-                        style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
-                        <SymbolView tintColor="#0A84FF" name="arrow.up.right.square" size={20} />
-                      </Pressable>
                     </View>
+
+                    <Pressable
+                      onPress={handleOpenMap}
+                      style={({ pressed }) => [pressed && styles.pressed, { padding: Spacing.one }]}>
+                      <SymbolView tintColor="#0A84FF" name="location.circle" size={32} />
+                    </Pressable>
                   </View>
 
-                  {/* Equipments Present */}
+                  {/* Available Equipment (Clean vertical checkmark list) */}
                   <View style={styles.detailSection}>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.sectionLabel, { letterSpacing: 0.5 }]}>
                       AVAILABLE EQUIPMENT
                     </ThemedText>
                     {locationEquipments.filter((le) => le.GymLocationID === selectedGym.ID).length > 0 ? (
-                      <View style={[styles.detailTextBox, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected, flexDirection: 'column', alignItems: 'stretch' }]}>
+                      <View>
                         {locationEquipments
                           .filter((le) => le.GymLocationID === selectedGym.ID)
                           .map((le) => {
                             const name = equipmentList.find((eq) => eq.ID === le.GymEquipmentID)?.Name || 'Equipment';
                             return (
-                              <View key={le.ID} style={styles.detailEquipRow}>
-                                <SymbolView tintColor="#30D158" name="checkmark" size={14} style={{ marginRight: 8 }} />
-                                <ThemedText style={{ fontSize: 15 }}>{name}</ThemedText>
+                              <View key={le.ID} style={[styles.detailEquipRow, { paddingVertical: Spacing.one }]}>
+                                <SymbolView tintColor="#8E8E93" name="circle.fill" size={6} style={{ marginRight: 14, marginLeft: 4 }} />
+                                <ThemedText style={{ fontSize: 16 }}>{name}</ThemedText>
                               </View>
                             );
                           })}
                       </View>
                     ) : (
-                      <View style={[styles.detailTextBox, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-                        <ThemedText style={{ fontStyle: 'italic' }}>
-                          No equipment currently registered at this location.
-                        </ThemedText>
-                      </View>
+                      <ThemedText type="default" style={{ fontStyle: 'italic', color: theme.textSecondary, paddingLeft: Spacing.one }}>
+                        No equipment currently registered at this location.
+                      </ThemedText>
                     )}
                   </View>
                 </ScrollView>
@@ -1318,5 +1310,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.one,
+  },
+  configureButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    padding: Spacing.three,
+    marginTop: Spacing.two,
   },
 });

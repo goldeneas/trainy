@@ -228,7 +228,7 @@ export default function ExercisesScreen() {
   }, []);
 
   const getProgressionExercises = useCallback((prog: ExerciseProgression) => {
-    return prog.entry_ids.map((entryId) => {
+    return (prog.entry_ids || []).map((entryId) => {
       const entry = progressionEntries.find((e) => e.ID === entryId);
       if (!entry) return null;
       return exercises.find((e) => e.id === entry.ExerciseID);
@@ -274,7 +274,7 @@ export default function ExercisesScreen() {
     setEditingProgNotes(prog.notes || '');
     
     // Map initial entry IDs to exercise IDs in sequence order
-    const initialExIds = prog.entry_ids.map((entryId) => {
+    const initialExIds = (prog.entry_ids || []).map((entryId) => {
       const entry = progressionEntries.find((e) => e.ID === entryId);
       return entry ? entry.ExerciseID : null;
     }).filter((id): id is number => id !== null);
@@ -730,7 +730,7 @@ export default function ExercisesScreen() {
           </View>
 
           {/* List of progression steps */}
-          {isExpanded && (
+          {isExpanded && progExercises.length > 0 && (
             <View style={styles.progressionStepsContainer}>
               {progExercises.map((ex, index) => {
                 const isLast = index === progExercises.length - 1;
@@ -1342,23 +1342,12 @@ export default function ExercisesScreen() {
                           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
                             MUSCLE GROUPS
                           </ThemedText>
-                          <View style={styles.chipsContainer}>
+                          <View>
                             {names.map((name: string, index: number) => (
-                              <ThemedView
-                                key={index}
-                                type="backgroundSelected"
-                                style={[
-                                  styles.chip,
-                                  {
-                                    borderColor: theme.backgroundSelected,
-                                    alignSelf: 'flex-start',
-                                  },
-                                ]}
-                              >
-                                <ThemedText type="smallBold" style={{ color: '#0A84FF', fontSize: 12 }}>
-                                  {name}
-                                </ThemedText>
-                              </ThemedView>
+                              <View key={index} style={styles.detailMuscleRow}>
+                                <SymbolView tintColor="#8E8E93" name="circle.fill" size={6} style={{ marginRight: 14, marginLeft: 4 }} />
+                                <ThemedText style={{ fontSize: 16 }}>{name}</ThemedText>
+                              </View>
                             ))}
                           </View>
                         </View>
@@ -1878,6 +1867,11 @@ const styles = StyleSheet.create({
   },
   instructionsText: {
     lineHeight: 22,
+  },
+  detailMuscleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.one,
   },
   // Form Styles
   modalFormBody: {
