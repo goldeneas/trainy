@@ -1150,35 +1150,32 @@ export default function WorkoutsScreen() {
                     <ScrollView
                       style={styles.modalScrollBody}
                       contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
-                      <ThemedText type="subtitle" style={styles.detailTitle}>
-                        {selectedRoutine.Name}
-                      </ThemedText>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.one }}>
+                        <View style={{ flex: 1, marginRight: Spacing.two }}>
+                          <ThemedText type="subtitle" style={[styles.detailTitle, { marginBottom: 0 }]}>
+                            {selectedRoutine.Name}
+                          </ThemedText>
+                        </View>
+                        <Pressable
+                          onPress={() => setIsAddExerciseToRoutineVisible(true)}
+                          style={({ pressed }) => [pressed && styles.pressed, { paddingTop: 6 }]}>
+                          <SymbolView
+                            tintColor="#0A84FF"
+                            name="plus.circle"
+                            size={28}
+                          />
+                        </Pressable>
+                      </View>
                       <ThemedText type="default" themeColor="textSecondary" style={styles.detailDesc}>
                         {selectedRoutine.Description || 'No description provided.'}
                       </ThemedText>
 
                       {/* Planned Exercises Section */}
                       <View style={styles.detailSection}>
-                        <View style={styles.sectionHeaderRow}>
-                          <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.sectionLabel, { marginLeft: Spacing.one }]}>
-                            EXERCISES
-                          </ThemedText>
-                          <Pressable
-                            onPress={() => setIsAddExerciseToRoutineVisible(true)}
-                            style={styles.inlineAddBtn}>
-                            <SymbolView
-                              tintColor="#0A84FF"
-                              name="plus.circle"
-                              size={20}
-                              style={{ marginRight: Spacing.one }}
-                            />
-                          </Pressable>
-                        </View>
-
                         {selectedRoutine.plannedExercises.length === 0 ? (
                           <ThemedView type="backgroundElement" style={styles.detailTextBox}>
                             <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-                              {"No exercises added to this routine yet. Tap 'Add Exercise' to plan."}
+                              {"No exercises added to this routine yet. Tap the '+' button above to add one."}
                             </ThemedText>
                           </ThemedView>
                           ) : (

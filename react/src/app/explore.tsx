@@ -1332,31 +1332,6 @@ export default function ExercisesScreen() {
                   {selectedExercise.name}
                 </ThemedText>
 
-                {(() => {
-                  const mgIds = selectedExercise.muscle_group_ids;
-                  if (mgIds && mgIds.length > 0) {
-                    const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter((name): name is string => name !== undefined);
-                    if (names.length > 0) {
-                      return (
-                        <View style={styles.detailSection}>
-                          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
-                            MUSCLE GROUPS
-                          </ThemedText>
-                          <View>
-                            {names.map((name: string, index: number) => (
-                              <View key={index} style={styles.detailMuscleRow}>
-                                <SymbolView tintColor="#8E8E93" name="circle.fill" size={6} style={{ marginRight: 14, marginLeft: 4 }} />
-                                <ThemedText style={{ fontSize: 16 }}>{name}</ThemedText>
-                              </View>
-                            ))}
-                          </View>
-                        </View>
-                      );
-                    }
-                  }
-                  return null;
-                })()}
-
                 {selectedExercise.notes ? (
                   <View style={styles.detailSection}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
@@ -1382,6 +1357,31 @@ export default function ExercisesScreen() {
                     </ThemedView>
                   </View>
                 ) : null}
+
+                {(() => {
+                  const mgIds = selectedExercise.muscle_group_ids;
+                  if (mgIds && mgIds.length > 0) {
+                    const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter((name): name is string => name !== undefined);
+                    if (names.length > 0) {
+                      return (
+                        <View style={styles.detailSection}>
+                          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                            MUSCLE GROUPS
+                          </ThemedText>
+                          <View>
+                            {names.map((name: string, index: number) => (
+                              <View key={index} style={styles.detailMuscleRow}>
+                                <SymbolView tintColor="#8E8E93" name="circle.fill" size={6} style={{ marginRight: 14, marginLeft: 4 }} />
+                                <ThemedText style={{ fontSize: 16 }}>{name}</ThemedText>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      );
+                    }
+                  }
+                  return null;
+                })()}
               </ScrollView>
               </Pressable>
             )}
