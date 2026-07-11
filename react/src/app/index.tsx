@@ -205,13 +205,10 @@ export default function WorkoutsScreen() {
   });
 
   const routineDetailSwipe = useBottomSheet(isRoutineDetailVisible, () => {
-    if (isAddExerciseToRoutineVisible) {
-      setIsAddExerciseToRoutineVisible(false);
-      setDropdownSearchQuery('');
-      setSelectedExerciseId(null);
-    } else {
-      setIsRoutineDetailVisible(false);
-    }
+    setIsRoutineDetailVisible(false);
+    setIsAddExerciseToRoutineVisible(false);
+    setDropdownSearchQuery('');
+    setSelectedExerciseId(null);
   });
 
   const historyDetailSwipe = useBottomSheet(isHistoryDetailVisible, () => {
@@ -1235,9 +1232,10 @@ export default function WorkoutsScreen() {
                       </View>
                     </ScrollView>
                   ) : (
-                    <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                      <ScrollView 
-                        style={styles.modalFormBody}
+                    <ScrollView 
+                      style={styles.modalFormBody}
+                      keyboardShouldPersistTaps="handled"
+                      keyboardDismissMode="on-drag"
                       contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
                       {/* Exercise Selector */}
                       <View style={styles.formGroup}>
@@ -1250,244 +1248,276 @@ export default function WorkoutsScreen() {
                           </ThemedText>
                         ) : (
                           <View style={styles.dropdownContainer}>
-                            {/* Search bar is the first widget under SELECT EXERCISE */}
-                            <View style={[
-                              styles.dropdownSearchContainer,
-                              {
-                                backgroundColor: theme.backgroundElement,
-                                borderColor: theme.backgroundSelected,
-                                borderWidth: 1,
-                                borderRadius: 8,
-                                marginBottom: Spacing.two,
-                              }
-                            ]}>
-                              <SymbolView
-                                name="magnifyingglass"
-                                tintColor={theme.textSecondary}
-                                size={14}
-                                style={styles.dropdownSearchIcon}
-                              />
-                              <TextInput
-                                placeholder="Search exercises..."
-                                placeholderTextColor={theme.textSecondary}
-                                value={dropdownSearchQuery}
-                                onFocus={() => {
-                                  setSelectedExerciseId(null);
-                                  setDropdownSearchQuery('');
-                                }}
-                                onChangeText={(text) => {
-                                  setDropdownSearchQuery(text);
-                                  const currentSelected = exercises.find(e => e.id === selectedExerciseId);
-                                  if (currentSelected && currentSelected.name !== text) {
-                                    setSelectedExerciseId(null);
-                                  }
-                                }}
-                                style={[styles.dropdownSearchInput, { color: theme.text }]}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                              />
-                              {dropdownSearchQuery ? (
-                                <Pressable 
+                            {selectedExerciseId !== null ? (
+                              <ThemedView type="backgroundElement" style={[styles.appleListRow, { borderRadius: 8, overflow: 'hidden' }]}>
+                                <View style={{ flex: 1 }}>
+                                  <ThemedText type="small" style={{ fontWeight: 'bold', fontSize: 16 }}>
+                                    {exercises.find(e => e.id === selectedExerciseId)?.name}
+                                  </ThemedText>
+                                  {(() => {
+                                    const ex = exercises.find(e => e.id === selectedExerciseId);
+                                    const mgIds = ex?.muscle_group_ids;
+                                    if (mgIds && mgIds.length > 0) {
+                                      const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                      return names ? (
+                                        <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
+                                          {names}
+                                        </ThemedText>
+                                      ) : null;
+                                    }
+                                    return null;
+                                  })()}
+                                </View>
+                                <Pressable
                                   onPress={() => {
-                                    setDropdownSearchQuery('');
                                     setSelectedExerciseId(null);
-                                  }} 
-                                  style={styles.dropdownClearSearch}>
+                                    setDropdownSearchQuery('');
+                                  }}
+                                  style={({ pressed }) => [
+                                    pressed && styles.pressed,
+                                    {
+                                      padding: 6,
+                                    }
+                                  ]}>
+                                  <SymbolView name="arrow.triangle.2.circlepath" tintColor="#0A84FF" size={18} />
+                                </Pressable>
+                              </ThemedView>
+                            ) : (
+                              <View>
+                                <View style={[
+                                  styles.dropdownSearchContainer,
+                                  {
+                                    backgroundColor: theme.backgroundElement,
+                                    borderColor: theme.backgroundSelected,
+                                    borderWidth: 1,
+                                    borderRadius: 8,
+                                  }
+                                ]}>
                                   <SymbolView
-                                    name="xmark.circle.fill"
+                                    name="magnifyingglass"
                                     tintColor={theme.textSecondary}
                                     size={14}
+                                    style={styles.dropdownSearchIcon}
                                   />
-                                </Pressable>
-                              ) : null}
-                            </View>
- 
-                            {/* The scrollable list of exercises directly below it, shown conditionally */}
-                            {dropdownSearchQuery.trim() !== '' && selectedExerciseId === null && (
-                              <View style={[
-                                styles.dropdownMenu,
-                                {
-                                  backgroundColor: theme.backgroundElement,
-                                  borderColor: theme.backgroundSelected,
-                                }
-                              ]}>
-                                <ScrollView 
-                                  nestedScrollEnabled={true}
-                                  keyboardShouldPersistTaps="handled"
-                                  style={styles.dropdownList}
-                                  contentContainerStyle={{ paddingVertical: Spacing.one }}>
-                                  {(() => {
-                                    const filtered = exercises.filter(e =>
-                                      e.name.toLowerCase().includes(dropdownSearchQuery.toLowerCase())
-                                    );
-                                    if (filtered.length === 0) {
-                                      return (
-                                        <View style={{ padding: Spacing.three, alignItems: 'center' }}>
-                                          <ThemedText type="small" themeColor="textSecondary">
-                                            No exercises match your search
-                                          </ThemedText>
-                                        </View>
-                                      );
+                                  <TextInput
+                                    placeholder="Search exercises..."
+                                    placeholderTextColor={theme.textSecondary}
+                                    value={dropdownSearchQuery}
+                                    onChangeText={setDropdownSearchQuery}
+                                    style={[styles.dropdownSearchInput, { color: theme.text }]}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                  />
+                                  {dropdownSearchQuery ? (
+                                    <Pressable 
+                                      onPress={() => setDropdownSearchQuery('')} 
+                                      style={styles.dropdownClearSearch}>
+                                      <SymbolView
+                                        name="xmark.circle.fill"
+                                        tintColor={theme.textSecondary}
+                                        size={14}
+                                      />
+                                    </Pressable>
+                                  ) : null}
+                                </View>
+
+                                {dropdownSearchQuery.trim() !== '' && (
+                                  <View style={[
+                                    styles.dropdownMenu,
+                                    {
+                                      backgroundColor: theme.backgroundElement,
+                                      borderColor: theme.backgroundSelected,
+                                      marginTop: Spacing.one,
                                     }
-                                    return filtered.map(ex => {
-                                      const isSelected = selectedExerciseId === ex.id;
-                                      return (
-                                        <Pressable
-                                          key={ex.id}
-                                          onPress={() => {
-                                            setSelectedExerciseId(ex.id);
-                                            setDropdownSearchQuery(ex.name);
-                                            Keyboard.dismiss();
-                                          }}
-                                          style={styles.dropdownItem}>
-                                          <View style={{ flex: 1 }}>
-                                            <ThemedText type="smallBold" style={isSelected ? { color: '#0A84FF' } : undefined}>
-                                              {ex.name}
-                                            </ThemedText>
-                                            {(() => {
-                                              const mgIds = ex.muscle_group_ids;
-                                              if (mgIds && mgIds.length > 0) {
-                                                const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                                                return names ? (
-                                                  <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
-                                                    {names}
-                                                  </ThemedText>
-                                                ) : null;
-                                              }
-                                              return null;
-                                            })()}
-                                          </View>
-                                          <SymbolView
-                                            name={isSelected ? "checkmark.circle.fill" : "plus.circle.fill"}
-                                            tintColor={isSelected ? "#30D158" : "#0A84FF"}
-                                            size={22}
-                                          />
-                                        </Pressable>
-                                      );
-                                    });
-                                  })()}
-                                </ScrollView>
+                                  ]}>
+                                    <ScrollView 
+                                      nestedScrollEnabled={true}
+                                      keyboardShouldPersistTaps="handled"
+                                      style={styles.dropdownList}
+                                      contentContainerStyle={{ paddingVertical: Spacing.one }}>
+                                      {(() => {
+                                        const filtered = exercises.filter(e =>
+                                          e.name.toLowerCase().includes(dropdownSearchQuery.toLowerCase())
+                                        );
+                                        if (filtered.length === 0) {
+                                          return (
+                                            <View style={{ padding: Spacing.three, alignItems: 'center' }}>
+                                              <ThemedText type="small" themeColor="textSecondary">
+                                                No exercises match your search
+                                              </ThemedText>
+                                            </View>
+                                          );
+                                        }
+                                        return filtered.map(ex => {
+                                          return (
+                                            <Pressable
+                                              key={ex.id}
+                                              onPress={() => {
+                                                setSelectedExerciseId(ex.id);
+                                                setDropdownSearchQuery(ex.name);
+                                                Keyboard.dismiss();
+                                              }}
+                                              style={styles.dropdownItem}>
+                                              <View style={{ flex: 1 }}>
+                                                <ThemedText type="smallBold">
+                                                  {ex.name}
+                                                </ThemedText>
+                                              </View>
+                                              <SymbolView
+                                                name="checkmark.circle.fill"
+                                                tintColor="#0A84FF"
+                                                size={22}
+                                              />
+                                            </Pressable>
+                                          );
+                                        });
+                                      })()}
+                                    </ScrollView>
+                                  </View>
+                                )}
                               </View>
                             )}
                           </View>
                         )}
                       </View>
 
-                      {/* Rest Time */}
+                      {/* Rest Time (Clean Table-like Row) */}
                       <View style={styles.formGroup}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                          REST TIME (SECONDS)
+                          OPTIONS
                         </ThemedText>
-                        <TextInput
-                          placeholder="e.g. 90"
-                          keyboardType="numeric"
-                          placeholderTextColor={theme.textSecondary}
-                          value={newRestTime}
-                          onChangeText={setNewRestTime}
-                          style={[
-                            styles.inputField,
-                            {
-                              backgroundColor: theme.backgroundElement,
-                              color: theme.text,
-                              borderColor: theme.backgroundSelected,
-                            },
-                          ]}
-                        />
+                        <ThemedView type="backgroundElement" style={styles.appleListGroup}>
+                          <View style={styles.appleListRow}>
+                            <ThemedText type="small" style={{ fontWeight: '500' }}>Rest Time</ThemedText>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <TextInput
+                                placeholder="90"
+                                keyboardType="numeric"
+                                placeholderTextColor={theme.textSecondary}
+                                value={newRestTime}
+                                onChangeText={setNewRestTime}
+                                style={{
+                                  color: theme.text,
+                                  textAlign: 'center',
+                                  fontSize: 14,
+                                  paddingHorizontal: Spacing.one,
+                                  backgroundColor: theme.background,
+                                  borderColor: theme.backgroundSelected,
+                                  borderWidth: 1,
+                                  borderRadius: 6,
+                                  minWidth: 50,
+                                  height: 26,
+                                  marginRight: 4,
+                                  fontWeight: 'normal',
+                                }}
+                              />
+                              <ThemedText type="small" themeColor="textSecondary">sec</ThemedText>
+                            </View>
+                          </View>
+                        </ThemedView>
                       </View>
 
                       {/* Sets Builder */}
                       <View style={styles.formGroup}>
-                        <View style={styles.sectionHeaderRow}>
-                          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                            PLANNED SETS
-                          </ThemedText>
-                          <Pressable
-                            onPress={() =>
-                              setPlannedSets((prev) => [...prev, { reps: '10', notes: '' }])
-                            }
-                            style={styles.addSetBtn}>
-                            <SymbolView
-                              tintColor="#0A84FF"
-                              name="plus.circle"
-                              size={20}
-                              style={{ marginRight: Spacing.one }}
-                            />
-                          </Pressable>
-                        </View>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                          PLANNED SETS
+                        </ThemedText>
 
                         {(() => {
                           const selectedEx = exercises.find(ex => ex.id === selectedExerciseId);
                           const unitName = selectedEx ? (repUnits[selectedEx.rep_unit_id]?.name_plural || 'Reps') : 'Reps';
 
-                          return plannedSets.map((s, idx) => (
-                             <Swipeable
-                               key={idx}
-                               renderLeftActions={plannedSets.length > 1 ? () => renderPlannedSetSwipeActions(idx) : undefined}
-                               containerStyle={[styles.swipeContainer, { borderRadius: 8 }]}>
-                               <View
-                                 style={[styles.setBuilderRow, { marginBottom: 0, paddingHorizontal: Spacing.one }]}>
-                                 <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: theme.backgroundSelected, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.one }}>
-                                   <ThemedText type="smallBold" style={{ color: '#0A84FF', fontSize: 11 }}>
-                                     {idx + 1}
-                                   </ThemedText>
-                                 </View>
-                                 <TextInput
-                                   placeholder={unitName}
-                                   keyboardType="numeric"
-                                   value={s.reps}
-                                   placeholderTextColor={theme.textSecondary}
-                                   onChangeText={(val) => {
-                                     const newSets = [...plannedSets];
-                                     newSets[idx].reps = val;
-                                     setPlannedSets(newSets);
-                                   }}
-                                   style={[
-                                     styles.inputField,
-                                     styles.setRepsInput,
-                                     {
-                                       backgroundColor: theme.backgroundElement,
-                                       color: theme.text,
-                                       borderColor: theme.backgroundSelected,
-                                       borderWidth: 1,
-                                       borderRadius: 8,
-                                       height: 38,
-                                     },
-                                   ]}
-                                 />
-                                 <View style={{ justifyContent: 'center', minWidth: 32, marginHorizontal: 4 }}>
-                                   <ThemedText style={{ fontSize: 10, fontWeight: 'bold', color: theme.textSecondary }}>
-                                     {unitName}
-                                   </ThemedText>
-                                 </View>
-                                 <TextInput
-                                   placeholder="Notes (optional)"
-                                   value={s.notes}
-                                   placeholderTextColor={theme.textSecondary}
-                                   onChangeText={(val) => {
-                                     const newSets = [...plannedSets];
-                                     newSets[idx].notes = val;
-                                     setPlannedSets(newSets);
-                                   }}
-                                   style={[
-                                     styles.inputField,
-                                     styles.setNotesInput,
-                                     {
-                                       backgroundColor: theme.backgroundElement,
-                                       color: theme.text,
-                                       borderColor: theme.backgroundSelected,
-                                       borderWidth: 1,
-                                       borderRadius: 8,
-                                       paddingHorizontal: Spacing.two,
-                                       height: 38,
-                                     },
-                                   ]}
-                                 />
-                               </View>
-                             </Swipeable>
-                           ))})()}
+                          return (
+                            <ThemedView type="backgroundElement" style={styles.appleListGroup}>
+                              {plannedSets.map((s, idx) => {
+                                const isLast = idx === plannedSets.length - 1;
+                                return (
+                                  <Swipeable
+                                    key={idx}
+                                    renderLeftActions={plannedSets.length > 1 ? () => renderPlannedSetSwipeActions(idx) : undefined}
+                                    containerStyle={{ overflow: 'hidden' }}>
+                                    <View style={[
+                                      styles.appleListRow,
+                                      { backgroundColor: theme.backgroundElement },
+                                      !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
+                                    ]}>
+                                      <ThemedText type="smallBold" style={{ width: 30, color: theme.textSecondary }}>
+                                        S{idx + 1}
+                                      </ThemedText>
+
+                                      <TextInput
+                                        placeholder={unitName}
+                                        keyboardType="numeric"
+                                        value={s.reps}
+                                        placeholderTextColor={theme.textSecondary}
+                                        onChangeText={(val) => {
+                                          const newSets = [...plannedSets];
+                                          newSets[idx].reps = val;
+                                          setPlannedSets(newSets);
+                                        }}
+                                        style={{
+                                          width: 50,
+                                          color: theme.text,
+                                          fontSize: 16,
+                                          padding: 0,
+                                          textAlign: 'center',
+                                          backgroundColor: theme.background,
+                                          borderColor: theme.backgroundSelected,
+                                          borderWidth: 1,
+                                          borderRadius: 8,
+                                          height: 34,
+                                          marginRight: Spacing.one,
+                                          fontWeight: '600',
+                                        }}
+                                      />
+                                      <ThemedText type="default" themeColor="textSecondary" style={{ marginRight: Spacing.four, fontSize: 14 }}>
+                                        {unitName}
+                                      </ThemedText>
+
+                                      <TextInput
+                                        placeholder="Notes"
+                                        value={s.notes}
+                                        placeholderTextColor={theme.textSecondary}
+                                        onChangeText={(val) => {
+                                          const newSets = [...plannedSets];
+                                          newSets[idx].notes = val;
+                                          setPlannedSets(newSets);
+                                        }}
+                                        style={{
+                                          flex: 1,
+                                          color: theme.text,
+                                          fontSize: 14,
+                                          paddingHorizontal: Spacing.two,
+                                          backgroundColor: theme.background,
+                                          borderColor: theme.backgroundSelected,
+                                          borderWidth: 1,
+                                          borderRadius: 8,
+                                          height: 34,
+                                        }}
+                                      />
+                                    </View>
+                                  </Swipeable>
+                                );
+                              })}
+
+                              {/* Add Set Row */}
+                              <Pressable
+                                onPress={() => setPlannedSets((prev) => [...prev, { reps: '10', notes: '' }])}
+                                style={({ pressed }) => [
+                                  styles.appleListRow,
+                                  { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.backgroundSelected },
+                                  pressed && styles.pressed,
+                                ]}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                  <SymbolView name="plus.circle.fill" tintColor="#0A84FF" size={20} style={{ marginRight: 8 }} />
+                                  <ThemedText type="default" style={{ color: '#0A84FF', fontWeight: '500' }}>Add Set</ThemedText>
+                                </View>
+                              </Pressable>
+                            </ThemedView>
+                          );
+                        })()}
                       </View>
                     </ScrollView>
-                    </Pressable>
                   )}
                 </View>
               )}
@@ -2544,6 +2574,18 @@ const styles = StyleSheet.create({
   },
   setDeleteBtn: {
     padding: Spacing.one,
+  },
+  appleListGroup: {
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  appleListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    minHeight: 44,
   },
   // Active Workout View Elements
   workoutHeader: {
