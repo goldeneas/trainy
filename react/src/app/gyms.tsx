@@ -676,7 +676,7 @@ export default function GymsScreen() {
                 <ScrollView style={styles.modalScrollBody} contentContainerStyle={styles.modalScrollContent}>
                   <View style={styles.inputGroup}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                      Gym Name
+                      GYM NAME
                     </ThemedText>
                     <TextInput
                       value={name}
@@ -697,7 +697,7 @@ export default function GymsScreen() {
                   <View style={styles.coordRowInputs}>
                     <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two }]}>
                       <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                        Latitude
+                        LATITUDE
                       </ThemedText>
                       <TextInput
                         value={altitude}
@@ -792,11 +792,11 @@ export default function GymsScreen() {
                   keyExtractor={(eq) => eq.ID.toString()}
                   contentContainerStyle={{ padding: Spacing.four, paddingBottom: safeBottom }}
                   ListHeaderComponent={
-                    <View style={{ marginBottom: Spacing.four }}>
+                    <View style={{ marginBottom: Spacing.one }}>
                       {/* Gym Name */}
                       <View style={styles.inputGroup}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                          Gym Name
+                          GYM NAME
                         </ThemedText>
                         <TextInput
                           value={editName}
@@ -818,7 +818,7 @@ export default function GymsScreen() {
                       <View style={styles.coordRowInputs}>
                         <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two }]}>
                           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                            Latitude / Altitude
+                            LATITUDE
                           </ThemedText>
                           <TextInput
                             value={editAltitude}
@@ -839,7 +839,7 @@ export default function GymsScreen() {
 
                         <View style={[styles.inputGroup, { flex: 1 }]}>
                           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                            Longitude
+                            LONGITUDE
                           </ThemedText>
                           <TextInput
                             value={editLongitude}
@@ -884,9 +884,9 @@ export default function GymsScreen() {
                       </Pressable>
 
                       {/* Section Divider / Label */}
-                      <View style={{ marginTop: Spacing.two, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#C6C6C8', paddingTop: Spacing.three }}>
+                      <View>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.inputLabel, { marginBottom: 0 }]}>
-                          Equipment List
+                          EQUIPMENT LIST
                         </ThemedText>
                       </View>
                     </View>
@@ -961,10 +961,7 @@ export default function GymsScreen() {
                   </ThemedText>
 
                   {/* Rating display (Interactive) */}
-                  <View style={[styles.detailSection, { flexDirection: 'row', alignItems: 'center', marginBottom: 20 }]}>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={{ marginRight: 8 }}>
-                      Rating:
-                    </ThemedText>
+                  <View style={[styles.detailSection, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }]}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       {Array.from({ length: 5 }).map((_, idx) => {
                         const val = idx + 1;
@@ -989,7 +986,7 @@ export default function GymsScreen() {
                   <View style={styles.detailSection}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.sectionLabel, { marginBottom: 0 }]}>
-                        Location
+                        LOCATION
                       </ThemedText>
                       <Pressable
                         onPress={handleOpenMap}
@@ -1002,7 +999,7 @@ export default function GymsScreen() {
                   {/* Equipments Present */}
                   <View style={styles.detailSection}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
-                      Available Equipment
+                      AVAILABLE EQUIPMENT
                     </ThemedText>
                     {locationEquipments.filter((le) => le.GymLocationID === selectedGym.ID).length > 0 ? (
                       <View style={[styles.detailTextBox, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected, flexDirection: 'column', alignItems: 'stretch' }]}>

@@ -1910,7 +1910,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: Spacing.one,
   },
   chip: {
     paddingVertical: Spacing.one,
