@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Animated,
+  AppState,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -186,6 +187,10 @@ export default function WorkoutsScreen() {
       useNativeDriver: false,
     }).start();
   }, [restTimerSeconds, timerAnimatedValue]);
+
+  const appState = useRef(AppState.currentState);
+  const timeWentToBackgroundRef = useRef<number | null>(null);
+
   // Settings Modal State
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [tempServerUrl, setTempServerUrl] = useState('');
@@ -340,6 +345,71 @@ export default function WorkoutsScreen() {
       if (interval) clearInterval(interval);
     };
   }, [restTimerActive, triggerRestTimerEndEffects]);
+
+  // Cancel scheduled notifications if rest timer becomes inactive in foreground
+  useEffect(() => {
+    if (!restTimerActive) {
+      try {
+        Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
+      } catch {}
+    }
+  }, [restTimerActive]);
+
+  // Handle background / phone lock timer drift and schedule background notifications
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        // App returned to foreground: cancel lock screen notification
+        try {
+          Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
+        } catch {}
+
+        if (restTimerActive && timeWentToBackgroundRef.current !== null) {
+          const elapsedSecs = Math.floor((Date.now() - timeWentToBackgroundRef.current) / 1000);
+          if (elapsedSecs > 0) {
+            setRestTimerSeconds((prev) => {
+              const remaining = prev - elapsedSecs;
+              if (remaining <= 0) {
+                setRestTimerActive(false);
+                setTimeout(() => {
+                  triggerRestTimerEndEffects();
+                }, 100);
+                return 0;
+              }
+              return remaining;
+            });
+          }
+        }
+        timeWentToBackgroundRef.current = null;
+      } else if (nextAppState.match(/inactive|background/)) {
+        // App entering background / lock screen: capture time and schedule local notification
+        if (restTimerActive && restTimerSeconds > 0) {
+          timeWentToBackgroundRef.current = Date.now();
+          try {
+            Notifications.scheduleNotificationAsync({
+              content: {
+                title: 'Rest Over!',
+                body: 'Keep going, king!',
+                sound: true,
+              },
+              trigger: {
+                seconds: restTimerSeconds,
+                repeats: false,
+              },
+            }).catch(() => {});
+          } catch {}
+        }
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [restTimerActive, restTimerSeconds, triggerRestTimerEndEffects]);
 
   // Stopwatch ticking
   useEffect(() => {
@@ -1026,7 +1096,7 @@ export default function WorkoutsScreen() {
                         setSelectedExerciseId(null);
                       }}
                       style={styles.modalHeaderButton}>
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>
+                      <ThemedText type="link" themeColor="textSecondary">
                         Back
                       </ThemedText>
                     </Pressable>
@@ -1071,12 +1141,9 @@ export default function WorkoutsScreen() {
                             <SymbolView
                               tintColor="#0A84FF"
                               name="plus.circle"
-                              size={16}
+                              size={20}
                               style={{ marginRight: Spacing.one }}
                             />
-                            <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>
-                              Add Exercise
-                            </ThemedText>
                           </Pressable>
                         </View>
 
@@ -1220,6 +1287,7 @@ export default function WorkoutsScreen() {
                               ]}>
                                 <ScrollView 
                                   nestedScrollEnabled={true}
+                                  keyboardShouldPersistTaps="handled"
                                   style={styles.dropdownList}
                                   contentContainerStyle={{ paddingVertical: Spacing.one }}>
                                   {(() => {
@@ -1243,6 +1311,7 @@ export default function WorkoutsScreen() {
                                           onPress={() => {
                                             setSelectedExerciseId(ex.id);
                                             setDropdownSearchQuery(ex.name);
+                                            Keyboard.dismiss();
                                           }}
                                           style={styles.dropdownItem}>
                                           <View style={{ flex: 1 }}>
@@ -1312,8 +1381,12 @@ export default function WorkoutsScreen() {
                             onPress={() =>
                               setPlannedSets((prev) => [...prev, { reps: '10', notes: '' }])
                             }
-                            style={styles.inlineAddBtn}>
-                            <ThemedText type="linkPrimary" style={{ color: '#0A84FF' }}>+ Add Set</ThemedText>
+                            style={styles.addSetBtn}>
+                            <SymbolView
+                              name="plus.circle.fill"
+                              tintColor="#0A84FF"
+                              size={20}
+                            />
                           </Pressable>
                         </View>
 
@@ -2307,6 +2380,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.one,
+  },
+  addSetBtn: {
+      paddingRight: Spacing.one,
   },
   routineExerciseCard: {
     padding: Spacing.three,
