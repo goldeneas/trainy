@@ -1654,61 +1654,69 @@ export default function WorkoutsScreen() {
                          <ThemedText type="small" themeColor="textSecondary" style={styles.tdPlanned}>
                            {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || ''} {set.Notes ? `(${set.Notes})` : ''}
                         </ThemedText>
-                        <TextInput
-                          placeholder="0"
-                          keyboardType="numeric"
-                          placeholderTextColor={theme.textSecondary}
-                          value={log.weight}
-                          onChangeText={(val) => {
-                            setWorkoutLogs((prev) => {
-                              const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
-                              return {
-                                ...prev,
-                                [set.ID]: { ...current, weight: val },
-                              };
-                            });
-                          }}
-                          style={[
-                            styles.workoutCellInput,
-                            {
-                              color: theme.text,
-                              backgroundColor: theme.background,
-                              borderColor: theme.backgroundSelected,
-                            },
-                          ]}
-                        />
-                        <TextInput
-                          placeholder={repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
-                          keyboardType="numeric"
-                          placeholderTextColor={theme.textSecondary}
-                          value={log.reps}
-                          onChangeText={(val) => {
-                            setWorkoutLogs((prev) => {
-                              const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
-                              return {
-                                ...prev,
-                                [set.ID]: { ...current, reps: val },
-                              };
-                            });
-                          }}
-                          style={[
-                            styles.workoutCellInput,
-                            {
-                              color: theme.text,
-                              backgroundColor: theme.background,
-                              borderColor: theme.backgroundSelected,
-                            },
-                          ]}
-                        />
+                        <View style={{ width: 60, alignItems: 'center', justifyContent: 'center' }}>
+                          <TextInput
+                            placeholder="0"
+                            keyboardType="numeric"
+                            placeholderTextColor={theme.textSecondary}
+                            value={log.weight}
+                            onChangeText={(val) => {
+                              setWorkoutLogs((prev) => {
+                                const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
+                                return {
+                                  ...prev,
+                                  [set.ID]: { ...current, weight: val },
+                                };
+                              });
+                            }}
+                            style={[
+                              styles.workoutCellInput,
+                              {
+                                width: 54,
+                                marginHorizontal: 0,
+                                color: theme.text,
+                                backgroundColor: theme.background,
+                                borderColor: theme.backgroundSelected,
+                              },
+                            ]}
+                          />
+                        </View>
+                        <View style={{ width: 60, alignItems: 'center', justifyContent: 'center' }}>
+                          <TextInput
+                            placeholder={repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
+                            keyboardType="numeric"
+                            placeholderTextColor={theme.textSecondary}
+                            value={log.reps}
+                            onChangeText={(val) => {
+                              setWorkoutLogs((prev) => {
+                                const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
+                                return {
+                                  ...prev,
+                                  [set.ID]: { ...current, reps: val },
+                                };
+                              });
+                            }}
+                            style={[
+                              styles.workoutCellInput,
+                              {
+                                width: 54,
+                                marginHorizontal: 0,
+                                color: theme.text,
+                                backgroundColor: theme.background,
+                                borderColor: theme.backgroundSelected,
+                              },
+                            ]}
+                          />
+                        </View>
                         <Pressable
                           onPress={() => handleToggleSetComplete(set.ID, pe.RestTime)}
                           style={[
                             styles.checkboxBtn,
                           ]}>
                           <SymbolView
-                            tintColor={log.completed ? '#FFF' : theme.textSecondary}
+                            tintColor={log.completed ? '#30D158' : theme.textSecondary}
                             name={log.completed ? 'checkmark.circle.fill' : 'circle'}
-                            size={20}
+                            size={22}
                           />
                         </Pressable>
                       </View>
@@ -2773,6 +2781,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.1)',
     paddingBottom: 4,
     marginBottom: Spacing.one,
+    paddingHorizontal: Spacing.half,
   },
   thSet: {
     width: 30,
