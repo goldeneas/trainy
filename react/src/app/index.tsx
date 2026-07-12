@@ -1175,7 +1175,7 @@ export default function WorkoutsScreen() {
                         {selectedRoutine.plannedExercises.length === 0 ? (
                           <ThemedView type="backgroundElement" style={styles.detailTextBox}>
                             <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-                              {"No exercises added to this routine yet. Tap the '+' button above to add one."}
+                              {"No exercises added to this routine yet."}
                             </ThemedText>
                           </ThemedView>
                           ) : (
@@ -1262,11 +1262,7 @@ export default function WorkoutsScreen() {
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                           SELECT EXERCISE *
                         </ThemedText>
-                        {exercises.length === 0 ? (
-                          <ThemedText type="small" style={{ color: '#FF3B30', marginTop: Spacing.one }}>
-                            {"Please add exercises in the 'Exercises' tab first!"}
-                          </ThemedText>
-                        ) : (
+
                           <View style={styles.dropdownContainer}>
                             {selectedExerciseId !== null ? (
                               <ThemedView type="backgroundElement" style={[styles.appleListRow, { borderRadius: 8, overflow: 'hidden' }]}>
@@ -1398,7 +1394,6 @@ export default function WorkoutsScreen() {
                               </View>
                             )}
                           </View>
-                        )}
                       </View>
 
                       {/* Rest Time (Clean Table-like Row) */}

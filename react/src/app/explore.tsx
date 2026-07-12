@@ -1599,6 +1599,7 @@ export default function ExercisesScreen() {
                         backgroundColor: theme.backgroundElement,
                         color: theme.text,
                         borderColor: theme.backgroundSelected,
+                        fontSize: 14,
                       },
                     ]}
                     multiline
