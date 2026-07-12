@@ -1530,7 +1530,7 @@ export default function WorkoutsScreen() {
                                 ]}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                   <SymbolView name="plus.circle" tintColor="#0A84FF" size={20} style={{ marginRight: 8 }} />
-                                  <ThemedText type="default" style={{ color: '#0A84FF', fontWeight: '500' }}>Add Set</ThemedText>
+                                  <ThemedText type="default" style={{ color: '#0A84FF', fontWeight: '500', fontSize: 16 }}>Add Set</ThemedText>
                                 </View>
                               </Pressable>
                             </ThemedView>

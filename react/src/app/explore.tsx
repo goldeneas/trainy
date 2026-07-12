@@ -381,6 +381,19 @@ export default function ExercisesScreen() {
     setLocalExerciseIds((prev) => prev.filter((id) => id !== exerciseId));
   }, []);
 
+  const renderLocalExerciseSwipeActions = useCallback((exId: number) => (
+    <View style={styles.swipeActionContainer}>
+      <Pressable
+        onPress={() => handleRemoveLocalExercise(exId)}
+        style={({ pressed }) => [
+          styles.deleteSwipeBtn,
+          pressed && styles.pressed,
+        ]}>
+        <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+      </Pressable>
+    </View>
+  ), [handleRemoveLocalExercise]);
+
   useFocusEffect(
     useCallback(() => {
       fetchExercises();
@@ -428,7 +441,6 @@ export default function ExercisesScreen() {
       
       // Refresh
       fetchExercises();
-      Alert.alert('Success', 'Exercise created successfully');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to create exercise');
     } finally {
@@ -465,7 +477,6 @@ export default function ExercisesScreen() {
       
       // Refresh
       fetchExercises();
-      Alert.alert('Success', 'Exercise updated successfully');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to update exercise');
     } finally {
@@ -1034,7 +1045,7 @@ export default function ExercisesScreen() {
                       ]}
                     />
                   </View>
-                  <View style={[styles.formGroup, { marginTop: Spacing.three }]}>
+                  <View style={styles.formGroup}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                       NOTES
                     </ThemedText>
@@ -1050,6 +1061,7 @@ export default function ExercisesScreen() {
                           backgroundColor: theme.backgroundElement,
                           color: theme.text,
                           borderColor: theme.backgroundSelected,
+                          fontSize: 14,
                         },
                       ]}
                       multiline
@@ -1137,7 +1149,7 @@ export default function ExercisesScreen() {
                         ]}
                       />
                     </View>
-                    <View style={[styles.formGroup, { marginTop: Spacing.three }]}>
+                    <View style={styles.formGroup}>
                       <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                         NOTES
                       </ThemedText>
@@ -1153,6 +1165,7 @@ export default function ExercisesScreen() {
                             backgroundColor: theme.backgroundElement,
                             color: theme.text,
                             borderColor: theme.backgroundSelected,
+                            fontSize: 14,
                           },
                         ]}
                         multiline
@@ -1161,7 +1174,7 @@ export default function ExercisesScreen() {
                     </View>
 
                     {/* Search and Add Exercise Bar */}
-                    <View style={[styles.formGroup, { marginTop: Spacing.three, zIndex: 10 }]}>
+                    <View style={[styles.formGroup, { zIndex: 10 }]}>
                       <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                         SEARCH AND ADD EXERCISE
                       </ThemedText>
@@ -1265,30 +1278,53 @@ export default function ExercisesScreen() {
                     </View>
 
                     {/* Exercises currently in progression */}
-                    <View style={[styles.formGroup, { marginTop: Spacing.three }]}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                        EXERCISES IN PROGRESSION
-                      </ThemedText>
-                      {localExercises.length === 0 ? (
-                        <ThemedText type="small" themeColor="textSecondary" style={{ fontStyle: 'italic', marginTop: Spacing.one }}>
-                          No exercises in this progression yet.
+                    {localExercises.length > 0 && (
+                      <View style={styles.formGroup}>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                          EXERCISES IN PROGRESSION
                         </ThemedText>
-                      ) : (
-                        localExercises.map((ex, idx) => (
-                          <View key={ex.id} style={styles.editProgItemRow}>
-                            <ThemedText type="smallBold" style={{ color: '#0A84FF', marginRight: Spacing.two, width: 20 }}>
-                              {idx + 1}
-                            </ThemedText>
-                            <ThemedText type="default" style={{ flex: 1 }}>{ex.name}</ThemedText>
-                            <Pressable
-                              onPress={() => handleRemoveLocalExercise(ex.id)}
-                              style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-                              <SymbolView tintColor="#FF3B30" name="trash.fill" size={18} />
-                            </Pressable>
-                          </View>
-                        ))
-                      )}
-                    </View>
+                        <ThemedView type="backgroundElement" style={styles.appleListGroup}>
+                          {localExercises.map((ex, idx) => {
+                            const isLast = idx === localExercises.length - 1;
+                            return (
+                              <Swipeable
+                                key={ex.id}
+                                renderLeftActions={() => renderLocalExerciseSwipeActions(ex.id)}
+                                containerStyle={{ overflow: 'hidden' }}>
+                                <View style={[
+                                  styles.appleListRow,
+                                  { backgroundColor: theme.backgroundElement },
+                                  !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
+                                ]}>
+                                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                                    <ThemedText type="smallBold" style={{ color: '#0A84FF', marginRight: Spacing.two, width: 20 }}>
+                                      {idx + 1}
+                                    </ThemedText>
+                                    <View style={{ flex: 1 }}>
+                                      <ThemedText type="small" style={{ fontWeight: '500' }}>
+                                        {ex.name}
+                                      </ThemedText>
+                                      {(() => {
+                                        const mgIds = ex.muscle_group_ids;
+                                        if (mgIds && mgIds.length > 0) {
+                                          const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                          return names ? (
+                                            <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
+                                              {names}
+                                            </ThemedText>
+                                          ) : null;
+                                        }
+                                        return null;
+                                      })()}
+                                    </View>
+                                  </View>
+                                </View>
+                              </Swipeable>
+                            );
+                          })}
+                        </ThemedView>
+                      </View>
+                    )}
                   </View>
                 </Pressable>
               </ScrollView>
@@ -1539,6 +1575,7 @@ export default function ExercisesScreen() {
                         backgroundColor: theme.backgroundElement,
                         color: theme.text,
                         borderColor: theme.backgroundSelected,
+                        fontSize: 14,
                       },
                     ]}
                     multiline
@@ -2055,5 +2092,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     paddingHorizontal: 16,
+  },
+  appleListGroup: {
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  appleListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    minHeight: 44,
   },
 });
