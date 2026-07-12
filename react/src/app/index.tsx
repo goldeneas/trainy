@@ -144,10 +144,12 @@ export default function WorkoutsScreen() {
   const [isAddExerciseToRoutineVisible, setIsAddExerciseToRoutineVisible] = useState(false);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [isHistoryDetailVisible, setIsHistoryDetailVisible] = useState(false);
+  const [isExerciseDetailVisible, setIsExerciseDetailVisible] = useState(false);
 
   // Selected entities
   const [selectedRoutineId, setSelectedRoutineId] = useState<number | null>(null);
   const [selectedHistory, setSelectedHistory] = useState<FullActualRoutine | null>(null);
+  const [selectedExerciseForDetail, setSelectedExerciseForDetail] = useState<Exercise | null>(null);
 
   // Derive selectedRoutine dynamically from routines
   const selectedRoutine = useMemo(() => {
@@ -222,6 +224,11 @@ export default function WorkoutsScreen() {
 
   const customTimerSwipe = useBottomSheet(isCustomTimerModalVisible, () => {
     setIsCustomTimerModalVisible(false);
+  });
+
+  const exerciseDetailSwipe = useBottomSheet(isExerciseDetailVisible, () => {
+    setIsExerciseDetailVisible(false);
+    setSelectedExerciseForDetail(null);
   });
 
   useEffect(() => {
@@ -1212,9 +1219,12 @@ export default function WorkoutsScreen() {
                                       return null;
                                     })()}
                                   </View>
-                                  <ThemedText type="small" themeColor="textSecondary">
-                                    {pe.RestTime ? `Rest: ${pe.RestTime}s` : 'No rest'}
-                                  </ThemedText>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
+                                    <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
+                                      {pe.RestTime ? `${pe.RestTime}s` : 'None'}
+                                    </ThemedText>
+                                  </View>
                                 </View>
 
                                 {/* Sets Rows */}
@@ -1592,24 +1602,32 @@ export default function WorkoutsScreen() {
                   key={pe.ID}
                   type="backgroundElement"
                   style={styles.workoutExerciseBlock}>
-                  <ThemedText type="default" style={{ fontWeight: 'bold', marginBottom: Spacing.one }}>
-                    {pe.exercise?.name}
-                  </ThemedText>
-                  {(() => {
-                    const mgIds = pe.exercise?.muscle_group_ids;
-                    if (mgIds && mgIds.length > 0) {
-                      const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                      return names ? (
-                        <ThemedText type="small" style={{ color: '#0A84FF', marginBottom: Spacing.one }}>
-                          {names}
-                        </ThemedText>
-                      ) : null;
-                    }
-                    return null;
-                  })()}
-                  <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
-                    Planned Rest: {pe.RestTime ? `${pe.RestTime}s` : 'None'}
-                  </ThemedText>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                    <ThemedText type="default" style={{ fontWeight: 'bold', color: theme.text, fontSize: 18, flex: 1, marginRight: Spacing.two }}>
+                      {pe.exercise?.name}
+                    </ThemedText>
+                    <Pressable
+                      onPress={() => {
+                        const exerciseId = pe.exercise?.id || pe.ExerciseID;
+                        const fullExercise = exercises.find(e => e.id === exerciseId);
+                        if (fullExercise) {
+                          setSelectedExerciseForDetail(fullExercise);
+                          setIsExerciseDetailVisible(true);
+                        } else if (pe.exercise) {
+                          setSelectedExerciseForDetail(pe.exercise);
+                          setIsExerciseDetailVisible(true);
+                        }
+                      }}
+                      style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
+                      <SymbolView name="info.circle" tintColor="#0A84FF" size={20} />
+                    </Pressable>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.three }}>
+                    <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
+                    <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
+                      {pe.RestTime ? `${pe.RestTime}s` : 'None'}
+                    </ThemedText>
+                  </View>
 
                   {/* Table Headers */}
                   <View style={styles.tableHeaderRow}>
@@ -1987,7 +2005,100 @@ export default function WorkoutsScreen() {
               </View>
             </KeyboardAvoidingView>
           </Modal>
-        </ThemedView>
+            {/* Exercise Detail Modal */}
+            <Modal
+              animationType="none"
+              transparent={true}
+              visible={isExerciseDetailVisible}
+              onRequestClose={exerciseDetailSwipe.close}>
+              <View style={styles.modalOverlay}>
+                <Pressable style={StyleSheet.absoluteFill} onPress={exerciseDetailSwipe.close} />
+                <Animated.View 
+                  style={[
+                    styles.modalContent,
+                    {
+                      height: '80%',
+                      backgroundColor: theme.background,
+                      transform: [{ translateY: exerciseDetailSwipe.translateY }]
+                    }
+                  ]}>
+                  <View {...exerciseDetailSwipe.panHandlers}>
+                    <View style={styles.dragHandleContainer}>
+                      <View style={styles.dragHandle} />
+                    </View>
+                    <View style={styles.modalHeader}>
+                      <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
+                        Exercise Details
+                      </ThemedText>
+                    </View>
+                  </View>
+
+                  {selectedExerciseForDetail && (
+                    <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                      <ScrollView 
+                        style={styles.modalScrollBody} 
+                        contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
+                        <ThemedText type="subtitle" style={styles.detailTitle}>
+                          {selectedExerciseForDetail.name}
+                        </ThemedText>
+
+                        {selectedExerciseForDetail.notes ? (
+                          <View style={styles.detailSection}>
+                            <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                              NOTES
+                            </ThemedText>
+                            <ThemedView type="backgroundElement" style={styles.detailTextBox}>
+                              <ThemedText type="default">
+                                {selectedExerciseForDetail.notes}
+                              </ThemedText>
+                            </ThemedView>
+                          </View>
+                        ) : null}
+
+                        {selectedExerciseForDetail.instructions ? (
+                          <View style={styles.detailSection}>
+                            <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                              INSTRUCTIONS
+                            </ThemedText>
+                            <ThemedView type="backgroundElement" style={styles.detailTextBox}>
+                              <ThemedText type="default" style={styles.instructionsText}>
+                                {selectedExerciseForDetail.instructions}
+                              </ThemedText>
+                            </ThemedView>
+                          </View>
+                        ) : null}
+
+                        {(() => {
+                          const mgIds = selectedExerciseForDetail.muscle_group_ids;
+                          if (mgIds && mgIds.length > 0) {
+                            const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter((name: string | undefined): name is string => name !== undefined);
+                            if (names.length > 0) {
+                              return (
+                                <View style={styles.detailSection}>
+                                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                                    MUSCLE GROUPS
+                                  </ThemedText>
+                                  <View>
+                                    {names.map((name: string, index: number) => (
+                                      <View key={index} style={styles.detailMuscleRow}>
+                                        <SymbolView tintColor="#8E8E93" name="circle.fill" size={6} style={{ marginRight: 14, marginLeft: 4 }} />
+                                        <ThemedText style={{ fontSize: 16 }}>{name}</ThemedText>
+                                      </View>
+                                    ))}
+                                  </View>
+                                </View>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
+                      </ScrollView>
+                    </Pressable>
+                  )}
+                </Animated.View>
+              </View>
+            </Modal>
+          </ThemedView>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -2894,5 +3005,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.three,
+  },
+  instructionsText: {
+    lineHeight: 22,
+  },
+  detailMuscleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.one,
   },
 });
