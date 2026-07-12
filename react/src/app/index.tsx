@@ -1256,7 +1256,8 @@ export default function WorkoutsScreen() {
                       keyboardShouldPersistTaps="handled"
                       keyboardDismissMode="on-drag"
                       contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
-                      {/* Exercise Selector */}
+                      <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flexGrow: 1 }}>
+                        {/* Exercise Selector */}
                       <View style={styles.formGroup}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                           SELECT EXERCISE *
@@ -1536,6 +1537,7 @@ export default function WorkoutsScreen() {
                           );
                         })()}
                       </View>
+                    </Pressable>
                     </ScrollView>
                   )}
                 </View>
