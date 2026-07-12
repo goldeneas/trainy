@@ -121,6 +121,45 @@ function useBottomSheet(visible: boolean, onClose: () => void) {
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
+interface TableProps {
+  style?: any;
+  children: React.ReactNode;
+}
+
+interface RowProps {
+  style?: any;
+  widthArr: (number | 'flex')[];
+  data: React.ReactNode[];
+}
+
+function Table({ style, children }: TableProps) {
+  return <View style={style}>{children}</View>;
+}
+
+function Row({ style, widthArr, data }: RowProps) {
+  return (
+    <View style={[{ flexDirection: 'row', alignItems: 'center' }, style]}>
+      {data.map((item, idx) => {
+        const widthVal = widthArr[idx];
+        const cellStyle: any = { justifyContent: 'center', alignSelf: 'center' };
+        if (idx !== 1) {
+          cellStyle.alignItems = 'center';
+        }
+        if (typeof widthVal === 'number') {
+          cellStyle.width = widthVal;
+        } else if (widthVal === 'flex') {
+          cellStyle.flex = 2;
+        }
+        return (
+          <View key={idx} style={cellStyle}>
+            {item}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function WorkoutsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -836,30 +875,35 @@ export default function WorkoutsScreen() {
       <Swipeable
         renderLeftActions={renderSwipeActions}
         containerStyle={styles.swipeContainer}>
-        <Pressable
-          onPress={() => {
-            setSelectedHistory(item);
-            setIsHistoryDetailVisible(true);
-          }}
-          style={({ pressed }) => [
+        <View
+          style={[
             styles.card,
             { backgroundColor: theme.backgroundElement, marginBottom: 0 },
-            pressed && styles.cardPressed,
           ]}>
           <View style={styles.cardHeader}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: Spacing.two }}>
               <ThemedText type="smallBold" style={styles.cardTitle}>
                 {item.routineName}
               </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
+              <ThemedText type="small" themeColor="textSecondary" style={styles.cardSubtitle}>
                 {formattedDate}
               </ThemedText>
             </View>
-            <SymbolView
-              tintColor={theme.textSecondary}
-              name="chevron.right"
-              size={14}
-            />
+            <Pressable
+              onPress={() => {
+                setSelectedHistory(item);
+                setIsHistoryDetailVisible(true);
+              }}
+              style={({ pressed }) => [
+                styles.cardStartIconBtn,
+                pressed && styles.pressed,
+              ]}>
+              <SymbolView
+                tintColor="#0A84FF"
+                name="chevron.right.circle.fill"
+                size={28}
+              />
+            </Pressable>
           </View>
           <View style={styles.cardFooter}>
             <SymbolView
@@ -872,7 +916,7 @@ export default function WorkoutsScreen() {
               Completed {item.actualSets.length} sets
             </ThemedText>
           </View>
-        </Pressable>
+        </View>
       </Swipeable>
     );
   };
@@ -1630,98 +1674,105 @@ export default function WorkoutsScreen() {
                   </View>
 
                   {/* Table Headers */}
-                  <View style={styles.tableHeaderRow}>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thSet}>SET</ThemedText>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thPlanned}>PLANNED</ThemedText>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thWeight}>WEIGHT</ThemedText>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thReps}>
-                      {(repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps').toUpperCase()}
-                    </ThemedText>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.thLog}>LOG</ThemedText>
-                  </View>
+                  {/* Table Headers */}
+                  <Row
+                    style={styles.tableHeaderRow}
+                    widthArr={[30, 'flex', 60, 60, 40]}
+                    data={[
+                      <ThemedText key="h-set" type="smallBold" themeColor="textSecondary" style={styles.thSet}>SET</ThemedText>,
+                      <ThemedText key="h-plan" type="smallBold" themeColor="textSecondary" style={styles.thPlanned}>PLANNED</ThemedText>,
+                      <ThemedText key="h-weight" type="smallBold" themeColor="textSecondary" style={styles.thWeight}>WEIGHT</ThemedText>,
+                      <ThemedText key="h-reps" type="smallBold" themeColor="textSecondary" style={styles.thReps}>
+                        {(repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps').toUpperCase()}
+                      </ThemedText>,
+                      <ThemedText key="h-log" type="smallBold" themeColor="textSecondary" style={styles.thLog}>LOG</ThemedText>
+                    ]}
+                  />
 
                   {/* Set Log Rows */}
-                  {pe.sets.map((set) => {
-                    const log = workoutLogs[set.ID] || { weight: '0', reps: '10', completed: false };
-                    return (
-                      <View
-                        key={set.ID}
-                        style={[
-                          styles.tableBodyRow,
-                          log.completed && { backgroundColor: 'rgba(48, 209, 88, 0.15)' },
-                        ]}>
-                        <ThemedText type="smallBold" style={styles.tdSet}>{set.Ord}</ThemedText>
-                         <ThemedText type="small" themeColor="textSecondary" style={styles.tdPlanned}>
-                           {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || ''} {set.Notes ? `(${set.Notes})` : ''}
-                        </ThemedText>
-                        <View style={{ width: 60, alignItems: 'center', justifyContent: 'center' }}>
-                          <TextInput
-                            placeholder="0"
-                            keyboardType="numeric"
-                            placeholderTextColor={theme.textSecondary}
-                            value={log.weight}
-                            onChangeText={(val) => {
-                              setWorkoutLogs((prev) => {
-                                const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
-                                return {
-                                  ...prev,
-                                  [set.ID]: { ...current, weight: val },
-                                };
-                              });
-                            }}
-                            style={[
-                              styles.workoutCellInput,
-                              {
-                                width: 54,
-                                marginHorizontal: 0,
-                                color: theme.text,
-                                backgroundColor: theme.background,
-                                borderColor: theme.backgroundSelected,
-                              },
-                            ]}
-                          />
-                        </View>
-                        <View style={{ width: 60, alignItems: 'center', justifyContent: 'center' }}>
-                          <TextInput
-                            placeholder={repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
-                            keyboardType="numeric"
-                            placeholderTextColor={theme.textSecondary}
-                            value={log.reps}
-                            onChangeText={(val) => {
-                              setWorkoutLogs((prev) => {
-                                const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
-                                return {
-                                  ...prev,
-                                  [set.ID]: { ...current, reps: val },
-                                };
-                              });
-                            }}
-                            style={[
-                              styles.workoutCellInput,
-                              {
-                                width: 54,
-                                marginHorizontal: 0,
-                                color: theme.text,
-                                backgroundColor: theme.background,
-                                borderColor: theme.backgroundSelected,
-                              },
-                            ]}
-                          />
-                        </View>
-                        <Pressable
-                          onPress={() => handleToggleSetComplete(set.ID, pe.RestTime)}
+                  <Table>
+                    {pe.sets.map((set) => {
+                      const log = workoutLogs[set.ID] || { weight: '0', reps: '10', completed: false };
+                      return (
+                        <Row
+                          key={set.ID}
                           style={[
-                            styles.checkboxBtn,
-                          ]}>
-                          <SymbolView
-                            tintColor={log.completed ? '#30D158' : theme.textSecondary}
-                            name={log.completed ? 'checkmark.circle.fill' : 'circle'}
-                            size={22}
-                          />
-                        </Pressable>
-                      </View>
-                    );
-                  })}
+                            styles.tableBodyRow,
+                            log.completed && { backgroundColor: 'rgba(48, 209, 88, 0.15)' },
+                          ]}
+                          widthArr={[30, 'flex', 60, 60, 40]}
+                          data={[
+                            <ThemedText key="b-set" type="smallBold" style={styles.tdSet}>{set.Ord}</ThemedText>,
+                            <ThemedText key="b-plan" type="small" themeColor="textSecondary" style={styles.tdPlanned}>
+                              {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || ''} {set.Notes ? `(${set.Notes})` : ''}
+                            </ThemedText>,
+                            <TextInput
+                              key="b-weight"
+                              placeholder="0"
+                              keyboardType="numeric"
+                              placeholderTextColor={theme.textSecondary}
+                              value={log.weight}
+                              onChangeText={(val) => {
+                                setWorkoutLogs((prev) => {
+                                  const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
+                                  return {
+                                    ...prev,
+                                    [set.ID]: { ...current, weight: val },
+                                  };
+                                });
+                              }}
+                              style={[
+                                styles.workoutCellInput,
+                                {
+                                  width: 54,
+                                  marginHorizontal: 0,
+                                  color: theme.text,
+                                  backgroundColor: theme.background,
+                                  borderColor: theme.backgroundSelected,
+                                },
+                              ]}
+                            />,
+                            <TextInput
+                              key="b-reps"
+                              placeholder={repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
+                              keyboardType="numeric"
+                              placeholderTextColor={theme.textSecondary}
+                              value={log.reps}
+                              onChangeText={(val) => {
+                                setWorkoutLogs((prev) => {
+                                  const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
+                                  return {
+                                    ...prev,
+                                    [set.ID]: { ...current, reps: val },
+                                  };
+                                });
+                              }}
+                              style={[
+                                styles.workoutCellInput,
+                                {
+                                  width: 54,
+                                  marginHorizontal: 0,
+                                  color: theme.text,
+                                  backgroundColor: theme.background,
+                                  borderColor: theme.backgroundSelected,
+                                },
+                              ]}
+                            />,
+                            <Pressable
+                              key="b-log"
+                              onPress={() => handleToggleSetComplete(set.ID, pe.RestTime)}
+                              style={styles.checkboxBtn}>
+                              <SymbolView
+                                tintColor={log.completed ? '#30D158' : theme.textSecondary}
+                                name={log.completed ? 'checkmark.circle.fill' : 'circle'}
+                                size={22}
+                              />
+                            </Pressable>
+                          ]}
+                        />
+                      );
+                    })}
+                  </Table>
                 </ThemedView>
               ))}
             </ScrollView>
@@ -2143,7 +2194,7 @@ export default function WorkoutsScreen() {
             </View>
 
             {selectedHistory && (
-              <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
               <ScrollView
                 style={styles.modalScrollBody}
                 contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
@@ -2151,30 +2202,26 @@ export default function WorkoutsScreen() {
                   {selectedHistory.routineName}
                 </ThemedText>
                 
-                <ThemedView type="backgroundElement" style={styles.detailTextBox}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.one }}>
-                    <SymbolView
-                      tintColor={theme.textSecondary}
-                      name="calendar"
-                      size={14}
-                      style={{ marginRight: Spacing.one }}
-                    />
-                    <ThemedText type="smallBold" themeColor="textSecondary">DATE & TIME</ThemedText>
-                  </View>
-                  <ThemedText type="default">
-                    {new Date(selectedHistory.FinishTimestamp * 1000).toLocaleString(undefined, {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                <View style={styles.detailSection}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                    DATE & TIME
                   </ThemedText>
-                </ThemedView>
+                  <ThemedView type="backgroundElement" style={styles.detailTextBox}>
+                    <ThemedText type="default">
+                      {new Date(selectedHistory.FinishTimestamp * 1000).toLocaleString(undefined, {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </ThemedText>
+                  </ThemedView>
+                </View>
 
                 {/* Achieved Sets list */}
-                <View style={[styles.detailSection, { marginTop: Spacing.four }]}>
+                <View style={styles.detailSection}>
                   <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
                     WORKOUT STATS
                   </ThemedText>
@@ -2550,7 +2597,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.four,
   },
   detailSection: {
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.two,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -2618,7 +2665,7 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   formGroup: {
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.two,
   },
   formLabel: {
     fontSize: 12,
@@ -2788,7 +2835,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   thPlanned: {
-    flex: 2,
     textAlign: 'center',
   },
   thWeight: {
@@ -2816,7 +2862,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tdPlanned: {
-    flex: 2,
     textAlign: 'center',
   },
   workoutCellInput: {

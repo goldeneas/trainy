@@ -1176,7 +1176,7 @@ export default function ExercisesScreen() {
                     {/* Search and Add Exercise Bar */}
                     <View style={[styles.formGroup, { zIndex: 10 }]}>
                       <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                        SEARCH AND ADD EXERCISE
+                        SELECT EXERCISE *
                       </ThemedText>
                       <View style={styles.dropdownContainer}>
                         <View style={[
@@ -1889,10 +1889,10 @@ const styles = StyleSheet.create({
   detailTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.one,
   },
   detailSection: {
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.two,
   },
   sectionLabel: {
     fontSize: 12,
@@ -1916,7 +1916,7 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   formGroup: {
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.two,
   },
   formLabel: {
     fontSize: 12,
