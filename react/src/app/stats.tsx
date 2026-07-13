@@ -8,6 +8,8 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  Clipboard,
+  Pressable,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +20,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { api, ActualRoutine, MuscleGroupDistribution, WeeklyWorkoutHourDistribution } from '@/services/api';
+import { api, ActualRoutine, MuscleGroupDistribution, WeeklyWorkoutHourDistribution, Exercise, MuscleGroup, RepUnit } from '@/services/api';
 
 const getNow = () => Date.now();
 
@@ -39,6 +41,10 @@ export default function StatsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isTransitionReady, setIsTransitionReady] = useState(false);
 
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([]);
+  const [repUnits, setRepUnits] = useState<RepUnit[]>([]);
+
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
       setIsTransitionReady(true);
@@ -49,12 +55,24 @@ export default function StatsScreen() {
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const [workoutsCount, frequencyCount, monthlyData, distributionData, weeklyHoursData] = await Promise.all([
+      const [
+        workoutsCount, 
+        frequencyCount, 
+        monthlyData, 
+        distributionData, 
+        weeklyHoursData,
+        exercisesData,
+        musclesData,
+        unitsData
+      ] = await Promise.all([
         api.getStatsTotalWorkouts(),
         api.getStatsWeeklyFrequency(),
         api.getStatsMonthlyRoutines(),
         api.getStatsMuscleDistribution(),
         api.getStatsWeeklyHours(),
+        api.getExercises().catch(() => [] as Exercise[]),
+        api.getMuscleGroups().catch(() => [] as MuscleGroup[]),
+        api.getRepUnits().catch(() => [] as RepUnit[]),
       ]);
 
       setTotalWorkouts(workoutsCount ?? 0);
@@ -62,6 +80,9 @@ export default function StatsScreen() {
       setMonthlyRoutines(monthlyData || []);
       setMuscleDistribution(distributionData || []);
       setWeeklyHours(weeklyHoursData || []);
+      setExercises(exercisesData || []);
+      setMuscleGroups(musclesData || []);
+      setRepUnits(unitsData || []);
       setSelectedBarIndex(null);
     } catch (error: any) {
       console.error(error);
@@ -71,6 +92,42 @@ export default function StatsScreen() {
       setRefreshing(false);
     }
   }, []);
+
+  const handleExportToClipboard = async () => {
+    try {
+      let exportText = "=== TRAINY EXERCISES DIRECTORY FOR LLM ===\n\n";
+
+      exportText += "--- 1. REPETITION TYPES (REP UNITS) ---\n";
+      exportText += "Use these IDs for the rep_unit_id field of exercises:\n";
+      repUnits.forEach((ru) => {
+        exportText += `ID: ${ru.ID} | Name: ${ru.NameSingular} (${ru.NamePlural || ''})\n`;
+      });
+      exportText += "\n";
+
+      exportText += "--- 2. MUSCLE GROUPS ---\n";
+      exportText += "Use these IDs for the muscle_group_ids field of exercises:\n";
+      muscleGroups.forEach((mg) => {
+        exportText += `ID: ${mg.ID} | Name: ${mg.Name}\n`;
+      });
+      exportText += "\n";
+
+      exportText += "--- 3. EXISTING EXERCISES ---\n";
+      exportText += "Use these IDs for the exercise_ids in progressions (do not create duplicates):\n";
+      exercises.forEach((ex) => {
+        const muscles = ex.muscle_group_ids 
+          ? ex.muscle_group_ids.map(id => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ')
+          : 'None';
+        exportText += `ID: ${ex.id} | Name: ${ex.name} | Muscle Groups: ${muscles} | Rep Unit ID: ${ex.rep_unit_id}\n`;
+        if (ex.notes) exportText += `   Notes: ${ex.notes}\n`;
+        if (ex.instructions) exportText += `   Instructions: ${ex.instructions}\n`;
+      });
+
+      Clipboard.setString(exportText);
+      Alert.alert('Success', 'Exercises, muscle groups, and rep units directory copied to clipboard!');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to copy to clipboard');
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -121,6 +178,15 @@ export default function StatsScreen() {
         <ThemedText type="subtitle" style={styles.headerTitle}>
           Stats
         </ThemedText>
+        <Pressable
+          onPress={handleExportToClipboard}
+          style={({ pressed }) => [pressed && styles.pressed, { paddingTop: 6 }]}>
+          <SymbolView
+            tintColor="#0A84FF"
+            name="doc.on.clipboard"
+            size={28}
+          />
+        </Pressable>
       </View>
 
       {!isTransitionReady || loading ? (
@@ -347,6 +413,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.two,
@@ -354,6 +423,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontWeight: 'bold',
     fontSize: 34,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   scrollBody: {
     flex: 1,
