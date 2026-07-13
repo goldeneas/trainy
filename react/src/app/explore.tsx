@@ -6,6 +6,7 @@ import {
   FlatList,
   Keyboard,
   Modal,
+  KeyboardAvoidingView,
   PanResponder,
   Platform,
   Pressable,
@@ -16,7 +17,6 @@ import {
   View,
   InteractionManager,
 } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SymbolView } from 'expo-symbols';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -799,7 +799,10 @@ export default function ExercisesScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+      <Pressable 
+        onPress={Keyboard.dismiss}
+        accessible={false}
+        style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
       {/* Header Bar */}
       <View style={styles.header}>
         <ThemedText type="subtitle" style={styles.headerTitle}>
@@ -934,6 +937,8 @@ export default function ExercisesScreen() {
             data={filteredExercises}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderExerciseItem}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             contentContainerStyle={[
               styles.listContainer,
               { paddingBottom: safeBottom + Spacing.four },
@@ -966,6 +971,8 @@ export default function ExercisesScreen() {
             data={filteredProgressions}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderProgressionItem}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             contentContainerStyle={[
               styles.listContainer,
               { paddingBottom: safeBottom + Spacing.four },
@@ -987,47 +994,47 @@ export default function ExercisesScreen() {
         transparent={true}
         visible={isAddProgModalVisible}
         onRequestClose={addProgSwipe.close}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={addProgSwipe.close} />
-            <Animated.View 
-              style={[
-                styles.modalContent,
-                {
-                  height: '40%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: addProgSwipe.translateY }]
-                }
-              ]}>
-              <View {...addProgSwipe.panHandlers}>
-                <View style={styles.dragHandleContainer}>
-                  <View style={styles.dragHandle} />
-                </View>
-                <View style={styles.modalHeader}>
-                  <Pressable
-                    onPress={addProgSwipe.close}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                  </Pressable>
-                  <ThemedText type="smallBold" style={styles.modalTitle}>
-                    New Progression
-                  </ThemedText>
-                  <Pressable
-                    onPress={handleCreateProgression}
-                    disabled={isSubmitting}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    {isSubmitting ? (
-                      <ActivityIndicator size="small" color="#0A84FF" />
-                    ) : (
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                    )}
-                  </Pressable>
-                </View>
+        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={addProgSwipe.close} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '40%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: addProgSwipe.translateY }]
+              }
+            ]}>
+            <View {...addProgSwipe.panHandlers}>
+              <View style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
               </View>
+              <View style={styles.modalHeader}>
+                <Pressable
+                  onPress={addProgSwipe.close}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                </Pressable>
+                <ThemedText type="smallBold" style={styles.modalTitle}>
+                  New Progression
+                </ThemedText>
+                <Pressable
+                  onPress={handleCreateProgression}
+                  disabled={isSubmitting}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="#0A84FF" />
+                  ) : (
+                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}>
               <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                <ScrollView style={styles.modalFormBody}>
+                <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
                   <View style={styles.formGroup}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                       NAME *
@@ -1072,9 +1079,9 @@ export default function ExercisesScreen() {
                   </View>
                 </ScrollView>
               </Pressable>
-            </Animated.View>
-          </View>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
       </Modal>
 
       {/* Edit Progression Modal */}
@@ -1083,20 +1090,17 @@ export default function ExercisesScreen() {
         transparent={true}
         visible={isEditProgModalVisible}
         onRequestClose={editProgSwipe.close}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={editProgSwipe.close} />
-            <Animated.View 
-              style={[
-                styles.modalContent,
-                {
-                  height: '80%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: editProgSwipe.translateY }]
-                }
-              ]}>
+        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={editProgSwipe.close} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '80%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: editProgSwipe.translateY }]
+              }
+            ]}>
               <View {...editProgSwipe.panHandlers}>
                 <View style={styles.dragHandleContainer}>
                   <View style={styles.dragHandle} />
@@ -1123,12 +1127,15 @@ export default function ExercisesScreen() {
                 </View>
               </View>
 
-              <ScrollView 
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}>
+                <ScrollView 
                 style={styles.modalFormBody}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="on-drag"
                 onScrollBeginDrag={() => setIsProgSearchFocused(false)}
-                contentContainerStyle={{ paddingBottom: 60 }}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 140 }}
               >
                 <Pressable onPress={() => { Keyboard.dismiss(); setIsProgSearchFocused(false); }}>
                   <View>
@@ -1330,10 +1337,10 @@ export default function ExercisesScreen() {
                   </View>
                 </Pressable>
               </ScrollView>
+              </KeyboardAvoidingView>
               </Animated.View>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        </Modal>
 
       {/* Detail Modal */}
       <Modal
@@ -1433,20 +1440,17 @@ export default function ExercisesScreen() {
         transparent={true}
         visible={isAddModalVisible}
         onRequestClose={addExerciseSwipe.close}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={addExerciseSwipe.close} />
-            <Animated.View 
-              style={[
-                styles.modalContent,
-                {
-                  height: '80%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: addExerciseSwipe.translateY }]
-                }
-              ]}>
+        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={addExerciseSwipe.close} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '80%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: addExerciseSwipe.translateY }]
+              }
+            ]}>
               <View {...addExerciseSwipe.panHandlers}>
                 <View style={styles.dragHandleContainer}>
                   <View style={styles.dragHandle} />
@@ -1472,8 +1476,11 @@ export default function ExercisesScreen() {
                   </Pressable>
                 </View>
               </View>
-              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                <ScrollView style={styles.modalFormBody}>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}>
+                <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 160 }}>
                 <View style={styles.formGroup}>
                   <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                     NAME *
@@ -1610,9 +1617,9 @@ export default function ExercisesScreen() {
                 </View>
               </ScrollView>
               </Pressable>
-            </Animated.View>
-          </View>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
       </Modal>
 
       {/* CSV Import Modal */}
@@ -1621,20 +1628,17 @@ export default function ExercisesScreen() {
         transparent={true}
         visible={isImportModalVisible}
         onRequestClose={importCSVSwipe.close}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={importCSVSwipe.close} />
-            <Animated.View 
-              style={[
-                styles.modalContent,
-                {
-                  height: '80%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: importCSVSwipe.translateY }]
-                }
-              ]}>
+        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={importCSVSwipe.close} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '80%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: importCSVSwipe.translateY }]
+              }
+            ]}>
               <View {...importCSVSwipe.panHandlers}>
                 <View style={styles.dragHandleContainer}>
                   <View style={styles.dragHandle} />
@@ -1660,8 +1664,11 @@ export default function ExercisesScreen() {
                   </Pressable>
                 </View>
               </View>
-              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                <ScrollView style={styles.modalFormBody}>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}>
+                <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
                   <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
                     CSV format: name,notes,instructions,muscle_group_ids,image_id
                   </ThemedText>
@@ -1688,12 +1695,12 @@ export default function ExercisesScreen() {
                   />
                 </ScrollView>
               </Pressable>
-            </Animated.View>
-          </View>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
       </Modal>
-    </View>
-  </GestureHandlerRootView>
+      </Pressable>
+    </GestureHandlerRootView>
   );
 }
 

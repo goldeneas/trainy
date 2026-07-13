@@ -7,6 +7,7 @@ import {
   Keyboard,
   Linking,
   Modal,
+  KeyboardAvoidingView,
   PanResponder,
   Platform,
   Pressable,
@@ -17,7 +18,6 @@ import {
   View,
   InteractionManager,
 } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SymbolView } from 'expo-symbols';
 import * as Location from 'expo-location';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
@@ -641,18 +641,15 @@ export default function GymsScreen() {
           onRequestClose={addSwipe.close}>
           <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
             <Pressable style={StyleSheet.absoluteFill} onPress={addSwipe.close} />
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ flex: 1, justifyContent: 'flex-end', width: '100%' }}>
-              <Animated.View
-                style={[
-                  styles.modalContent,
-                  {
-                    height: '70%',
-                    backgroundColor: theme.background,
-                    transform: [{ translateY: addSwipe.translateY }],
-                  },
-                ]}>
+            <Animated.View
+              style={[
+                styles.modalContent,
+                {
+                  height: '70%',
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: addSwipe.translateY }],
+                },
+              ]}>
                 <View {...addSwipe.panHandlers}>
                   <View style={styles.dragHandleContainer}>
                     <View style={styles.dragHandle} />
@@ -676,7 +673,10 @@ export default function GymsScreen() {
                   </View>
                 </View>
 
-                <ScrollView style={styles.modalScrollBody} contentContainerStyle={styles.modalScrollContent}>
+                <KeyboardAvoidingView
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  style={{ flex: 1 }}>
+                  <ScrollView style={styles.modalScrollBody} contentContainerStyle={[styles.modalScrollContent, { paddingBottom: safeBottom + 120 }]}>
                   <View style={styles.inputGroup}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
                       GYM NAME
@@ -742,8 +742,8 @@ export default function GymsScreen() {
                   </View>
 
                  </ScrollView>
+                </KeyboardAvoidingView>
               </Animated.View>
-            </KeyboardAvoidingView>
           </View>
         </Modal>
 
@@ -755,18 +755,15 @@ export default function GymsScreen() {
           onRequestClose={defineEquipSwipe.close}>
           <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
             <Pressable style={StyleSheet.absoluteFill} onPress={defineEquipSwipe.close} />
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ flex: 1, justifyContent: 'flex-end' }}>
-              <Animated.View
-                style={[
-                  styles.modalContent,
-                  {
-                    height: '85%',
-                    backgroundColor: theme.background,
-                    transform: [{ translateY: defineEquipSwipe.translateY }],
-                  },
-                ]}>
+            <Animated.View
+              style={[
+                styles.modalContent,
+                {
+                  height: '85%',
+                  backgroundColor: theme.background,
+                  transform: [{ translateY: defineEquipSwipe.translateY }],
+                },
+              ]}>
                 <View {...defineEquipSwipe.panHandlers}>
                   <View style={styles.dragHandleContainer}>
                     <View style={styles.dragHandle} />
@@ -790,10 +787,13 @@ export default function GymsScreen() {
                   </View>
                 </View>
 
-                <FlatList
+                <KeyboardAvoidingView
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  style={{ flex: 1 }}>
+                  <FlatList
                   data={equipmentList}
                   keyExtractor={(eq) => eq.ID.toString()}
-                  contentContainerStyle={{ padding: Spacing.four, paddingBottom: safeBottom }}
+                  contentContainerStyle={{ padding: Spacing.four, paddingBottom: safeBottom + 120 }}
                   ListHeaderComponent={
                     <View style={{ marginBottom: Spacing.one }}>
                       {/* Gym Name */}
@@ -917,8 +917,8 @@ export default function GymsScreen() {
                     );
                   }}
                 />
+                </KeyboardAvoidingView>
               </Animated.View>
-            </KeyboardAvoidingView>
           </View>
         </Modal>
 

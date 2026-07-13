@@ -6,6 +6,7 @@ import {
   AppState,
   FlatList,
   Keyboard,
+  KeyboardAvoidingView,
   Modal,
   PanResponder,
   Platform,
@@ -17,7 +18,6 @@ import {
   Vibration,
   View,
 } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
@@ -1062,38 +1062,38 @@ export default function WorkoutsScreen() {
         transparent={true}
         visible={isAddRoutineVisible}
         onRequestClose={createRoutineSwipe.close}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-          <View style={styles.modalOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={createRoutineSwipe.close} />
-            <Animated.View 
-              style={[
-                styles.modalContent,
-                {
-                  height: '80%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: createRoutineSwipe.translateY }]
-                }
-              ]}>
-              <View {...createRoutineSwipe.panHandlers}>
-                <View style={styles.dragHandleContainer}>
-                  <View style={styles.dragHandle} />
-                </View>
-                <View style={styles.modalHeader}>
-                  <Pressable
-                    onPress={createRoutineSwipe.close}
-                    style={styles.modalHeaderButton}>
-                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                  </Pressable>
-                  <ThemedText type="smallBold" style={styles.modalTitle}>
-                    New Routine
-                  </ThemedText>
-                  <Pressable onPress={handleCreateRoutine} style={styles.modalHeaderButton}>
-                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                  </Pressable>
-                </View>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={createRoutineSwipe.close} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '80%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: createRoutineSwipe.translateY }]
+              }
+            ]}>
+            <View {...createRoutineSwipe.panHandlers}>
+              <View style={styles.dragHandleContainer}>
+                <View style={styles.dragHandle} />
               </View>
+              <View style={styles.modalHeader}>
+                <Pressable
+                  onPress={createRoutineSwipe.close}
+                  style={styles.modalHeaderButton}>
+                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                </Pressable>
+                <ThemedText type="smallBold" style={styles.modalTitle}>
+                  New Routine
+                </ThemedText>
+                <Pressable onPress={handleCreateRoutine} style={styles.modalHeaderButton}>
+                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                </Pressable>
+              </View>
+            </View>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}>
               <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
                 <View style={styles.modalFormBody}>
                   <View style={styles.formGroup}>
@@ -1139,9 +1139,9 @@ export default function WorkoutsScreen() {
                   </View>
                 </View>
               </Pressable>
-            </Animated.View>
-          </View>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
       </Modal>
 
       {/* MODAL: Routine Detail */}
@@ -1150,21 +1150,18 @@ export default function WorkoutsScreen() {
         transparent={true}
         visible={isRoutineDetailVisible}
         onRequestClose={routineDetailSwipe.close}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-          <View style={styles.modalOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={routineDetailSwipe.close} />
-            <Animated.View 
-              style={[
-                styles.modalContent,
-                {
-                  height: '80%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: routineDetailSwipe.translateY }]
-                }
-              ]}>
-              <View {...routineDetailSwipe.panHandlers}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={routineDetailSwipe.close} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '80%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: routineDetailSwipe.translateY }]
+              }
+            ]}>
+            <View {...routineDetailSwipe.panHandlers}>
                 <View style={styles.dragHandleContainer}>
                   <View style={styles.dragHandle} />
                 </View>
@@ -1195,8 +1192,11 @@ export default function WorkoutsScreen() {
                     <View style={{ minWidth: 60 }} />
                   )}
                 </View>
-              </View>
+            </View>
 
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}>
               {selectedRoutine && (
                 <View style={{ flex: 1 }}>
                   {!isAddExerciseToRoutineVisible ? (
@@ -1311,7 +1311,7 @@ export default function WorkoutsScreen() {
                       style={styles.modalFormBody}
                       keyboardShouldPersistTaps="handled"
                       keyboardDismissMode="on-drag"
-                      contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
+                      contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six + 100 }]}>
                       <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flexGrow: 1 }}>
                         {/* Exercise Selector */}
                       <View style={styles.formGroup}>
@@ -1593,9 +1593,9 @@ export default function WorkoutsScreen() {
                   )}
                 </View>
               )}
-            </Animated.View>
-          </View>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
       </Modal>
 
       <Modal
@@ -1822,20 +1822,17 @@ export default function WorkoutsScreen() {
             transparent={true}
             visible={isCustomTimerModalVisible}
             onRequestClose={customTimerSwipe.close}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ flex: 1 }}>
-              <View style={styles.modalOverlay}>
-                <Pressable style={StyleSheet.absoluteFill} onPress={customTimerSwipe.close} />
-                <Animated.View 
-                  style={[
-                    styles.modalContent,
-                    {
-                      height: '60%',
-                      backgroundColor: theme.background,
-                      transform: [{ translateY: customTimerSwipe.translateY }]
-                    }
-                  ]}>
+            <View style={styles.modalOverlay}>
+              <Pressable style={StyleSheet.absoluteFill} onPress={customTimerSwipe.close} />
+              <Animated.View 
+                style={[
+                  styles.modalContent,
+                  {
+                    height: '60%',
+                    backgroundColor: theme.background,
+                    transform: [{ translateY: customTimerSwipe.translateY }]
+                  }
+                ]}>
                   <View {...customTimerSwipe.panHandlers}>
                     <View style={styles.dragHandleContainer}>
                       <View style={styles.dragHandle} />
@@ -1845,9 +1842,12 @@ export default function WorkoutsScreen() {
                       <ThemedText type="smallBold" style={styles.modalTitle}>
                         Clock & Timer
                       </ThemedText>
-                      <View style={styles.modalHeaderButton} />
                     </View>
                   </View>
+
+                  <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={{ flex: 1 }}>
 
                   {/* Segmented Control */}
                   <View style={styles.segmentedContainer}>
@@ -2062,9 +2062,9 @@ export default function WorkoutsScreen() {
                       )}
                     </ScrollView>
                   </Pressable>
-                </Animated.View>
-              </View>
-            </KeyboardAvoidingView>
+                </KeyboardAvoidingView>
+              </Animated.View>
+            </View>
           </Modal>
             {/* Exercise Detail Modal */}
             <Modal
@@ -2276,20 +2276,17 @@ export default function WorkoutsScreen() {
         transparent={true}
         visible={isSettingsVisible}
         onRequestClose={settingsSwipe.close}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-          <View style={styles.modalOverlay}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={settingsSwipe.close} />
-            <Animated.View 
-              style={[
-                styles.modalContent,
-                {
-                  height: '60%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: settingsSwipe.translateY }]
-                }
-              ]}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={settingsSwipe.close} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '60%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: settingsSwipe.translateY }]
+              }
+            ]}>
               <View {...settingsSwipe.panHandlers}>
                 <View style={styles.dragHandleContainer}>
                   <View style={styles.dragHandle} />
@@ -2319,7 +2316,10 @@ export default function WorkoutsScreen() {
                   </Pressable>
                 </View>
               </View>
-              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}>
+                <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
                 <ScrollView style={styles.modalFormBody}>
                   <View style={styles.formGroup}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
@@ -2347,9 +2347,9 @@ export default function WorkoutsScreen() {
                   </View>
                 </ScrollView>
               </Pressable>
-            </Animated.View>
-          </View>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
       </Modal>
     </View>
     </GestureHandlerRootView>
