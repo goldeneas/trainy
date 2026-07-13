@@ -175,18 +175,20 @@ export default function StatsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <ThemedText type="subtitle" style={styles.headerTitle}>
-          Stats
-        </ThemedText>
-        <Pressable
-          onPress={handleExportToClipboard}
-          style={({ pressed }) => [pressed && styles.pressed, { paddingTop: 6 }]}>
-          <SymbolView
-            tintColor="#0A84FF"
-            name="doc.on.clipboard"
-            size={28}
-          />
-        </Pressable>
+        <View style={styles.headerTop}>
+          <ThemedText type="subtitle" style={styles.headerTitle}>
+            Stats
+          </ThemedText>
+          <Pressable
+            onPress={handleExportToClipboard}
+            style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+            <SymbolView
+              tintColor="#0A84FF"
+              name="arrow.up.circle.fill"
+              size={28}
+            />
+          </Pressable>
+        </View>
       </View>
 
       {!isTransitionReady || loading ? (
@@ -413,12 +415,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.two,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.two,
   },
   headerTitle: {
     fontWeight: 'bold',
@@ -426,6 +431,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  addButton: {
+    padding: Spacing.one,
   },
   scrollBody: {
     flex: 1,

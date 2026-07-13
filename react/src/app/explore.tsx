@@ -520,7 +520,7 @@ export default function ExercisesScreen() {
 
     setIsImporting(true);
     try {
-      const lines = csvInput.split('\n');
+      const lines = csvInput.split(/\r?\n|\r/);
       let successCount = 0;
       let startIdx = 0;
 
@@ -579,7 +579,7 @@ export default function ExercisesScreen() {
 
     setIsProgImporting(true);
     try {
-      const lines = csvProgInput.split('\n');
+      const lines = csvProgInput.split(/\r?\n|\r/);
       let successCount = 0;
       let startIdx = 0;
 
@@ -600,8 +600,9 @@ export default function ExercisesScreen() {
         const name = row[0];
         const notes = row[1] || '';
         const exercisesField = row[2] || '';
+
         const exerciseIds = exercisesField
-          .split(/[;]+/)
+          .split(/[;,]+/)
           .map(val => parseInt(val.trim(), 10))
           .filter(id => !isNaN(id));
 
@@ -623,6 +624,7 @@ export default function ExercisesScreen() {
       setCsvProgInput('');
       importProgCSVSwipe.close();
       fetchExercises();
+      
       Alert.alert('Success', `Successfully imported ${successCount} progressions!`);
     } catch (error: any) {
       Alert.alert('Import Error', error.message || 'An error occurred during import.');
@@ -830,7 +832,7 @@ export default function ExercisesScreen() {
 
                 return (
                   <Pressable
-                    key={ex.id}
+                    key={`${ex.id}-${index}`}
                     onPress={() => {
                       Keyboard.dismiss();
                       setSelectedExercise(ex);
@@ -1387,7 +1389,7 @@ export default function ExercisesScreen() {
                             const isLast = idx === localExercises.length - 1;
                             return (
                               <Swipeable
-                                key={ex.id}
+                                key={`${ex.id}-${idx}`}
                                 renderLeftActions={() => renderLocalExerciseSwipeActions(ex.id)}
                                 containerStyle={{ overflow: 'hidden' }}>
                                 <Pressable
