@@ -1237,70 +1237,72 @@ export default function WorkoutsScreen() {
                               key={pe.ID}
                               renderLeftActions={() => renderPlannedExerciseSwipeActions(pe.ID)}
                               containerStyle={[styles.swipeContainer, { borderRadius: 10, marginBottom: Spacing.two }]}>
-                              <ThemedView
-                                type="backgroundElement"
-                                style={[styles.appleListGroup, { marginBottom: 0 }]}>
-                                {/* Header Row */}
-                                <View style={[
-                                  styles.appleListRow,
-                                  {
-                                    borderBottomWidth: pe.sets.length > 0 ? StyleSheet.hairlineWidth : 0,
-                                    borderBottomColor: theme.backgroundSelected
-                                  }
-                                ]}>
-                                  <View style={{ flex: 1 }}>
-                                    <ThemedText type="small" style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                      {pe.exercise?.name || 'Exercise'}
-                                    </ThemedText>
-                                    {(() => {
-                                      const mgIds = pe.exercise?.muscle_group_ids;
-                                      if (mgIds && mgIds.length > 0) {
-                                        const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                                        return names ? (
-                                          <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
-                                            {names}
-                                          </ThemedText>
-                                        ) : null;
-                                      }
-                                      return null;
-                                    })()}
-                                  </View>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
-                                    <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
-                                      {pe.RestTime ? `${pe.RestTime}s` : 'None'}
-                                    </ThemedText>
-                                  </View>
-                                </View>
-
-                                {/* Sets Rows */}
-                                {pe.sets.map((set, idx) => {
-                                  const isLast = idx === pe.sets.length - 1;
-                                  return (
-                                    <View
-                                      key={set.ID}
-                                      style={[
-                                        styles.appleListRow,
-                                        { paddingVertical: 8, minHeight: 34 },
-                                        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
-                                      ]}>
-                                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                                        <ThemedText type="small" themeColor="textSecondary" style={{ width: 45 }}>
-                                          S{set.Ord}
-                                        </ThemedText>
-                                        {set.Notes ? (
-                                          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontSize: 12, fontStyle: 'italic' }}>
-                                            ({set.Notes})
-                                          </ThemedText>
-                                        ) : null}
-                                      </View>
-                                      <ThemedText type="small" themeColor="textSecondary">
-                                        {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
+                              <Pressable onPress={Keyboard.dismiss}>
+                                <ThemedView
+                                  type="backgroundElement"
+                                  style={[styles.appleListGroup, { marginBottom: 0 }]}>
+                                  {/* Header Row */}
+                                  <View style={[
+                                    styles.appleListRow,
+                                    {
+                                      borderBottomWidth: pe.sets.length > 0 ? StyleSheet.hairlineWidth : 0,
+                                      borderBottomColor: theme.backgroundSelected
+                                    }
+                                  ]}>
+                                    <View style={{ flex: 1 }}>
+                                      <ThemedText type="small" style={{ fontWeight: 'bold', fontSize: 16 }}>
+                                        {pe.exercise?.name || 'Exercise'}
+                                      </ThemedText>
+                                      {(() => {
+                                        const mgIds = pe.exercise?.muscle_group_ids;
+                                        if (mgIds && mgIds.length > 0) {
+                                          const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                          return names ? (
+                                            <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
+                                              {names}
+                                            </ThemedText>
+                                          ) : null;
+                                        }
+                                        return null;
+                                      })()}
+                                    </View>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                      <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
+                                      <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
+                                        {pe.RestTime ? `${pe.RestTime}s` : 'None'}
                                       </ThemedText>
                                     </View>
-                                  );
-                                })}
-                              </ThemedView>
+                                  </View>
+
+                                  {/* Sets Rows */}
+                                  {pe.sets.map((set, idx) => {
+                                    const isLast = idx === pe.sets.length - 1;
+                                    return (
+                                      <View
+                                        key={set.ID}
+                                        style={[
+                                          styles.appleListRow,
+                                          { paddingVertical: 8, minHeight: 34 },
+                                          !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
+                                        ]}>
+                                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                                          <ThemedText type="small" themeColor="textSecondary" style={{ width: 45 }}>
+                                            S{set.Ord}
+                                          </ThemedText>
+                                          {set.Notes ? (
+                                            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontSize: 12, fontStyle: 'italic' }}>
+                                              ({set.Notes})
+                                            </ThemedText>
+                                          ) : null}
+                                        </View>
+                                        <ThemedText type="small" themeColor="textSecondary">
+                                          {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
+                                        </ThemedText>
+                                      </View>
+                                    );
+                                  })}
+                                </ThemedView>
+                              </Pressable>
                             </Swipeable>
                           ))
                         )}

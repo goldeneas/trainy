@@ -172,6 +172,11 @@ export default function ExercisesScreen() {
   const [isImporting, setIsImporting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // CSV Import state for progressions
+  const [csvProgInput, setCsvProgInput] = useState('');
+  const [isImportProgModalVisible, setIsImportProgModalVisible] = useState(false);
+  const [isProgImporting, setIsProgImporting] = useState(false);
+
   const [editingExerciseId, setEditingExerciseId] = useState<number | null>(null);
 
   // Bottom Sheet gesture controllers
@@ -188,6 +193,10 @@ export default function ExercisesScreen() {
   const importCSVSwipe = useBottomSheet(isImportModalVisible, () => {
     setCsvInput('');
     setIsImportModalVisible(false);
+  });
+  const importProgCSVSwipe = useBottomSheet(isImportProgModalVisible, () => {
+    setCsvProgInput('');
+    setIsImportProgModalVisible(false);
   });
   const addProgSwipe = useBottomSheet(isAddProgModalVisible, () => {
     setIsAddProgModalVisible(false);
@@ -265,12 +274,14 @@ export default function ExercisesScreen() {
   }, [exercisesNotInProg, progSearchQuery]);
 
   const toggleExpand = useCallback((id: number) => {
+    Keyboard.dismiss();
     setExpandedProgIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   }, []);
 
   const handleStartEditProgression = useCallback((prog: ExerciseProgression) => {
+    Keyboard.dismiss();
     setSelectedProgression(prog);
     setEditingProgName(prog.name);
     setEditingProgNotes(prog.notes || '');
@@ -375,6 +386,7 @@ export default function ExercisesScreen() {
   }, [fetchExercises]);
 
   const handleAddLocalExercise = useCallback((exerciseId: number) => {
+    Keyboard.dismiss();
     setLocalExerciseIds((prev) => [...prev, exerciseId]);
     setProgSearchQuery('');
   }, []);
@@ -488,6 +500,7 @@ export default function ExercisesScreen() {
 
   // Start edit mode
   const handleStartEditExercise = (ex: Exercise) => {
+    Keyboard.dismiss();
     setEditingExerciseId(ex.id);
     setNewName(ex.name);
     setNewNotes(ex.notes || '');
@@ -558,6 +571,66 @@ export default function ExercisesScreen() {
     }
   };
 
+  const handleImportProgressionCSV = async () => {
+    if (!csvProgInput.trim()) {
+      Alert.alert('Error', 'Please enter some CSV text');
+      return;
+    }
+
+    setIsProgImporting(true);
+    try {
+      const lines = csvProgInput.split('\n');
+      let successCount = 0;
+      let startIdx = 0;
+
+      if (lines.length > 0) {
+        const firstRow = parseCSVLine(lines[0]);
+        if (firstRow[0]?.toLowerCase() === 'name') {
+          startIdx = 1;
+        }
+      }
+
+      for (let i = startIdx; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const row = parseCSVLine(line);
+        if (row.length === 0 || !row[0]) continue;
+
+        const name = row[0];
+        const notes = row[1] || '';
+        const exercisesField = row[2] || '';
+        const exerciseIds = exercisesField
+          .split(/[;]+/)
+          .map(val => parseInt(val.trim(), 10))
+          .filter(id => !isNaN(id));
+
+        const progId = await api.createExerciseProgression({
+          name,
+          notes,
+        });
+
+        for (let j = 0; j < exerciseIds.length; j++) {
+          const exId = exerciseIds[j];
+          await api.createExerciseProgressionEntry({
+            exercise_id: exId,
+            exercise_progression_id: progId,
+          });
+        }
+        successCount++;
+      }
+
+      setCsvProgInput('');
+      importProgCSVSwipe.close();
+      fetchExercises();
+      Alert.alert('Success', `Successfully imported ${successCount} progressions!`);
+    } catch (error: any) {
+      Alert.alert('Import Error', error.message || 'An error occurred during import.');
+    } finally {
+      setIsProgImporting(false);
+    }
+  };
+
   // Handle delete
   const handleDeleteExercise = (id: number, name: string) => {
     Alert.alert(
@@ -603,7 +676,8 @@ export default function ExercisesScreen() {
       <Swipeable
         renderLeftActions={() => renderSwipeActions(item)}
         containerStyle={styles.swipeContainer}>
-        <View
+        <Pressable
+          onPress={Keyboard.dismiss}
           style={[
             styles.card,
             { backgroundColor: cardBg, marginBottom: 0 },
@@ -634,6 +708,7 @@ export default function ExercisesScreen() {
               </Pressable>
               <Pressable
                 onPress={() => {
+                  Keyboard.dismiss();
                   setSelectedExercise(item);
                   setIsDetailModalVisible(true);
                 }}
@@ -668,7 +743,7 @@ export default function ExercisesScreen() {
             }
             return null;
           })()}
-        </View>
+        </Pressable>
       </Swipeable>
     );
   };
@@ -695,7 +770,9 @@ export default function ExercisesScreen() {
       <Swipeable
         renderLeftActions={() => renderProgressionSwipeActions(item)}
         containerStyle={styles.swipeContainer}>
-        <View style={[styles.card, { backgroundColor: cardBg, marginBottom: 0 }]}>
+        <Pressable
+          onPress={Keyboard.dismiss}
+          style={[styles.card, { backgroundColor: cardBg, marginBottom: 0 }]}>
           <View style={styles.cardHeader}>
             <Pressable
               onPress={() => toggleExpand(item.id)}
@@ -755,6 +832,7 @@ export default function ExercisesScreen() {
                   <Pressable
                     key={ex.id}
                     onPress={() => {
+                      Keyboard.dismiss();
                       setSelectedExercise(ex);
                       setIsDetailModalVisible(true);
                     }}
@@ -792,17 +870,15 @@ export default function ExercisesScreen() {
               })}
             </View>
           )}
-        </View>
+        </Pressable>
       </Swipeable>
     );
   };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Pressable 
-        onPress={Keyboard.dismiss}
-        accessible={false}
-        style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+      <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+        <Pressable onPress={Keyboard.dismiss} accessible={false}>
       {/* Header Bar */}
       <View style={styles.header}>
         <ThemedText type="subtitle" style={styles.headerTitle}>
@@ -835,17 +911,30 @@ export default function ExercisesScreen() {
               </Pressable>
             </>
           ) : (
-            <Pressable
-              onPress={() => {
-                setIsAddProgModalVisible(true);
-              }}
-              style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-              <SymbolView
-                tintColor="#0A84FF" // Apple active blue
-                name="plus.circle.fill"
-                size={28}
-              />
-            </Pressable>
+            <>
+              <Pressable
+                onPress={() => {
+                  setIsImportProgModalVisible(true);
+                }}
+                style={({ pressed }) => [styles.importButton, styles.addButton, pressed && styles.pressed]}>
+                <SymbolView
+                  tintColor={theme.textSecondary}
+                  name="square.and.arrow.up.fill"
+                  size={28}
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setIsAddProgModalVisible(true);
+                }}
+                style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+                <SymbolView
+                  tintColor="#0A84FF" // Apple active blue
+                  name="plus.circle.fill"
+                  size={28}
+                />
+              </Pressable>
+            </>
           )}
         </View>
       </View>
@@ -885,6 +974,7 @@ export default function ExercisesScreen() {
           </Pressable>
         </View>
       </View>
+    </Pressable>
 
       {/* Search Input */}
       <View style={[styles.searchContainer, { backgroundColor: theme.backgroundElement }]}>
@@ -1300,11 +1390,13 @@ export default function ExercisesScreen() {
                                 key={ex.id}
                                 renderLeftActions={() => renderLocalExerciseSwipeActions(ex.id)}
                                 containerStyle={{ overflow: 'hidden' }}>
-                                <View style={[
-                                  styles.appleListRow,
-                                  { backgroundColor: theme.backgroundElement },
-                                  !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
-                                ]}>
+                                <Pressable
+                                  onPress={Keyboard.dismiss}
+                                  style={[
+                                    styles.appleListRow,
+                                    { backgroundColor: theme.backgroundElement },
+                                    !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
+                                  ]}>
                                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
                                     <ThemedText type="smallBold" style={{ color: '#0A84FF', marginRight: Spacing.two, width: 20 }}>
                                       {idx + 1}
@@ -1327,7 +1419,7 @@ export default function ExercisesScreen() {
                                       })()}
                                     </View>
                                   </View>
-                                </View>
+                                </Pressable>
                               </Swipeable>
                             );
                           })}
@@ -1699,7 +1791,86 @@ export default function ExercisesScreen() {
           </Animated.View>
         </View>
       </Modal>
-      </Pressable>
+
+      {/* CSV Import Progression Modal */}
+      <Modal
+        animationType="none"
+        transparent={true}
+        visible={isImportProgModalVisible}
+        onRequestClose={importProgCSVSwipe.close}>
+        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={importProgCSVSwipe.close} />
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                height: '80%',
+                backgroundColor: theme.background,
+                transform: [{ translateY: importProgCSVSwipe.translateY }]
+              }
+            ]}>
+              <View {...importProgCSVSwipe.panHandlers}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
+                </View>
+                <View style={styles.modalHeader}>
+                  <Pressable
+                    onPress={importProgCSVSwipe.close}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
+                  </Pressable>
+                  <ThemedText type="smallBold" style={styles.modalTitle}>
+                    Import Progressions
+                  </ThemedText>
+                  <Pressable
+                    onPress={handleImportProgressionCSV}
+                    disabled={isProgImporting}
+                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                    {isProgImporting ? (
+                      <ActivityIndicator size="small" color="#0A84FF" />
+                    ) : (
+                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Import</ThemedText>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}>
+                <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+                <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
+                  <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
+                    CSV format:{"\n"}
+                    name,notes,exercise_ids
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
+                    Example:{"\n"}
+                    Pull-up Progression,Additional notes,1;3;5;6
+                  </ThemedText>
+
+                  <TextInput
+                    placeholder="Paste CSV text here..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={csvProgInput}
+                    onChangeText={setCsvProgInput}
+                    multiline
+                    style={[
+                      styles.inputField,
+                      styles.importCsvInput,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
+                </ScrollView>
+              </Pressable>
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
+      </Modal>
+      </View>
     </GestureHandlerRootView>
   );
 }

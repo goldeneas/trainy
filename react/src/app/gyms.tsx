@@ -358,6 +358,7 @@ export default function GymsScreen() {
   };
 
   const handleToggleEquipment = async (equipId: number) => {
+    Keyboard.dismiss();
     if (!selectedGym) return;
 
     const existingLink = locationEquipments.find(
@@ -405,6 +406,7 @@ export default function GymsScreen() {
   };
 
   const handleOpenConfigureGym = (gym: GymLocation) => {
+    Keyboard.dismiss();
     setSelectedGym(gym);
     setEditName(gym.Name);
     setEditAltitude(gym.Altitude.toString().replace('.', ','));
@@ -480,7 +482,9 @@ export default function GymsScreen() {
       <Swipeable
         renderLeftActions={() => renderSwipeActions(item)}
         containerStyle={styles.swipeContainer}>
-        <View style={[styles.card, { backgroundColor: cardBg, marginBottom: 0 }]}>
+        <Pressable
+          onPress={Keyboard.dismiss}
+          style={[styles.card, { backgroundColor: cardBg, marginBottom: 0 }]}>
           <View style={styles.cardHeader}>
             <View style={{ flex: 1, marginRight: Spacing.two }}>
               <ThemedText type="smallBold" style={styles.cardTitle}>
@@ -537,6 +541,7 @@ export default function GymsScreen() {
               </Pressable>
               <Pressable
                 onPress={() => {
+                  Keyboard.dismiss();
                   setSelectedGym(item);
                   setIsDetailModalVisible(true);
                 }}
@@ -548,7 +553,7 @@ export default function GymsScreen() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </Pressable>
       </Swipeable>
     );
   };
@@ -557,17 +562,19 @@ export default function GymsScreen() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
         
-        {/* Header Bar */}
-        <View style={styles.header}>
-          <ThemedText type="subtitle" style={styles.headerTitle}>
-            Gyms
-          </ThemedText>
-          <Pressable
-            onPress={handleOpenAddModal}
-            style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-            <SymbolView tintColor="#0A84FF" name="plus.circle.fill" size={28} />
-          </Pressable>
-        </View>
+        <Pressable onPress={Keyboard.dismiss} accessible={false}>
+          {/* Header Bar */}
+          <View style={styles.header}>
+            <ThemedText type="subtitle" style={styles.headerTitle}>
+              Gyms
+            </ThemedText>
+            <Pressable
+              onPress={handleOpenAddModal}
+              style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+              <SymbolView tintColor="#0A84FF" name="plus.circle.fill" size={28} />
+            </Pressable>
+          </View>
+        </Pressable>
 
         {/* Search Input */}
         <View style={[styles.searchContainer, { backgroundColor: theme.backgroundElement }]}>
@@ -618,6 +625,8 @@ export default function GymsScreen() {
             data={filteredGymLocations}
             keyExtractor={(item) => item.ID.toString()}
             renderItem={renderGymItem}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             contentContainerStyle={[
               styles.listContainer,
               { paddingBottom: safeBottom + Spacing.four },
