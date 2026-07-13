@@ -6,7 +6,6 @@ import {
   FlatList,
   Keyboard,
   Modal,
-  KeyboardAvoidingView,
   PanResponder,
   Platform,
   Pressable,
@@ -17,6 +16,7 @@ import {
   View,
   InteractionManager,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SymbolView } from 'expo-symbols';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
