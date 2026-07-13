@@ -62,6 +62,7 @@ function useBottomSheet(visible: boolean, onClose: () => void) {
   }, [translateY]);
 
   const animateClose = useCallback(() => {
+    Keyboard.dismiss();
     Animated.timing(translateY, {
       toValue: 800,
       duration: 250,
@@ -90,6 +91,7 @@ function useBottomSheet(visible: boolean, onClose: () => void) {
       },
       onPanResponderRelease: (evt, gestureState) => {
         if (gestureState.dy > 120 || gestureState.vy > 0.8) {
+          Keyboard.dismiss();
           Animated.timing(translateY, {
             toValue: 800,
             duration: 220,
