@@ -519,6 +519,7 @@ export default function ExercisesScreen() {
     }
 
     setIsImporting(true);
+    const createdExerciseIds: number[] = [];
     try {
       const lines = csvInput.split(/\r?\n|\r/);
       let successCount = 0;
@@ -531,6 +532,20 @@ export default function ExercisesScreen() {
         }
       }
 
+      // 1. Validation Pass
+      for (let i = startIdx; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const row = parseCSVLine(line);
+        if (row.length === 0 || !row[0]) continue;
+
+        if (row.length < 4) {
+          throw new Error(`Row ${i + 1} does not have the required 4 parameters (name, notes, instructions, muscle_group_ids).`);
+        }
+      }
+
+      // 2. Import Pass
       for (let i = startIdx; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
@@ -549,7 +564,7 @@ export default function ExercisesScreen() {
         const imageIdVal = row[4] ? parseInt(row[4].trim(), 10) : null;
         const imageId = (imageIdVal && !isNaN(imageIdVal)) ? imageIdVal : null;
 
-        await api.createExercise({
+        const exId = await api.createExercise({
           name,
           notes,
           instructions,
@@ -557,6 +572,7 @@ export default function ExercisesScreen() {
           muscle_group_ids: muscleGroupIds,
           image_id: imageId,
         });
+        createdExerciseIds.push(exId);
         successCount++;
       }
 
@@ -565,6 +581,15 @@ export default function ExercisesScreen() {
       fetchExercises();
       Alert.alert('Success', `Successfully imported ${successCount} exercises!`);
     } catch (error: any) {
+      // Rollback created exercises
+      for (const id of createdExerciseIds) {
+        try {
+          await api.deleteExercise(id);
+        } catch (cleanupErr) {
+          console.error(`Failed to rollback exercise ID ${id}:`, cleanupErr);
+        }
+      }
+      fetchExercises(); // Refresh state after rollback
       Alert.alert('Import Error', error.message || 'An error occurred during import.');
     } finally {
       setIsImporting(false);
@@ -578,6 +603,7 @@ export default function ExercisesScreen() {
     }
 
     setIsProgImporting(true);
+    const createdProgIds: number[] = [];
     try {
       const lines = csvProgInput.split(/\r?\n|\r/);
       let successCount = 0;
@@ -590,6 +616,25 @@ export default function ExercisesScreen() {
         }
       }
 
+      // 1. Validation Pass
+      for (let i = startIdx; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const row = parseCSVLine(line);
+        if (row.length === 0 || !row[0]) continue;
+
+        // Clean trailing empty columns (e.g. from trailing commas) before validation
+        while (row.length > 1 && !row[row.length - 1]) {
+          row.pop();
+        }
+
+        if (row.length < 3) {
+          throw new Error(`Row ${i + 1} does not have the required 3 parameters (name, notes, exercise_ids).`);
+        }
+      }
+
+      // 2. Import Pass
       for (let i = startIdx; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
@@ -615,17 +660,14 @@ export default function ExercisesScreen() {
           name,
           notes,
         });
+        createdProgIds.push(progId);
 
         for (let j = 0; j < exerciseIds.length; j++) {
           const exId = exerciseIds[j];
-          try {
-            await api.createExerciseProgressionEntry({
-              exercise_id: exId,
-              exercise_progression_id: progId,
-            });
-          } catch (entryErr) {
-            console.warn(`Failed to link exercise ID ${exId} to progression ID ${progId}:`, entryErr);
-          }
+          await api.createExerciseProgressionEntry({
+            exercise_id: exId,
+            exercise_progression_id: progId,
+          });
         }
         successCount++;
       }
@@ -636,6 +678,15 @@ export default function ExercisesScreen() {
       
       Alert.alert('Success', `Successfully imported ${successCount} progressions!`);
     } catch (error: any) {
+      // Rollback created progressions in case of any failure
+      for (const id of createdProgIds) {
+        try {
+          await api.deleteExerciseProgression(id);
+        } catch (cleanupErr) {
+          console.error(`Failed to rollback progression ID ${id}:`, cleanupErr);
+        }
+      }
+      fetchExercises(); // Refresh state after rollback
       Alert.alert('Import Error', error.message || 'An error occurred during import.');
     } finally {
       setIsProgImporting(false);
