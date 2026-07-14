@@ -1,8 +1,16 @@
-PRAGMA foreign_keys = ON;
-
 CREATE TABLE IF NOT EXISTS Image (
     id INTEGER PRIMARY KEY,
     path TEXT
+);
+
+CREATE TABLE IF NOT EXISTS Routine (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    image_id INTEGER,
+
+    FOREIGN KEY (image_id) REFERENCES Image(id)
+        ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS RepUnit (
@@ -114,16 +122,6 @@ CREATE TABLE IF NOT EXISTS PlannedSetInfo (
     UNIQUE(ord, planned_exercise_id),
     FOREIGN KEY (planned_exercise_id) REFERENCES PlannedExercise(id)
         ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS Routine (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    image_id INTEGER,
-
-    FOREIGN KEY (image_id) REFERENCES Image(id)
-        ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS ActualRoutine (

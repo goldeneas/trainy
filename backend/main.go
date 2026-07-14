@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	dbPath := "trainy.db"
+	dbPath := "trainy.db?_foreign_keys=on"
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
@@ -51,4 +51,3 @@ func main() {
 
 	r.Run()
 }
-

@@ -597,9 +597,14 @@ export default function ExercisesScreen() {
         const row = parseCSVLine(line);
         if (row.length === 0 || !row[0]) continue;
 
+        // Clean trailing empty columns (e.g. from trailing commas)
+        while (row.length > 1 && !row[row.length - 1]) {
+          row.pop();
+        }
+
         const name = row[0];
-        const notes = row[1] || '';
-        const exercisesField = row[2] || '';
+        const exercisesField = row.length > 1 ? row[row.length - 1] : '';
+        const notes = row.length > 2 ? row.slice(1, -1).join(', ') : '';
 
         const exerciseIds = exercisesField
           .split(/[;,]+/)
@@ -613,10 +618,14 @@ export default function ExercisesScreen() {
 
         for (let j = 0; j < exerciseIds.length; j++) {
           const exId = exerciseIds[j];
-          await api.createExerciseProgressionEntry({
-            exercise_id: exId,
-            exercise_progression_id: progId,
-          });
+          try {
+            await api.createExerciseProgressionEntry({
+              exercise_id: exId,
+              exercise_progression_id: progId,
+            });
+          } catch (entryErr) {
+            console.warn(`Failed to link exercise ID ${exId} to progression ID ${progId}:`, entryErr);
+          }
         }
         successCount++;
       }

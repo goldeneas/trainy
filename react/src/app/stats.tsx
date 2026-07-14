@@ -184,7 +184,7 @@ export default function StatsScreen() {
             style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
             <SymbolView
               tintColor="#0A84FF"
-              name="arrow.up.circle.fill"
+              name="square.and.arrow.up.circle.fill"
               size={28}
             />
           </Pressable>
