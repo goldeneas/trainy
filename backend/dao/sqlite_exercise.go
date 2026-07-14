@@ -26,7 +26,7 @@ func (d *SQLiteExerciseDAO) InsertExercise(dbtx sqlw.DBTX, m *model.Exercise) (i
 
 func (d *SQLiteExerciseDAO) InsertPlannedExercise(dbtx sqlw.DBTX, m *model.PlannedExercise) (int64, error) {
 	res, err := dbtx.Exec(`INSERT INTO PlannedExercise(rest_time, time_unit_id, exercise_id,
-		routine_id) VALUES (?, ?, ?, ?)`, m.RestTime, m.TimeUnitID, m.ExerciseID, m.RoutineID)
+		routine_id, notes) VALUES (?, ?, ?, ?, ?)`, m.RestTime, m.TimeUnitID, m.ExerciseID, m.RoutineID, m.Notes)
 
 	if err != nil {
 		return 0, err
@@ -74,9 +74,9 @@ func (d *SQLiteExerciseDAO) GetExerciseByID(dbtx sqlw.DBTX, id int64) (*model.Ex
 
 func (d *SQLiteExerciseDAO) GetPlannedExerciseByID(dbtx sqlw.DBTX, id int64) (*model.PlannedExercise, error) {
 	var m model.PlannedExercise
-	row := dbtx.QueryRow(`SELECT id, rest_time, time_unit_id, exercise_id, routine_id 
+	row := dbtx.QueryRow(`SELECT id, rest_time, time_unit_id, exercise_id, routine_id, notes 
 		FROM PlannedExercise WHERE id = ?`, id)
-	err := row.Scan(&m.ID, &m.RestTime, &m.TimeUnitID, &m.ExerciseID, &m.RoutineID)
+	err := row.Scan(&m.ID, &m.RestTime, &m.TimeUnitID, &m.ExerciseID, &m.RoutineID, &m.Notes)
 
 	if err != nil {
 		return nil, err
@@ -125,8 +125,8 @@ func (d *SQLiteExerciseDAO) GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, e
 
 func (d *SQLiteExerciseDAO) GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.PlannedExercise) error {
-		return rows.Scan(&t.ID, &t.RestTime, &t.TimeUnitID, &t.ExerciseID, &t.RoutineID)
-	}, `SELECT id, rest_time, time_unit_id, exercise_id, routine_id
+		return rows.Scan(&t.ID, &t.RestTime, &t.TimeUnitID, &t.ExerciseID, &t.RoutineID, &t.Notes)
+	}, `SELECT id, rest_time, time_unit_id, exercise_id, routine_id, notes
 		FROM PlannedExercise`)
 }
 

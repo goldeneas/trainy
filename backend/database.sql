@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS PlannedExercise (
     time_unit_id INTEGER,
     exercise_id INTEGER NOT NULL,
     routine_id INTEGER NOT NULL,
+    notes TEXT,
 
     FOREIGN KEY (routine_id) REFERENCES Routine(id)
         ON DELETE CASCADE,

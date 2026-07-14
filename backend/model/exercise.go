@@ -15,6 +15,7 @@ type PlannedExercise struct {
 	TimeUnitID *int64
 	ExerciseID int64
 	RoutineID  int64
+	Notes      *string
 }
 
 type PlannedSetInfo struct {

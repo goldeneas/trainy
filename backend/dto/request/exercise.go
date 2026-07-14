@@ -23,6 +23,7 @@ type RegisterPlannedExercise struct {
 	TimeUnitID      *int64           `json:"time_unit_id"`
 	ExerciseID      int64            `json:"exercise_id"`
 	RoutineID       int64            `json:"routine_id"`
+	Notes           *string          `json:"notes"`
 	PlannedSetInfos []PlannedSetInfo `json:"planned_set_infos"`
 }
 

@@ -109,6 +109,7 @@ func (c *ExerciseController) RegisterPlannedExercise(ctx *gin.Context) {
 		TimeUnitID: m.TimeUnitID,
 		ExerciseID: m.ExerciseID,
 		RoutineID:  m.RoutineID,
+		Notes:      m.Notes,
 	}
 
 	infos := make([]model.PlannedSetInfo, len(m.PlannedSetInfos))
