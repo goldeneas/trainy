@@ -204,6 +204,7 @@ export default function WorkoutsScreen() {
   // Add Planned Exercise Form
   const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
   const [newRestTime, setNewRestTime] = useState('90');
+  const [newPlannedExerciseNotes, setNewPlannedExerciseNotes] = useState('');
   const [plannedSets, setPlannedSets] = useState<{ reps: string; notes: string }[]>([
     { reps: '10', notes: '' },
   ]);
@@ -252,6 +253,7 @@ export default function WorkoutsScreen() {
     setIsAddExerciseToRoutineVisible(false);
     setDropdownSearchQuery('');
     setSelectedExerciseId(null);
+    setNewPlannedExerciseNotes('');
   });
 
   const historyDetailSwipe = useBottomSheet(isHistoryDetailVisible, () => {
@@ -551,6 +553,7 @@ export default function WorkoutsScreen() {
       routine_id: selectedRoutine.ID,
       exercise_id: selectedExerciseId,
       rest_time: isNaN(restTimeNum) ? 90 : restTimeNum,
+      notes: newPlannedExerciseNotes.trim() || null,
       planned_set_infos: plannedSets.map((s, idx) => ({
         ord: idx + 1,
         reps: parseInt(s.reps, 10) || 10,
@@ -564,6 +567,7 @@ export default function WorkoutsScreen() {
       // Reset form
       setSelectedExerciseId(null);
       setNewRestTime('90');
+      setNewPlannedExerciseNotes('');
       setPlannedSets([{ reps: '10', notes: '' }]);
       setDropdownSearchQuery('');
       fetchData();
@@ -1172,6 +1176,7 @@ export default function WorkoutsScreen() {
                         setIsAddExerciseToRoutineVisible(false);
                         setDropdownSearchQuery('');
                         setSelectedExerciseId(null);
+                        setNewPlannedExerciseNotes('');
                       }}
                       style={styles.modalHeaderButton}>
                       <ThemedText type="link" themeColor="textSecondary">
@@ -1265,6 +1270,11 @@ export default function WorkoutsScreen() {
                                         }
                                         return null;
                                       })()}
+                                      {pe.Notes ? (
+                                        <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, fontStyle: 'italic', marginTop: 1 }}>
+                                          Notes: {pe.Notes}
+                                        </ThemedText>
+                                      ) : null}
                                     </View>
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                       <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
@@ -1490,6 +1500,30 @@ export default function WorkoutsScreen() {
                         </ThemedView>
                       </View>
 
+                      {/* Notes (Separate Section) */}
+                      <View style={styles.formGroup}>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                          NOTES
+                        </ThemedText>
+                        <TextInput
+                          placeholder="Optional notes..."
+                          placeholderTextColor={theme.textSecondary}
+                          value={newPlannedExerciseNotes}
+                          onChangeText={setNewPlannedExerciseNotes}
+                          style={[
+                            styles.inputField,
+                            styles.textAreaField,
+                            {
+                              backgroundColor: theme.backgroundElement,
+                              color: theme.text,
+                              borderColor: theme.backgroundSelected,
+                            },
+                          ]}
+                          multiline
+                          numberOfLines={2}
+                        />
+                      </View>
+
                       {/* Sets Builder */}
                       <View style={styles.formGroup}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
@@ -1670,11 +1704,18 @@ export default function WorkoutsScreen() {
                       <SymbolView name="info.circle" tintColor="#0A84FF" size={20} />
                     </Pressable>
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.three }}>
-                    <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
-                    <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
-                      {pe.RestTime ? `${pe.RestTime}s` : 'None'}
-                    </ThemedText>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.three }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
+                      <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
+                        {pe.RestTime ? `${pe.RestTime}s` : 'None'}
+                      </ThemedText>
+                    </View>
+                    {pe.Notes ? (
+                      <ThemedText type="small" themeColor="textSecondary" style={{ fontStyle: 'italic', fontSize: 13 }}>
+                        {pe.Notes}
+                      </ThemedText>
+                    ) : null}
                   </View>
 
                   {/* Table Headers */}
@@ -2680,7 +2721,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: Spacing.three,
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 14,
     borderWidth: 1,
   },
   textAreaField: {

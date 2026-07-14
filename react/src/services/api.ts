@@ -71,6 +71,7 @@ export interface PlannedExercise {
   TimeUnitID: number | null;
   ExerciseID: number;
   RoutineID: number;
+  Notes: string | null;
 }
 
 export interface PlannedSetInfo {
@@ -143,6 +144,7 @@ export interface RegisterPlannedExerciseDto {
   time_unit_id?: number | null;
   exercise_id: number;
   routine_id: number;
+  notes?: string | null;
   planned_set_infos: PlannedSetInfoCreate[];
 }
 
