@@ -1290,7 +1290,6 @@ export default function ExercisesScreen() {
                           backgroundColor: theme.backgroundElement,
                           color: theme.text,
                           borderColor: theme.backgroundSelected,
-                          fontSize: 14,
                         },
                       ]}
                       multiline
@@ -1394,7 +1393,6 @@ export default function ExercisesScreen() {
                             backgroundColor: theme.backgroundElement,
                             color: theme.text,
                             borderColor: theme.backgroundSelected,
-                            fontSize: 14,
                           },
                         ]}
                         multiline
@@ -1532,7 +1530,7 @@ export default function ExercisesScreen() {
                                       {idx + 1}
                                     </ThemedText>
                                     <View style={{ flex: 1 }}>
-                                      <ThemedText type="small" style={{ fontWeight: '500' }}>
+                                      <ThemedText type="small" style={{ fontWeight: '500', fontSize: 14 }}>
                                         {ex.name}
                                       </ThemedText>
                                       {(() => {
@@ -1877,7 +1875,6 @@ export default function ExercisesScreen() {
                         backgroundColor: theme.backgroundElement,
                         color: theme.text,
                         borderColor: theme.backgroundSelected,
-                        fontSize: 14,
                       },
                     ]}
                     multiline
@@ -1901,7 +1898,6 @@ export default function ExercisesScreen() {
                         backgroundColor: theme.backgroundElement,
                         color: theme.text,
                         borderColor: theme.backgroundSelected,
-                        fontSize: 14,
                       },
                     ]}
                     multiline
@@ -1924,7 +1920,6 @@ export default function ExercisesScreen() {
                         backgroundColor: theme.backgroundElement,
                         color: theme.text,
                         borderColor: theme.backgroundSelected,
-                        fontSize: 14,
                       },
                     ]}
                   />
@@ -2294,7 +2289,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.one,
   },
   detailSection: {
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.four,
   },
   sectionLabel: {
     fontSize: 12,
@@ -2318,7 +2313,7 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   formGroup: {
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.four,
   },
   formLabel: {
     fontSize: 12,
@@ -2329,7 +2324,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: Spacing.three,
     paddingVertical: 12,
-    fontSize: 14,
+    fontSize: 16,
     borderWidth: 1,
   },
   textAreaField: {
@@ -2479,7 +2474,7 @@ const styles = StyleSheet.create({
   },
   dropdownSearchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     height: '100%',
     padding: 0,
   },

@@ -1297,106 +1297,101 @@ export default function WorkoutsScreen() {
 
                       {/* Planned Exercises Section */}
                       <View style={styles.detailSection}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.one }}>
-                          <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.formLabel, { marginBottom: 0 }]}>
-                            EXERCISES
-                          </ThemedText>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                          EXERCISES
+                        </ThemedText>
+                        {selectedRoutine.plannedExercises.map((pe) => (
+                          <Swipeable
+                            key={pe.ID}
+                            renderLeftActions={() => renderPlannedExerciseSwipeActions(pe.ID)}
+                            containerStyle={[styles.swipeContainer, { borderRadius: 10, marginBottom: Spacing.two }]}>
+                            <Pressable onPress={Keyboard.dismiss}>
+                              <ThemedView
+                                type="backgroundElement"
+                                style={[styles.appleListGroup, { marginBottom: 0 }]}>
+                                {/* Header Row */}
+                                <View style={[
+                                  styles.appleListRow,
+                                  {
+                                    borderBottomWidth: pe.sets.length > 0 ? StyleSheet.hairlineWidth : 0,
+                                    borderBottomColor: theme.backgroundSelected
+                                  }
+                                ]}>
+                                  <View style={{ flex: 1 }}>
+                                    <ThemedText type="small" style={{ fontWeight: 'bold', fontSize: 16 }}>
+                                      {pe.exercise?.name || 'Exercise'}
+                                    </ThemedText>
+                                    {(() => {
+                                      const mgIds = pe.exercise?.muscle_group_ids;
+                                      if (mgIds && mgIds.length > 0) {
+                                        const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                        return names ? (
+                                          <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
+                                            {names}
+                                          </ThemedText>
+                                        ) : null;
+                                      }
+                                      return null;
+                                    })()}
+                                    {pe.Notes ? (
+                                      <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, fontStyle: 'italic', marginTop: 1 }}>
+                                        Notes: {pe.Notes}
+                                      </ThemedText>
+                                    ) : null}
+                                  </View>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
+                                    <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
+                                      {pe.RestTime ? `${pe.RestTime}s` : 'None'}
+                                    </ThemedText>
+                                  </View>
+                                </View>
+
+                                {/* Sets Rows */}
+                                {pe.sets.map((set, idx) => {
+                                  const isLast = idx === pe.sets.length - 1;
+                                  return (
+                                    <View
+                                      key={set.ID}
+                                      style={[
+                                        styles.appleListRow,
+                                        { paddingVertical: 8, minHeight: 34 },
+                                        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
+                                      ]}>
+                                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                                        <ThemedText type="small" themeColor="textSecondary" style={{ width: 45 }}>
+                                          S{set.Ord}
+                                        </ThemedText>
+                                        {set.Notes ? (
+                                          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontSize: 12, fontStyle: 'italic' }}>
+                                            ({set.Notes})
+                                          </ThemedText>
+                                        ) : null}
+                                      </View>
+                                      <ThemedText type="small" themeColor="textSecondary">
+                                        {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
+                                      </ThemedText>
+                                    </View>
+                                  );
+                                })}
+                              </ThemedView>
+                            </Pressable>
+                          </Swipeable>
+                        ))}
+
+                        <ThemedView type="backgroundElement" style={[styles.appleListGroup, { marginTop: Spacing.one }]}>
                           <Pressable
                             onPress={() => setIsAddExerciseToRoutineVisible(true)}
-                            style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
-                            <SymbolView
-                              tintColor="#0A84FF"
-                              name="plus.circle"
-                              size={22}
-                            />
+                            style={({ pressed }) => [
+                              styles.appleListRow,
+                              pressed && styles.pressed,
+                            ]}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <SymbolView name="plus.circle" tintColor="#0A84FF" size={20} style={{ marginRight: 8 }} />
+                              <ThemedText type="default" style={{ color: '#0A84FF', fontWeight: '500', fontSize: 16 }}>Add Exercise</ThemedText>
+                            </View>
                           </Pressable>
-                        </View>
-                        {selectedRoutine.plannedExercises.length === 0 ? (
-                          <ThemedView type="backgroundElement" style={styles.detailTextBox}>
-                            <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-                              {"No exercises added to this routine yet."}
-                            </ThemedText>
-                          </ThemedView>
-                          ) : (
-                          selectedRoutine.plannedExercises.map((pe) => (
-                            <Swipeable
-                              key={pe.ID}
-                              renderLeftActions={() => renderPlannedExerciseSwipeActions(pe.ID)}
-                              containerStyle={[styles.swipeContainer, { borderRadius: 10, marginBottom: Spacing.two }]}>
-                              <Pressable onPress={Keyboard.dismiss}>
-                                <ThemedView
-                                  type="backgroundElement"
-                                  style={[styles.appleListGroup, { marginBottom: 0 }]}>
-                                  {/* Header Row */}
-                                  <View style={[
-                                    styles.appleListRow,
-                                    {
-                                      borderBottomWidth: pe.sets.length > 0 ? StyleSheet.hairlineWidth : 0,
-                                      borderBottomColor: theme.backgroundSelected
-                                    }
-                                  ]}>
-                                    <View style={{ flex: 1 }}>
-                                      <ThemedText type="small" style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                        {pe.exercise?.name || 'Exercise'}
-                                      </ThemedText>
-                                      {(() => {
-                                        const mgIds = pe.exercise?.muscle_group_ids;
-                                        if (mgIds && mgIds.length > 0) {
-                                          const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                                          return names ? (
-                                            <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
-                                              {names}
-                                            </ThemedText>
-                                          ) : null;
-                                        }
-                                        return null;
-                                      })()}
-                                      {pe.Notes ? (
-                                        <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, fontStyle: 'italic', marginTop: 1 }}>
-                                          Notes: {pe.Notes}
-                                        </ThemedText>
-                                      ) : null}
-                                    </View>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                      <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
-                                      <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
-                                        {pe.RestTime ? `${pe.RestTime}s` : 'None'}
-                                      </ThemedText>
-                                    </View>
-                                  </View>
-
-                                  {/* Sets Rows */}
-                                  {pe.sets.map((set, idx) => {
-                                    const isLast = idx === pe.sets.length - 1;
-                                    return (
-                                      <View
-                                        key={set.ID}
-                                        style={[
-                                          styles.appleListRow,
-                                          { paddingVertical: 8, minHeight: 34 },
-                                          !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
-                                        ]}>
-                                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                                          <ThemedText type="small" themeColor="textSecondary" style={{ width: 45 }}>
-                                            S{set.Ord}
-                                          </ThemedText>
-                                          {set.Notes ? (
-                                            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={{ flex: 1, fontSize: 12, fontStyle: 'italic' }}>
-                                              ({set.Notes})
-                                            </ThemedText>
-                                          ) : null}
-                                        </View>
-                                        <ThemedText type="small" themeColor="textSecondary">
-                                          {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
-                                        </ThemedText>
-                                      </View>
-                                    );
-                                  })}
-                                </ThemedView>
-                              </Pressable>
-                            </Swipeable>
-                          ))
-                        )}
+                        </ThemedView>
                       </View>
                     </ScrollView>
                   ) : (
@@ -1552,7 +1547,7 @@ export default function WorkoutsScreen() {
                         </ThemedText>
                         <ThemedView type="backgroundElement" style={styles.appleListGroup}>
                           <View style={styles.appleListRow}>
-                            <ThemedText type="small" style={{ fontWeight: '500' }}>Rest Time</ThemedText>
+                            <ThemedText type="small" style={{ fontWeight: '500', fontSize: 16 }}>Rest Time</ThemedText>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                               <TextInput
                                 placeholder="90"
@@ -1563,7 +1558,7 @@ export default function WorkoutsScreen() {
                                 style={{
                                   color: theme.text,
                                   textAlign: 'center',
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   paddingHorizontal: Spacing.one,
                                   backgroundColor: theme.background,
                                   borderColor: theme.backgroundSelected,
@@ -1629,7 +1624,7 @@ export default function WorkoutsScreen() {
                                       { backgroundColor: theme.backgroundElement },
                                       !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
                                     ]}>
-                                      <ThemedText type="smallBold" style={{ width: 30, color: theme.textSecondary }}>
+                                      <ThemedText type="smallBold" style={{ width: 30, color: theme.textSecondary, fontSize: 16 }}>
                                         S{idx + 1}
                                       </ThemedText>
 
@@ -1658,7 +1653,7 @@ export default function WorkoutsScreen() {
                                           fontWeight: '600',
                                         }}
                                       />
-                                      <ThemedText type="default" themeColor="textSecondary" style={{ marginRight: Spacing.four, fontSize: 14 }}>
+                                      <ThemedText type="default" themeColor="textSecondary" style={{ marginRight: Spacing.four, fontSize: 16 }}>
                                         {unitName}
                                       </ThemedText>
 
@@ -1674,7 +1669,7 @@ export default function WorkoutsScreen() {
                                         style={{
                                           flex: 1,
                                           color: theme.text,
-                                          fontSize: 14,
+                                          fontSize: 16,
                                           paddingHorizontal: Spacing.two,
                                           backgroundColor: theme.background,
                                           borderColor: theme.backgroundSelected,
@@ -2368,21 +2363,56 @@ export default function WorkoutsScreen() {
                       <ThemedView
                         key={exName}
                         type="backgroundElement"
-                        style={styles.routineExerciseCard}>
-                        <ThemedText type="smallBold" style={{ marginBottom: Spacing.two }}>{exName}</ThemedText>
-                        {sets.map((set, idx) => (
-                          <View key={set.ID} style={styles.setPlanRow}>
-                            <ThemedText type="small" themeColor="textSecondary" style={{ width: 45 }}>
-                              Set {idx + 1}:
+                        style={[styles.appleListGroup, { marginBottom: Spacing.two }]}>
+                        {/* Header Row */}
+                        <View style={[
+                          styles.appleListRow,
+                          {
+                            borderBottomWidth: sets.length > 0 ? StyleSheet.hairlineWidth : 0,
+                            borderBottomColor: theme.backgroundSelected
+                          }
+                        ]}>
+                          <View style={{ flex: 1 }}>
+                            <ThemedText type="small" style={{ fontWeight: 'bold', fontSize: 16 }}>
+                              {exName}
                             </ThemedText>
-                            <ThemedText type="smallBold" style={{ width: 80 }}>
-                              {set.Weight} kg
-                            </ThemedText>
-                            <ThemedText type="small" style={{ flex: 1 }}>
-                              {set.ActualReps} {repUnits[set.repUnitId]?.name_plural || 'Reps'}
-                            </ThemedText>
+                            {(() => {
+                              const ex = exercises.find(e => e.name === exName);
+                              const mgIds = ex?.muscle_group_ids;
+                              if (mgIds && mgIds.length > 0) {
+                                const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                return names ? (
+                                  <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
+                                    {names}
+                                  </ThemedText>
+                                ) : null;
+                              }
+                              return null;
+                            })()}
                           </View>
-                        ))}
+                        </View>
+
+                        {/* Sets Rows */}
+                        {sets.map((set, idx) => {
+                          const isLast = idx === sets.length - 1;
+                          const unitName = repUnits[set.repUnitId]?.name_plural || 'Reps';
+                          return (
+                            <View
+                              key={set.ID}
+                              style={[
+                                styles.appleListRow,
+                                { paddingVertical: 8, minHeight: 34 },
+                                !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
+                              ]}>
+                              <ThemedText type="small" themeColor="textSecondary" style={{ width: 45 }}>
+                                S{idx + 1}
+                              </ThemedText>
+                              <ThemedText type="small" themeColor="textSecondary">
+                                {set.ActualReps} {unitName} @ {set.Weight} kg
+                              </ThemedText>
+                            </View>
+                          );
+                        })}
                       </ThemedView>
                     ))
                   )}
@@ -2723,7 +2753,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.four,
   },
   detailSection: {
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.four,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -2734,6 +2764,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 12,
     letterSpacing: 0.5,
+    marginBottom: Spacing.one,
   },
   detailTextBox: {
     padding: Spacing.three,
@@ -2791,7 +2822,7 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   formGroup: {
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.four,
   },
   formLabel: {
     fontSize: 12,
@@ -2802,7 +2833,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: Spacing.three,
     paddingVertical: 12,
-    fontSize: 14,
+    fontSize: 16,
     borderWidth: 1,
   },
   textAreaField: {
@@ -2843,7 +2874,7 @@ const styles = StyleSheet.create({
   },
   dropdownSearchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     height: '100%',
     padding: 0,
   },

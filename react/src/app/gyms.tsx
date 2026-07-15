@@ -828,7 +828,7 @@ export default function GymsScreen() {
 
                       {/* Coordinates */}
                       <View style={styles.coordRowInputs}>
-                        <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two }]}>
+                        <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two, marginBottom: Spacing.two }]}>
                           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
                             LATITUDE
                           </ThemedText>
@@ -849,7 +849,7 @@ export default function GymsScreen() {
                           />
                         </View>
 
-                        <View style={[styles.inputGroup, { flex: 1 }]}>
+                        <View style={[styles.inputGroup, { flex: 1, marginBottom: Spacing.two }]}>
                           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
                             LONGITUDE
                           </ThemedText>
@@ -1245,7 +1245,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.six,
   },
   inputGroup: {
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.four,
   },
   inputLabel: {
     fontSize: 12,
@@ -1264,7 +1264,7 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.four,
   },
   coordRowInputs: {
     flexDirection: 'row',
