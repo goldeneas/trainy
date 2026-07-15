@@ -31,4 +31,4 @@ go.work.sum
 # .idea/
 # .vscode/
 
-backend/trainy.db
+./backend/trainy.db
