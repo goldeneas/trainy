@@ -7,6 +7,7 @@ type Exercise struct {
 	Instructions string
 	ImageID      *int64
 	RepUnitID    int64
+	VideoID      *int64
 }
 
 type PlannedExercise struct {

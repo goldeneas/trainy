@@ -111,6 +111,7 @@ func (s *ExerciseService) GetExerciseByID(id int64) (*dto_response.Exercise, err
 		ImageID:        exercise.ImageID,
 		RepUnitID:      exercise.RepUnitID,
 		MuscleGroupIDs: muscleGroupIDs,
+		VideoID:        exercise.VideoID,
 	}, nil
 }
 
@@ -191,6 +192,7 @@ func (s *ExerciseService) GetAllExercises() ([]dto_response.Exercise, error) {
 			ImageID:        exercise.ImageID,
 			RepUnitID:      exercise.RepUnitID,
 			MuscleGroupIDs: muscleGroupIDs,
+			VideoID:        exercise.VideoID,
 		})
 	}
 

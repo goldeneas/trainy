@@ -19,6 +19,7 @@ type RoutineDAO interface {
 	GetAllActualRoutines(dbtx sqlw.DBTX) ([]model.ActualRoutine, error)
 
 	DeleteRoutineByID(dbtx sqlw.DBTX, id int64) error
+	UpdateRoutineByID(dbtx sqlw.DBTX, r *model.Routine) error
 	DeleteActualRoutineByID(dbtx sqlw.DBTX, id int64) error
 	DeleteActualSetInfoByID(dbtx sqlw.DBTX, id int64) error
 }

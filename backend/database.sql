@@ -50,6 +50,11 @@ CREATE TABLE IF NOT EXISTS MuscleGroup (
     name TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS Video (
+    id INTEGER PRIMARY KEY,
+    link TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS Exercise (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -57,11 +62,14 @@ CREATE TABLE IF NOT EXISTS Exercise (
     instructions TEXT,
     image_id INTEGER,
     rep_unit_id INTEGER NOT NULL,
+    video_id INTEGER,
 
     FOREIGN KEY (image_id) REFERENCES Image(id)
         ON DELETE SET NULL,
     FOREIGN KEY (rep_unit_id) REFERENCES RepUnit(id)
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT,
+    FOREIGN KEY (video_id) REFERENCES Video(id)
+        ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS ExerciseProgression (

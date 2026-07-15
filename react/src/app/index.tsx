@@ -201,6 +201,10 @@ export default function WorkoutsScreen() {
   const [newRoutineName, setNewRoutineName] = useState('');
   const [newRoutineDesc, setNewRoutineDesc] = useState('');
 
+  // Edit Routine Form
+  const [editRoutineName, setEditRoutineName] = useState('');
+  const [editRoutineDesc, setEditRoutineDesc] = useState('');
+
   // Add Planned Exercise Form
   const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
   const [newRestTime, setNewRestTime] = useState('90');
@@ -576,6 +580,38 @@ export default function WorkoutsScreen() {
     }
   };
 
+  // Open routine detail handler
+  const handleOpenRoutineDetail = (routine: FullRoutine) => {
+    setSelectedRoutineId(routine.ID);
+    setEditRoutineName(routine.Name);
+    setEditRoutineDesc(routine.Description || '');
+    setIsAddExerciseToRoutineVisible(false);
+    setDropdownSearchQuery('');
+    setSelectedExerciseId(null);
+    setIsRoutineDetailVisible(true);
+  };
+
+  // Update routine handler
+  const handleUpdateRoutine = async () => {
+    if (!selectedRoutine) return;
+    if (!editRoutineName.trim()) {
+      Alert.alert('Error', 'Routine name cannot be empty');
+      return;
+    }
+
+    try {
+      await api.updateRoutine(selectedRoutine.ID, {
+        name: editRoutineName.trim(),
+        description: editRoutineDesc.trim(),
+        image_id: selectedRoutine.ImageID,
+      });
+      fetchData();
+      Alert.alert('Success', 'Routine updated successfully!');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update routine');
+    }
+  };
+
   // Remove planned exercise handler
   // Remove planned exercise handler
   const handleRemovePlannedExercise = useCallback(async (peId: number) => {
@@ -815,11 +851,7 @@ export default function WorkoutsScreen() {
             <View style={styles.cardActions}>
               <Pressable
                 onPress={() => {
-                  setSelectedRoutineId(item.ID);
-                  setIsAddExerciseToRoutineVisible(false);
-                  setDropdownSearchQuery('');
-                  setSelectedExerciseId(null);
-                  setIsRoutineDetailVisible(true);
+                  handleOpenRoutineDetail(item);
                 }}
                 style={({ pressed }) => [
                   styles.cardActionBtn,
@@ -1184,7 +1216,13 @@ export default function WorkoutsScreen() {
                       </ThemedText>
                     </Pressable>
                   ) : (
-                    <View style={{ minWidth: 60 }} />
+                    <Pressable
+                      onPress={routineDetailSwipe.close}
+                      style={styles.modalHeaderButton}>
+                      <ThemedText type="link" themeColor="textSecondary">
+                        Cancel
+                      </ThemedText>
+                    </Pressable>
                   )}
                   <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
                     {isAddExerciseToRoutineVisible ? 'Add Exercise' : 'Workout Plan'}
@@ -1194,7 +1232,9 @@ export default function WorkoutsScreen() {
                       <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
                     </Pressable>
                   ) : (
-                    <View style={{ minWidth: 60 }} />
+                    <Pressable onPress={handleUpdateRoutine} style={styles.modalHeaderButton}>
+                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+                    </Pressable>
                   )}
                 </View>
             </View>
@@ -1208,28 +1248,69 @@ export default function WorkoutsScreen() {
                     <ScrollView
                       style={styles.modalScrollBody}
                       contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.one }}>
-                        <View style={{ flex: 1, marginRight: Spacing.two }}>
-                          <ThemedText type="subtitle" style={[styles.detailTitle, { marginBottom: 0 }]}>
-                            {selectedRoutine.Name}
-                          </ThemedText>
-                        </View>
-                        <Pressable
-                          onPress={() => setIsAddExerciseToRoutineVisible(true)}
-                          style={({ pressed }) => [pressed && styles.pressed, { paddingTop: 6 }]}>
-                          <SymbolView
-                            tintColor="#0A84FF"
-                            name="plus.circle"
-                            size={28}
-                          />
-                        </Pressable>
+                      
+                      {/* Editable Routine Name */}
+                      <View style={styles.formGroup}>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                          ROUTINE NAME
+                        </ThemedText>
+                        <TextInput
+                          placeholder="Routine Name"
+                          placeholderTextColor={theme.textSecondary}
+                          value={editRoutineName}
+                          onChangeText={setEditRoutineName}
+                          style={[
+                            styles.inputField,
+                            {
+                              backgroundColor: theme.backgroundElement,
+                              color: theme.text,
+                              borderColor: theme.backgroundSelected,
+                            },
+                          ]}
+                        />
                       </View>
-                      <ThemedText type="default" themeColor="textSecondary" style={styles.detailDesc}>
-                        {selectedRoutine.Description || 'No description provided.'}
-                      </ThemedText>
+
+                      {/* Editable Description */}
+                      <View style={styles.formGroup}>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                          DESCRIPTION
+                        </ThemedText>
+                        <TextInput
+                          placeholder="Optional description"
+                          placeholderTextColor={theme.textSecondary}
+                          value={editRoutineDesc}
+                          onChangeText={setEditRoutineDesc}
+                          style={[
+                            styles.inputField,
+                            styles.textAreaField,
+                            {
+                              backgroundColor: theme.backgroundElement,
+                              color: theme.text,
+                              borderColor: theme.backgroundSelected,
+                              height: 60,
+                            },
+                          ]}
+                          multiline
+                          numberOfLines={2}
+                        />
+                      </View>
 
                       {/* Planned Exercises Section */}
                       <View style={styles.detailSection}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.one }}>
+                          <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.formLabel, { marginBottom: 0 }]}>
+                            EXERCISES
+                          </ThemedText>
+                          <Pressable
+                            onPress={() => setIsAddExerciseToRoutineVisible(true)}
+                            style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
+                            <SymbolView
+                              tintColor="#0A84FF"
+                              name="plus.circle"
+                              size={22}
+                            />
+                          </Pressable>
+                        </View>
                         {selectedRoutine.plannedExercises.length === 0 ? (
                           <ThemedView type="backgroundElement" style={styles.detailTextBox}>
                             <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>

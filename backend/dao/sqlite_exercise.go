@@ -14,8 +14,8 @@ func NewSQLiteExerciseDAO() *SQLiteExerciseDAO {
 }
 
 func (d *SQLiteExerciseDAO) InsertExercise(dbtx sqlw.DBTX, m *model.Exercise) (int64, error) {
-	res, err := dbtx.Exec(`INSERT INTO Exercise(name, notes, instructions, image_id, rep_unit_id)
-		VALUES (?, ?, ?, ?, ?)`, m.Name, m.Notes, m.Instructions, m.ImageID, m.RepUnitID)
+	res, err := dbtx.Exec(`INSERT INTO Exercise(name, notes, instructions, image_id, rep_unit_id, video_id)
+		VALUES (?, ?, ?, ?, ?, ?)`, m.Name, m.Notes, m.Instructions, m.ImageID, m.RepUnitID, m.VideoID)
 
 	if err != nil {
 		return 0, err
@@ -61,9 +61,9 @@ func (d *SQLiteExerciseDAO) InsertExerciseMuscleGroup(dbtx sqlw.DBTX,
 
 func (d *SQLiteExerciseDAO) GetExerciseByID(dbtx sqlw.DBTX, id int64) (*model.Exercise, error) {
 	var m model.Exercise
-	row := dbtx.QueryRow(`SELECT id, name, notes, instructions, image_id, rep_unit_id
+	row := dbtx.QueryRow(`SELECT id, name, notes, instructions, image_id, rep_unit_id, video_id
 		FROM Exercise WHERE id = ?`, id)
-	err := row.Scan(&m.ID, &m.Name, &m.Notes, &m.Instructions, &m.ImageID, &m.RepUnitID)
+	err := row.Scan(&m.ID, &m.Name, &m.Notes, &m.Instructions, &m.ImageID, &m.RepUnitID, &m.VideoID)
 
 	if err != nil {
 		return nil, err
@@ -119,8 +119,8 @@ func (s *SQLiteExerciseDAO) GetAllSetInfoByPlannedExerciseID(dbtx sqlw.DBTX, id 
 
 func (d *SQLiteExerciseDAO) GetAllExercises(dbtx sqlw.DBTX) ([]model.Exercise, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.Exercise) error {
-		return rows.Scan(&t.ID, &t.Name, &t.Notes, &t.Instructions, &t.ImageID, &t.RepUnitID)
-	}, "SELECT id, name, notes, instructions, image_id, rep_unit_id FROM Exercise")
+		return rows.Scan(&t.ID, &t.Name, &t.Notes, &t.Instructions, &t.ImageID, &t.RepUnitID, &t.VideoID)
+	}, "SELECT id, name, notes, instructions, image_id, rep_unit_id, video_id FROM Exercise")
 }
 
 func (d *SQLiteExerciseDAO) GetAllPlannedExercises(dbtx sqlw.DBTX) ([]model.PlannedExercise, error) {
@@ -137,7 +137,10 @@ func (d *SQLiteExerciseDAO) GetAllExerciseMuscleGroupIDs(dbtx sqlw.DBTX, exercis
 }
 
 func (d *SQLiteExerciseDAO) UpdateExerciseByID(dbtx sqlw.DBTX, id int64, info *model.Exercise) error {
-	_, err := dbtx.Exec(`UPDATE Exercise SET name = ?, notes = ?, instructions = ?, image_id = ?, rep_unit_id = ? WHERE id = ?`, info.Name, info.Notes, info.Instructions, info.ImageID, info.RepUnitID, id)
+	_, err := dbtx.Exec(`UPDATE Exercise SET name = ?, notes = ?, instructions = ?, image_id = ?,
+			rep_unit_id = ?, video_id = ? WHERE id = ?`,
+		info.Name, info.Notes, info.Instructions, info.ImageID, info.RepUnitID, info.VideoID, id)
+
 	return err
 }
 

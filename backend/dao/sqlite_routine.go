@@ -109,6 +109,12 @@ func (d *SQLiteRoutineDAO) DeleteRoutineByID(dbtx sqlw.DBTX, id int64) error {
 	return err
 }
 
+func (d *SQLiteRoutineDAO) UpdateRoutineByID(dbtx sqlw.DBTX, m *model.Routine) error {
+	_, err := dbtx.Exec("UPDATE Routine SET name = ?, description = ?, image_id = ? WHERE id = ?",
+		m.Name, m.Description, m.ImageID, m.ID)
+	return err
+}
+
 func (d *SQLiteRoutineDAO) DeleteActualRoutineByID(dbtx sqlw.DBTX, id int64) error {
 	_, err := dbtx.Exec("DELETE FROM ActualRoutine WHERE id = ?", id)
 	return err

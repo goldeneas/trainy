@@ -44,6 +44,11 @@ export const getApiBaseUrl = () => {
 
 // --- DATA TYPES & DTOs ---
 
+export interface Video {
+  id: number;
+  link: string;
+}
+
 export interface Exercise {
   id: number;
   name: string;
@@ -52,6 +57,7 @@ export interface Exercise {
   image_id: number | null;
   rep_unit_id: number;
   muscle_group_ids?: number[] | null;
+  video_id?: number | null;
 }
 
 export interface RepUnit {
@@ -122,6 +128,7 @@ export interface CreateExerciseDto {
   image_id?: number | null;
   rep_unit_id: number;
   muscle_group_ids?: number[] | null;
+  video_id?: number | null;
 }
 
 export interface UpdateExerciseDto {
@@ -131,6 +138,7 @@ export interface UpdateExerciseDto {
   image_id?: number | null;
   rep_unit_id: number;
   muscle_group_ids?: number[] | null;
+  video_id?: number | null;
 }
 
 export interface PlannedSetInfoCreate {
@@ -289,6 +297,12 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+  createVideo: (data: { link: string }) =>
+    request<number>('/v1/video', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  getVideoById: (id: number) => request<Video>(`/v1/video/${id}`),
   getRepUnit: (id: number) => request<RepUnit>(`/v1/exercise/unit/${id}`),
   getRepUnits: () => request<RepUnit[]>('/v1/exercise/unit'),
   getMuscleGroups: () => request<MuscleGroup[]>('/v1/exercise/muscle'),
@@ -313,6 +327,11 @@ export const api = {
   createRoutine: (data: CreateRoutineDto) => 
     request<number>('/v1/routine', {
       method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateRoutine: (id: number, data: CreateRoutineDto) => 
+    request<void>(`/v1/routine/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(data),
     }),
   deleteRoutine: (id: number) => 

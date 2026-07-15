@@ -8,4 +8,5 @@ type Exercise struct {
 	ImageID        *int64  `json:"image_id"`
 	RepUnitID      int64   `json:"rep_unit_id"`
 	MuscleGroupIDs []int64 `json:"muscle_group_ids"`
+	VideoID        *int64  `json:"video_id"`
 }

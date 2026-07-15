@@ -25,6 +25,7 @@ func EnableRoutineController(router *gin.Engine, routineService *service.Routine
 		v1.GET("", c.GetAllRoutines)
 		v1.GET("/:id", c.GetRoutineByID)
 		v1.DELETE("/:id", c.DeleteRoutineByID)
+		v1.PUT("/:id", c.UpdateRoutineByID)
 
 		v1.POST("/instance", c.RegisterActualRoutine)
 		v1.GET("/instance", c.GetAllActualRoutines)
@@ -128,5 +129,17 @@ func (c *RoutineController) DeleteActualRoutineByID(ctx *gin.Context) {
 func (c *RoutineController) GetAllActualSetInfosByActualRoutineID(ctx *gin.Context) {
 	httpw.GetAllByID(ctx, func(id int64) ([]model.ActualSetInfo, error) {
 		return c.service.GetAllActualSetInfoByActualRoutineID(id)
+	})
+}
+
+func (c *RoutineController) UpdateRoutineByID(ctx *gin.Context) {
+	httpw.UpdateByID(ctx, func(id int64, info *dto_request.UpdateRoutine) error {
+		r := model.Routine{
+			ID:          id,
+			Name:        info.Name,
+			Description: info.Description,
+			ImageID:     info.ImageID,
+		}
+		return c.service.UpdateRoutineByID(&r)
 	})
 }

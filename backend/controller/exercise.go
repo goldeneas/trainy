@@ -54,6 +54,7 @@ func (c *ExerciseController) CreateExercise(ctx *gin.Context) {
 		ImageID:      m.ImageID,
 		Instructions: m.Instructions,
 		RepUnitID:    m.RepUnitID,
+		VideoID:      m.VideoID,
 	}
 
 	id, err := c.service.RegisterExercise(&ex, m.MuscleGroupIDs)
@@ -91,6 +92,7 @@ func (c *ExerciseController) UpdateExerciseByID(ctx *gin.Context) {
 			Instructions: info.Instructions,
 			ImageID:      info.ImageID,
 			RepUnitID:    info.RepUnitID,
+			VideoID:      info.VideoID,
 		}
 
 		return c.service.UpdateExerciseByID(id, &ex, info.MuscleGroupIDs)
@@ -172,3 +174,5 @@ func (c *ExerciseController) GetAllMuscleGroups(ctx *gin.Context) {
 		return c.service.GetAllMuscleGroups()
 	})
 }
+
+

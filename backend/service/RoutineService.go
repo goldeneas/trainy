@@ -84,6 +84,10 @@ func (s *RoutineService) DeleteRoutineByID(id int64) error {
 	return s.routineDAO.DeleteRoutineByID(s.db, id)
 }
 
+func (s *RoutineService) UpdateRoutineByID(r *model.Routine) error {
+	return s.routineDAO.UpdateRoutineByID(s.db, r)
+}
+
 func (s *RoutineService) DeleteActualRoutineByID(id int64) error {
 	return s.routineDAO.DeleteActualRoutineByID(s.db, id)
 }

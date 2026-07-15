@@ -16,6 +16,8 @@ import {
   TextInput,
   View,
   InteractionManager,
+  Linking,
+  Image,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
@@ -26,7 +28,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { api, Exercise, MuscleGroup, RepUnit, ExerciseProgression, ExerciseProgressionEntry } from '@/services/api';
+import { api, Exercise, MuscleGroup, RepUnit, ExerciseProgression, ExerciseProgressionEntry, Video } from '@/services/api';
 
 
 function parseCSVLine(line: string): string[] {
@@ -115,6 +117,12 @@ function useBottomSheet(visible: boolean, onClose: () => void) {
   return { translateY, panHandlers, close: animateClose };
 }
 
+const getYoutubeVideoId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
 export default function ExercisesScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -157,11 +165,29 @@ export default function ExercisesScreen() {
   const [isImportModalVisible, setIsImportModalVisible] = useState(false);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [selectedExerciseVideo, setSelectedExerciseVideo] = useState<Video | null>(null);
+  const [originalVideoLink, setOriginalVideoLink] = useState('');
+
+  const handleOpenExerciseDetails = async (ex: Exercise | null) => {
+    setSelectedExercise(ex);
+    if (ex && ex.video_id) {
+      try {
+        const video = await api.getVideoById(ex.video_id);
+        setSelectedExerciseVideo(video);
+      } catch (err) {
+        console.warn("Failed to fetch exercise video details:", err);
+        setSelectedExerciseVideo(null);
+      }
+    } else {
+      setSelectedExerciseVideo(null);
+    }
+  };
 
   // Form state
   const [newName, setNewName] = useState('');
   const [newNotes, setNewNotes] = useState('');
   const [newInstructions, setNewInstructions] = useState('');
+  const [newVideoLink, setNewVideoLink] = useState('');
   const [selectedMuscleGroupIds, setSelectedMuscleGroupIds] = useState<number[]>([]);
   const [newRepUnitId, setNewRepUnitId] = useState<number>(1);
   const [repUnits, setRepUnits] = useState<RepUnit[]>([]);
@@ -180,11 +206,16 @@ export default function ExercisesScreen() {
   const [editingExerciseId, setEditingExerciseId] = useState<number | null>(null);
 
   // Bottom Sheet gesture controllers
-  const detailSwipe = useBottomSheet(isDetailModalVisible, () => setIsDetailModalVisible(false));
+  const detailSwipe = useBottomSheet(isDetailModalVisible, () => {
+    setIsDetailModalVisible(false);
+    setSelectedExercise(null);
+    setSelectedExerciseVideo(null);
+  });
   const addExerciseSwipe = useBottomSheet(isAddModalVisible, () => {
     setNewName('');
     setNewNotes('');
     setNewInstructions('');
+    setNewVideoLink('');
     setSelectedMuscleGroupIds([]);
     setNewRepUnitId(1);
     setEditingExerciseId(null);
@@ -437,18 +468,25 @@ export default function ExercisesScreen() {
 
     setIsSubmitting(true);
     try {
+      let videoId: number | null = null;
+      if (newVideoLink.trim()) {
+        videoId = await api.createVideo({ link: newVideoLink.trim() });
+      }
+
       await api.createExercise({
         name: newName.trim(),
         notes: newNotes.trim(),
         instructions: newInstructions.trim(),
         rep_unit_id: newRepUnitId,
         muscle_group_ids: selectedMuscleGroupIds,
+        video_id: videoId,
       });
       
       // Reset form
       setNewName('');
       setNewNotes('');
       setNewInstructions('');
+      setNewVideoLink('');
       setSelectedMuscleGroupIds([]);
       setNewRepUnitId(1);
       addExerciseSwipe.close();
@@ -472,18 +510,32 @@ export default function ExercisesScreen() {
 
     setIsSubmitting(true);
     try {
+      const originalExercise = exercises.find(ex => ex.id === editingExerciseId);
+      let videoId: number | null = originalExercise?.video_id || null;
+
+      if (newVideoLink.trim() !== originalVideoLink) {
+        if (newVideoLink.trim()) {
+          videoId = await api.createVideo({ link: newVideoLink.trim() });
+        } else {
+          videoId = null;
+        }
+      }
+
       await api.updateExercise(editingExerciseId, {
         name: newName.trim(),
         notes: newNotes.trim(),
         instructions: newInstructions.trim(),
         rep_unit_id: newRepUnitId,
         muscle_group_ids: selectedMuscleGroupIds,
+        video_id: videoId,
       });
       
       // Reset form
       setNewName('');
       setNewNotes('');
       setNewInstructions('');
+      setNewVideoLink('');
+      setOriginalVideoLink('');
       setSelectedMuscleGroupIds([]);
       setNewRepUnitId(1);
       setEditingExerciseId(null);
@@ -499,7 +551,7 @@ export default function ExercisesScreen() {
   };
 
   // Start edit mode
-  const handleStartEditExercise = (ex: Exercise) => {
+  const handleStartEditExercise = async (ex: Exercise) => {
     Keyboard.dismiss();
     setEditingExerciseId(ex.id);
     setNewName(ex.name);
@@ -507,6 +559,22 @@ export default function ExercisesScreen() {
     setNewInstructions(ex.instructions || '');
     setNewRepUnitId(ex.rep_unit_id);
     setSelectedMuscleGroupIds(ex.muscle_group_ids || []);
+
+    if (ex.video_id) {
+      try {
+        const video = await api.getVideoById(ex.video_id);
+        setNewVideoLink(video.link);
+        setOriginalVideoLink(video.link);
+      } catch (err) {
+        console.warn("Failed to fetch video for editing:", err);
+        setNewVideoLink('');
+        setOriginalVideoLink('');
+      }
+    } else {
+      setNewVideoLink('');
+      setOriginalVideoLink('');
+    }
+
     setIsDetailModalVisible(false); // Close detail modal
     setIsAddModalVisible(true); // Open form modal
   };
@@ -771,7 +839,7 @@ export default function ExercisesScreen() {
               <Pressable
                 onPress={() => {
                   Keyboard.dismiss();
-                  setSelectedExercise(item);
+                  handleOpenExerciseDetails(item);
                   setIsDetailModalVisible(true);
                 }}
                 style={({ pressed }) => [
@@ -895,7 +963,7 @@ export default function ExercisesScreen() {
                     key={`${ex.id}-${index}`}
                     onPress={() => {
                       Keyboard.dismiss();
-                      setSelectedExercise(ex);
+                      handleOpenExerciseDetails(ex);
                       setIsDetailModalVisible(true);
                     }}
                     style={({ pressed }) => [
@@ -1557,6 +1625,74 @@ export default function ExercisesScreen() {
                   </View>
                 ) : null}
 
+                {selectedExerciseVideo?.link ? (
+                  (() => {
+                    const videoId = getYoutubeVideoId(selectedExerciseVideo.link);
+                    return (
+                      <View style={styles.detailSection}>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+                          VIDEO PREVIEW
+                        </ThemedText>
+                        {videoId ? (
+                          <Pressable
+                            onPress={() => Linking.openURL(selectedExerciseVideo.link)}
+                            style={({ pressed }) => [
+                              pressed && styles.pressed,
+                              {
+                                position: 'relative',
+                                borderRadius: 12,
+                                overflow: 'hidden',
+                                backgroundColor: '#000',
+                                width: '100%',
+                                aspectRatio: 16 / 9,
+                              }
+                            ]}>
+                            <Image
+                              source={{ uri: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` }}
+                              style={{ width: '100%', height: '100%' }}
+                              resizeMode="cover"
+                            />
+                            <View style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: 'rgba(0,0,0,0.2)'
+                            }}>
+                              <View style={{
+                                backgroundColor: 'rgba(0,0,0,0.6)',
+                                borderRadius: 40,
+                                width: 60,
+                                height: 60,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                                <SymbolView name="play.fill" tintColor="#FFFFFF" size={30} />
+                              </View>
+                            </View>
+                          </Pressable>
+                        ) : (
+                          <Pressable
+                            onPress={() => Linking.openURL(selectedExerciseVideo.link)}
+                            style={({ pressed }) => [
+                              styles.detailTextBox,
+                              pressed && styles.pressed,
+                              { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }
+                            ]}>
+                            <ThemedText style={{ color: '#0A84FF', textDecorationLine: 'underline', flex: 1, marginRight: Spacing.two }} numberOfLines={1}>
+                              {selectedExerciseVideo.link}
+                            </ThemedText>
+                            <SymbolView name="arrow.up.right.square" tintColor="#0A84FF" size={18} />
+                          </Pressable>
+                        )}
+                      </View>
+                    );
+                  })()
+                ) : null}
+
                 {(() => {
                   const mgIds = selectedExercise.muscle_group_ids;
                   if (mgIds && mgIds.length > 0) {
@@ -1633,9 +1769,12 @@ export default function ExercisesScreen() {
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}>
-                <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 160 }}>
-                <View style={styles.formGroup}>
+                <ScrollView 
+                  style={styles.modalFormBody} 
+                  contentContainerStyle={{ paddingBottom: insets.bottom + 160 }}
+                  keyboardShouldPersistTaps="handled">
+                  <Pressable onPress={Keyboard.dismiss} style={{ width: '100%' }}>
+                    <View style={styles.formGroup}>
                   <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                     NAME *
                   </ThemedText>
@@ -1769,9 +1908,30 @@ export default function ExercisesScreen() {
                     numberOfLines={4}
                   />
                 </View>
-              </ScrollView>
+
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    YOUTUBE VIDEO
+                  </ThemedText>
+                  <TextInput
+                    placeholder="e.g. https://www.youtube.com/watch?v=..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={newVideoLink}
+                    onChangeText={setNewVideoLink}
+                    style={[
+                      styles.inputField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                        fontSize: 14,
+                      },
+                    ]}
+                  />
+                </View>
               </Pressable>
-            </KeyboardAvoidingView>
+            </ScrollView>
+          </KeyboardAvoidingView>
           </Animated.View>
         </View>
       </Modal>
@@ -2169,7 +2329,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: Spacing.three,
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 14,
     borderWidth: 1,
   },
   textAreaField: {

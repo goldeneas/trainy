@@ -6,6 +6,12 @@ type CreateRoutine struct {
 	ImageID     *int64 `json:"image_id"`
 }
 
+type UpdateRoutine struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ImageID     *int64 `json:"image_id"`
+}
+
 type RegisterActualRoutine struct {
 	RoutineID       int64           `json:"routine_id"`
 	StartTimestamp  int64           `json:"start_timestamp"`
