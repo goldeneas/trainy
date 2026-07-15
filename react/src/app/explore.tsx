@@ -17,18 +17,22 @@ import {
   View,
   InteractionManager,
   Linking,
-  Image,
+  Dimensions,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
+import YoutubePlayer from 'react-native-youtube-iframe';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, Exercise, MuscleGroup, RepUnit, ExerciseProgression, ExerciseProgressionEntry, Video } from '@/services/api';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const VIDEO_HEIGHT = (SCREEN_WIDTH - 32) * (9 / 16);
 
 
 function parseCSVLine(line: string): string[] {
@@ -1632,46 +1636,19 @@ export default function ExercisesScreen() {
                           VIDEO PREVIEW
                         </ThemedText>
                         {videoId ? (
-                          <Pressable
-                            onPress={() => Linking.openURL(selectedExerciseVideo.link)}
-                            style={({ pressed }) => [
-                              pressed && styles.pressed,
-                              {
-                                position: 'relative',
-                                borderRadius: 12,
-                                overflow: 'hidden',
-                                backgroundColor: '#000',
-                                width: '100%',
-                                aspectRatio: 16 / 9,
-                              }
-                            ]}>
-                            <Image
-                              source={{ uri: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` }}
-                              style={{ width: '100%', height: '100%' }}
-                              resizeMode="cover"
+                          <View style={{ borderRadius: 12, overflow: 'hidden', backgroundColor: '#000', width: '100%', height: VIDEO_HEIGHT }}>
+                            <YoutubePlayer
+                              height={VIDEO_HEIGHT}
+                              play={false}
+                              videoId={videoId}
+                              initialPlayerParams={{
+                                preventFullScreen: true,
+                                rel: false, // Hides related videos
+                                modestbranding: true, // Hides YouTube logo
+                                iv_load_policy: 3, // Hides annotations
+                              }}
                             />
-                            <View style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: 'rgba(0,0,0,0.2)'
-                            }}>
-                              <View style={{
-                                backgroundColor: 'rgba(0,0,0,0.6)',
-                                borderRadius: 40,
-                                width: 60,
-                                height: 60,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}>
-                                <SymbolView name="play.fill" tintColor="#FFFFFF" size={30} />
-                              </View>
-                            </View>
-                          </Pressable>
+                          </View>
                         ) : (
                           <Pressable
                             onPress={() => Linking.openURL(selectedExerciseVideo.link)}
