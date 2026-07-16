@@ -606,7 +606,7 @@ export default function WorkoutsScreen() {
         image_id: selectedRoutine.ImageID,
       });
       fetchData();
-      Alert.alert('Success', 'Routine updated successfully!');
+      routineDetailSwipe.close();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to update routine');
     }
