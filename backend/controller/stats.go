@@ -24,6 +24,7 @@ func EnableStatsController(router *gin.Engine, statsService *service.StatsServic
 		v1.GET("/routines/monthly", c.GetActualRoutinesThisMonth)
 		v1.GET("/frequency/week", c.GetFrequencyThisWeek)
 		v1.GET("/workouts", c.GetTotalWorkouts)
+		v1.GET("/exercise/weight/:id", c.GetExerciseWeightStatsByID)
 		v1.GET("/distribution/monthly", c.GetMuscleGroupDistributionThisMonth)
 		v1.GET("/weekly/hours", c.GetWeeklyWorkoutHourDistributionThisMonth)
 	}
@@ -43,6 +44,12 @@ func (c *StatsController) GetFrequencyThisWeek(ctx *gin.Context) {
 func (c *StatsController) GetTotalWorkouts(ctx *gin.Context) {
 	res := c.service.GetTotalWorkouts()
 	ctx.JSON(http.StatusOK, res)
+}
+
+func (c *StatsController) GetExerciseWeightStatsByID(ctx *gin.Context) {
+	httpw.GetByID(ctx, func(id int64) (dto_response.ExerciseWeightStats, error) {
+		return c.service.GetExerciseWeightStatsByID(id), nil
+	})
 }
 
 func (c *StatsController) GetMuscleGroupDistributionThisMonth(ctx *gin.Context) {

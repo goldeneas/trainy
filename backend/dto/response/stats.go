@@ -17,3 +17,7 @@ type ExerciseStats struct {
 	LastWeightKG   float64 `json:"last_weight_kg"`
 	TotalLiftedKG  float64 `json:"total_lifted_kg"`
 }
+
+type ExerciseWeightStats struct {
+	AllTimeTopWeight *float64 `json:"all_time_top_weight"`
+}
