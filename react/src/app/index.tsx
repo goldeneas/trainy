@@ -213,6 +213,7 @@ export default function WorkoutsScreen() {
     { reps: '10', notes: '' },
   ]);
   const [dropdownSearchQuery, setDropdownSearchQuery] = useState('');
+  const [pendingDeletePlannedExerciseIds, setPendingDeletePlannedExerciseIds] = useState<number[]>([]);
 
   // Active Workout Log State
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
@@ -258,6 +259,7 @@ export default function WorkoutsScreen() {
     setDropdownSearchQuery('');
     setSelectedExerciseId(null);
     setNewPlannedExerciseNotes('');
+    setPendingDeletePlannedExerciseIds([]);
   });
 
   const historyDetailSwipe = useBottomSheet(isHistoryDetailVisible, () => {
@@ -588,6 +590,7 @@ export default function WorkoutsScreen() {
     setIsAddExerciseToRoutineVisible(false);
     setDropdownSearchQuery('');
     setSelectedExerciseId(null);
+    setPendingDeletePlannedExerciseIds([]);
     setIsRoutineDetailVisible(true);
   };
 
@@ -600,11 +603,22 @@ export default function WorkoutsScreen() {
     }
 
     try {
+      // 1. Process pending deletions
+      if (pendingDeletePlannedExerciseIds.length > 0) {
+        await Promise.all(
+          pendingDeletePlannedExerciseIds.map((id) => api.deletePlannedExercise(id))
+        );
+      }
+
+      // 2. Update routine metadata
       await api.updateRoutine(selectedRoutine.ID, {
         name: editRoutineName.trim(),
         description: editRoutineDesc.trim(),
         image_id: selectedRoutine.ImageID,
       });
+
+      // 3. Reset state, refresh data and close modal
+      setPendingDeletePlannedExerciseIds([]);
       fetchData();
       routineDetailSwipe.close();
     } catch (error: any) {
@@ -613,28 +627,9 @@ export default function WorkoutsScreen() {
   };
 
   // Remove planned exercise handler
-  // Remove planned exercise handler
-  const handleRemovePlannedExercise = useCallback(async (peId: number) => {
-    Alert.alert(
-      'Remove Exercise',
-      'Remove this exercise template from the routine?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.deletePlannedExercise(peId);
-              fetchData();
-            } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to remove exercise');
-            }
-          },
-        },
-      ]
-    );
-  }, [fetchData]);
+  const handleRemovePlannedExercise = useCallback((peId: number) => {
+    setPendingDeletePlannedExerciseIds((prev) => [...prev, peId]);
+  }, [setPendingDeletePlannedExerciseIds]);
 
   const renderPlannedExerciseSwipeActions = useCallback((peId: number) => (
     <View style={styles.swipeActionContainer}>
@@ -1300,7 +1295,9 @@ export default function WorkoutsScreen() {
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                           EXERCISES
                         </ThemedText>
-                        {selectedRoutine.plannedExercises.map((pe) => (
+                        {selectedRoutine.plannedExercises
+                          .filter((pe) => !pendingDeletePlannedExerciseIds.includes(pe.ID))
+                          .map((pe) => (
                           <Swipeable
                             key={pe.ID}
                             renderLeftActions={() => renderPlannedExerciseSwipeActions(pe.ID)}
