@@ -82,15 +82,15 @@ func (d *SQLiteStatsDAO) GetWeeklyWorkoutHourDistributionThisMonth(
 	GROUP BY week_iso`, beginTimestamp)
 }
 
-func (d *SQLiteStatsDAO) GetExerciseWeightStatsByID(dbtx sqlw.DBTX, id int64) dto_response.ExerciseWeightStats {
+func (d *SQLiteStatsDAO) GetExerciseWeightStatsByIDAndReps(dbtx sqlw.DBTX, id int64, reps int64) dto_response.ExerciseWeightStats {
 	var m dto_response.ExerciseWeightStats
 	row := dbtx.QueryRow(`SELECT MAX(weight) FROM ActualSetInfo AS ASI
 			JOIN PlannedSetInfo PSI ON (ASI.set_info_id = PSI.id)
 			JOIN PlannedExercise PE ON (PSI.planned_exercise_id = PE.id)
 			JOIN Exercise EX ON (PE.exercise_id = EX.id)
-		WHERE EX.id = ?
-		GROUP BY EX.id`, id)
-	row.Scan(&m.AllTimeTopWeight)
+		WHERE EX.id = ? AND PE.reps = ?
+		GROUP BY EX.id`, id, reps)
+	row.Scan(&m.BestWeightAllTimeByRepCount)
 
 	return m
 }

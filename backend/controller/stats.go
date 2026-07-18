@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	dto_request "github.com/goldeneas/trainy/dto/request"
 	dto_response "github.com/goldeneas/trainy/dto/response"
 	"github.com/goldeneas/trainy/httpw"
 	"github.com/goldeneas/trainy/model"
@@ -47,9 +48,14 @@ func (c *StatsController) GetTotalWorkouts(ctx *gin.Context) {
 }
 
 func (c *StatsController) GetExerciseWeightStatsByID(ctx *gin.Context) {
-	httpw.GetByID(ctx, func(id int64) (dto_response.ExerciseWeightStats, error) {
-		return c.service.GetExerciseWeightStatsByID(id), nil
-	})
+	var m dto_request.ExerciseWeight
+	if err := ctx.ShouldBindJSON(&m); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res := c.service.GetExerciseWeightStatsByIDAndReps(m.ExerciseID, m.RepCount)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (c *StatsController) GetMuscleGroupDistributionThisMonth(ctx *gin.Context) {

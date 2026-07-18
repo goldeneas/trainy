@@ -42,6 +42,6 @@ func (s *StatsService) GetWeeklyWorkoutHourDistributionThisMonth() ([]dto_respon
 	return s.statsDAO.GetWeeklyWorkoutHourDistributionThisMonth(s.db)
 }
 
-func (s *StatsService) GetExerciseWeightStatsByID(id int64) dto_response.ExerciseWeightStats {
-	return s.statsDAO.GetExerciseWeightStatsByID(s.db, id)
+func (s *StatsService) GetExerciseWeightStatsByIDAndReps(id int64, reps int64) dto_response.ExerciseWeightStats {
+	return s.statsDAO.GetExerciseWeightStatsByIDAndReps(s.db, id, reps)
 }

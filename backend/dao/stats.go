@@ -12,5 +12,5 @@ type StatsDao interface {
 	GetTotalWorkouts(dbtx sqlw.DBTX) int
 	GetWeeklyWorkoutHourDistributionThisMonth(dbtx sqlw.DBTX) ([]dto_response.WeeklyWorkoutHourDistribution, error)
 	GetMuscleGroupDistributionThisMonth(dbtx sqlw.DBTX) ([]dto_response.MuscleGroupDistribution, error)
-	GetExerciseWeightStatsByID(dbtx sqlw.DBTX, id int64) dto_response.ExerciseWeightStats
+	GetExerciseWeightStatsByIDAndReps(dbtx sqlw.DBTX, id int64, reps int64) dto_response.ExerciseWeightStats
 }

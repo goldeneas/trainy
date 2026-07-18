@@ -19,5 +19,5 @@ type ExerciseStats struct {
 }
 
 type ExerciseWeightStats struct {
-	AllTimeTopWeight *float64 `json:"all_time_top_weight"`
+	BestWeightAllTimeByRepCount int64 `json:"best_weight_oat_by_reps"`
 }
