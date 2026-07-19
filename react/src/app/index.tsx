@@ -222,6 +222,7 @@ export default function WorkoutsScreen() {
   const [isRoutineDetailVisible, setIsRoutineDetailVisible] = useState(false);
   const [isAddExerciseToRoutineVisible, setIsAddExerciseToRoutineVisible] = useState(false);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
+  const [isWorkoutMinimized, setIsWorkoutMinimized] = useState(false);
   const [isHistoryDetailVisible, setIsHistoryDetailVisible] = useState(false);
   const [isExerciseDetailVisible, setIsExerciseDetailVisible] = useState(false);
 
@@ -756,6 +757,7 @@ export default function WorkoutsScreen() {
 
       setIsRoutineDetailVisible(false);
       setIsWorkoutActive(true);
+      setIsWorkoutMinimized(false);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to start workout');
     } finally {
@@ -835,6 +837,7 @@ export default function WorkoutsScreen() {
       });
 
       setIsWorkoutActive(false);
+      setIsWorkoutMinimized(false);
       setSelectedRoutineId(null);
       setRestTimerActive(false);
       setRestTimerSeconds(0);
@@ -859,6 +862,7 @@ export default function WorkoutsScreen() {
           style: 'destructive',
           onPress: () => {
             setIsWorkoutActive(false);
+            setIsWorkoutMinimized(false);
             setRestTimerActive(false);
             setRestTimerSeconds(0);
           },
@@ -1797,7 +1801,7 @@ export default function WorkoutsScreen() {
       <Modal
         animationType="slide"
         transparent={false}
-        visible={isWorkoutActive}
+        visible={isWorkoutActive && !isWorkoutMinimized}
         onRequestClose={handleCancelWorkout}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1815,12 +1819,21 @@ export default function WorkoutsScreen() {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
                 <Pressable
+                  onPress={() => setIsWorkoutMinimized(true)}
+                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed, { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }]}>
+                  <SymbolView
+                    name="chevron.down"
+                    tintColor={theme.textSecondary}
+                    size={26}
+                  />
+                </Pressable>
+                <Pressable
                   onPress={() => setIsCustomTimerModalVisible(true)}
                   style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed, { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }]}>
                   <SymbolView
                     name="timer"
                     tintColor={theme.textSecondary}
-                    size={28}
+                    size={26}
                   />
                 </Pressable>
                 <Pressable
@@ -1829,7 +1842,7 @@ export default function WorkoutsScreen() {
                   <SymbolView
                     name="trash.fill"
                     tintColor="#FF3B30"
-                    size={28}
+                    size={26}
                   />
                 </Pressable>
               </View>
@@ -2592,6 +2605,24 @@ export default function WorkoutsScreen() {
           </Animated.View>
         </View>
       </Modal>
+
+      {isWorkoutActive && isWorkoutMinimized && selectedRoutine && (
+        <Pressable
+          onPress={() => setIsWorkoutMinimized(false)}
+          style={[styles.minimizedWorkoutPill, { bottom: safeBottom + Spacing.two }]}>
+          <SymbolView
+            tintColor="#FFFFFF"
+            name="play.circle.fill"
+            size={22}
+          />
+          <ThemedText type="smallBold" style={styles.minimizedWorkoutText} numberOfLines={1}>
+            {selectedRoutine.Name}
+          </ThemedText>
+          <ThemedText type="smallBold" style={styles.minimizedWorkoutTimer}>
+            {formatDuration(workoutDuration)}
+          </ThemedText>
+        </Pressable>
+      )}
     </View>
     </GestureHandlerRootView>
   );
@@ -3311,5 +3342,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.one,
+  },
+  minimizedWorkoutPill: {
+    position: 'absolute',
+    left: 44,
+    right: 44,
+    backgroundColor: '#0A84FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.four,
+    borderRadius: 24,
+    zIndex: 999,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  minimizedWorkoutText: {
+    color: '#FFFFFF',
+    flex: 1,
+    fontSize: 15,
+    marginLeft: Spacing.two,
+  },
+  minimizedWorkoutTimer: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

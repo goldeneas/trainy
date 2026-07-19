@@ -25,9 +25,9 @@
 		376FA604C51D81E0AD26674F /* libPods-trainy.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-trainy.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		97925B23A9F1353C855EEAFC /* Pods-trainy.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-trainy.debug.xcconfig"; path = "Target Support Files/Pods-trainy/Pods-trainy.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = trainy/SplashScreen.storyboard; sourceTree = "<group>"; };
-		AB5AF009BFE941FBBF757208 /* expo.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = expo.icon; path = trainy/expo.icon; sourceTree = "<group>"; };
+		AB5AF009BFE941FBBF757208 /* expo.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = expo.icon; path = trainy/expo.icon; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E61A0AF458FCB99A78523814 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = trainy/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E61A0AF458FCB99A78523814 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = trainy/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = trainy/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* trainy-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "trainy-Bridging-Header.h"; path = "trainy/trainy-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -106,7 +106,6 @@
 				97925B23A9F1353C855EEAFC /* Pods-trainy.debug.xcconfig */,
 				26E607B165B7D90403A04EA4 /* Pods-trainy.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -365,6 +364,7 @@
 		};
 		9DACCCE20F034FC985C08A1F /* [Expo Dev Launcher] Strip Local Network Keys for Release */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
