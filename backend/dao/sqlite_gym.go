@@ -14,8 +14,8 @@ func NewSQLiteGymDAO() *SQLiteGymDAO {
 }
 
 func (d *SQLiteGymDAO) InsertGymLocation(dbtx sqlw.DBTX, m *model.GymLocation) (int64, error) {
-	res, err := dbtx.Exec(`INSERT INTO GymLocation (name, altitude, longitude, rating) VALUES (?, ?, ?, ?)`,
-		m.Name, m.Altitude, m.Longitude, m.Rating)
+	res, err := dbtx.Exec(`INSERT INTO GymLocation (name, latitude, longitude, rating) VALUES (?, ?, ?, ?)`,
+		m.Name, m.Latitude, m.Longitude, m.Rating)
 
 	if err != nil {
 		return 0, err
@@ -26,8 +26,8 @@ func (d *SQLiteGymDAO) InsertGymLocation(dbtx sqlw.DBTX, m *model.GymLocation) (
 
 func (d *SQLiteGymDAO) GetGymLocationByID(dbtx sqlw.DBTX, id int64) (*model.GymLocation, error) {
 	var m model.GymLocation
-	row := dbtx.QueryRow(`SELECT id, name, altitude, longitude, rating FROM GymLocation WHERE id = ?`, id)
-	err := row.Scan(&m.ID, &m.Name, &m.Altitude, &m.Longitude, &m.Rating)
+	row := dbtx.QueryRow(`SELECT id, name, latitude, longitude, rating FROM GymLocation WHERE id = ?`, id)
+	err := row.Scan(&m.ID, &m.Name, &m.Latitude, &m.Longitude, &m.Rating)
 
 	if err != nil {
 		return nil, err
@@ -38,13 +38,13 @@ func (d *SQLiteGymDAO) GetGymLocationByID(dbtx sqlw.DBTX, id int64) (*model.GymL
 
 func (d *SQLiteGymDAO) GetAllGymLocations(dbtx sqlw.DBTX) ([]model.GymLocation, error) {
 	return sqlw.QueryAll(dbtx, func(rows *sql.Rows, t *model.GymLocation) error {
-		return rows.Scan(&t.ID, &t.Name, &t.Altitude, &t.Longitude, &t.Rating)
-	}, "SELECT id, name, altitude, longitude, rating FROM GymLocation")
+		return rows.Scan(&t.ID, &t.Name, &t.Latitude, &t.Longitude, &t.Rating)
+	}, "SELECT id, name, latitude, longitude, rating FROM GymLocation")
 }
 
 func (d *SQLiteGymDAO) UpdateGymLocationByID(dbtx sqlw.DBTX, id int64, info *model.GymLocation) error {
-	_, err := dbtx.Exec(`UPDATE GymLocation SET name = ?, altitude = ?, longitude = ?, rating = ? WHERE id = ?`,
-		info.Name, info.Altitude, info.Longitude, info.Rating, id)
+	_, err := dbtx.Exec(`UPDATE GymLocation SET name = ?, latitude = ?, longitude = ?, rating = ? WHERE id = ?`,
+		info.Name, info.Latitude, info.Longitude, info.Rating, id)
 	return err
 }
 

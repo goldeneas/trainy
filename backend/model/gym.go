@@ -3,7 +3,7 @@ package model
 type GymLocation struct {
 	ID        int64
 	Name      string
-	Altitude  float64
+	Latitude  float64
 	Longitude float64
 	Rating    *int
 }

@@ -2,14 +2,14 @@ package dto_request
 
 type CreateGymLocation struct {
 	Name      string  `json:"name"`
-	Altitude  float64 `json:"altitude"`
+	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 	Rating    *int    `json:"rating"`
 }
 
 type UpdateGymLocation struct {
 	Name      string  `json:"name"`
-	Altitude  float64 `json:"altitude"`
+	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 	Rating    *int    `json:"rating"`
 }

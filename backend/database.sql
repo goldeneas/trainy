@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS RepUnit (
 CREATE TABLE IF NOT EXISTS GymLocation (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
-    altitude REAL NOT NULL,
+    latitude REAL NOT NULL,
     longitude REAL NOT NULL,
     rating INTEGER,
 

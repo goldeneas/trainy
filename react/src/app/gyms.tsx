@@ -187,7 +187,7 @@ export default function GymsScreen() {
 
   // Form states
   const [name, setName] = useState('');
-  const [altitude, setAltitude] = useState(''); // Latitude
+  const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [rating, setRating] = useState<number>(0);
   const [locating, setLocating] = useState(false);
@@ -195,7 +195,7 @@ export default function GymsScreen() {
 
   // Edit Form states
   const [editName, setEditName] = useState('');
-  const [editAltitude, setEditAltitude] = useState('');
+  const [editLatitude, setEditLatitude] = useState('');
   const [editLongitude, setEditLongitude] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -219,8 +219,8 @@ export default function GymsScreen() {
 
     if (userLocation) {
       return [...result].sort((a, b) => {
-        const distA = calculateDistance(userLocation.latitude, userLocation.longitude, a.Altitude, a.Longitude);
-        const distB = calculateDistance(userLocation.latitude, userLocation.longitude, b.Altitude, b.Longitude);
+        const distA = calculateDistance(userLocation.latitude, userLocation.longitude, a.Latitude, a.Longitude);
+        const distB = calculateDistance(userLocation.latitude, userLocation.longitude, b.Latitude, b.Longitude);
         return distA - distB;
       });
     }
@@ -277,9 +277,9 @@ export default function GymsScreen() {
       Alert.alert('Error', 'Please enter a name.');
       return;
     }
-    const altNum = parseFloat(altitude.replace(',', '.'));
+    const latNum = parseFloat(latitude.replace(',', '.'));
     const lonNum = parseFloat(longitude.replace(',', '.'));
-    if (isNaN(altNum) || isNaN(lonNum)) {
+    if (isNaN(latNum) || isNaN(lonNum)) {
       Alert.alert('Error', 'Please enter valid coordinate numbers.');
       return;
     }
@@ -287,7 +287,7 @@ export default function GymsScreen() {
     try {
       const payload = {
         name: name.trim(),
-        altitude: altNum,
+        latitude: latNum,
         longitude: lonNum,
         rating: rating > 0 ? rating : null,
       };
@@ -296,7 +296,7 @@ export default function GymsScreen() {
 
       // Reset & close
       setName('');
-      setAltitude('');
+      setLatitude('');
       setLongitude('');
       setRating(0);
       setIsAddModalVisible(false);
@@ -310,25 +310,25 @@ export default function GymsScreen() {
 
   const handleOpenAddModal = async () => {
     setName('');
-    setAltitude('');
+    setLatitude('');
     setLongitude('');
     setRating(0);
     setIsAddModalVisible(true);
 
     const userLoc = await getUserLocationSafe();
     if (userLoc) {
-      setAltitude(userLoc.latitude.toString().replace('.', ','));
+      setLatitude(userLoc.latitude.toString().replace('.', ','));
       setLongitude(userLoc.longitude.toString().replace('.', ','));
     }
   };
 
   const handleOpenMap = () => {
     if (!selectedGym) return;
-    const { Altitude, Longitude } = selectedGym;
+    const { Latitude, Longitude } = selectedGym;
     const url = Platform.select({
-      ios: `maps://?q=${Altitude},${Longitude}`,
-      android: `geo:${Altitude},${Longitude}?q=${Altitude},${Longitude}`,
-      default: `https://www.google.com/maps/search/?api=1&query=${Altitude},${Longitude}`,
+      ios: `maps://?q=${Latitude},${Longitude}`,
+      android: `geo:${Latitude},${Longitude}?q=${Latitude},${Longitude}`,
+      default: `https://www.google.com/maps/search/?api=1&query=${Latitude},${Longitude}`,
     });
     Linking.openURL(url).catch(() => {
       Alert.alert('Error', 'Failed to open map app');
@@ -388,7 +388,7 @@ export default function GymsScreen() {
     try {
       const payload = {
         name: selectedGym.Name,
-        altitude: selectedGym.Altitude,
+        latitude: selectedGym.Latitude,
         longitude: selectedGym.Longitude,
         rating: nextRating,
       };
@@ -409,7 +409,7 @@ export default function GymsScreen() {
     Keyboard.dismiss();
     setSelectedGym(gym);
     setEditName(gym.Name);
-    setEditAltitude(gym.Altitude.toString().replace('.', ','));
+    setEditLatitude(gym.Latitude.toString().replace('.', ','));
     setEditLongitude(gym.Longitude.toString().replace('.', ','));
     setIsDefineEquipModalVisible(true);
   };
@@ -420,9 +420,9 @@ export default function GymsScreen() {
       Alert.alert('Error', 'Please enter a name.');
       return;
     }
-    const altNum = parseFloat(editAltitude.replace(',', '.'));
+    const latNum = parseFloat(editLatitude.replace(',', '.'));
     const lonNum = parseFloat(editLongitude.replace(',', '.'));
-    if (isNaN(altNum) || isNaN(lonNum)) {
+    if (isNaN(latNum) || isNaN(lonNum)) {
       Alert.alert('Error', 'Please enter valid coordinate numbers.');
       return;
     }
@@ -430,7 +430,7 @@ export default function GymsScreen() {
     try {
       const payload = {
         name: editName.trim(),
-        altitude: altNum,
+        latitude: latNum,
         longitude: lonNum,
         rating: selectedGym.Rating,
       };
@@ -447,7 +447,7 @@ export default function GymsScreen() {
     try {
       const userLoc = await getUserLocationSafe();
       if (userLoc) {
-        setEditAltitude(userLoc.latitude.toString().replace('.', ','));
+        setEditLatitude(userLoc.latitude.toString().replace('.', ','));
         setEditLongitude(userLoc.longitude.toString().replace('.', ','));
       } else {
         Alert.alert(
@@ -500,12 +500,12 @@ export default function GymsScreen() {
                       calculateDistance(
                         userLocation.latitude,
                         userLocation.longitude,
-                        item.Altitude,
+                        item.Latitude,
                         item.Longitude
                       )
                     )
                   ) : (
-                    `${item.Altitude.toFixed(4).replace('.', ',')}, ${item.Longitude.toFixed(4).replace('.', ',')}`
+                    `${item.Latitude.toFixed(4).replace('.', ',')}, ${item.Longitude.toFixed(4).replace('.', ',')}`
                   )}
                 </ThemedText>
               </View>
@@ -712,8 +712,8 @@ export default function GymsScreen() {
                         LATITUDE
                       </ThemedText>
                       <TextInput
-                        value={altitude}
-                        onChangeText={setAltitude}
+                        value={latitude}
+                        onChangeText={setLatitude}
                         placeholder="e.g. 45.4642"
                         placeholderTextColor={theme.textSecondary}
                         keyboardType="decimal-pad"
@@ -833,8 +833,8 @@ export default function GymsScreen() {
                             LATITUDE
                           </ThemedText>
                           <TextInput
-                            value={editAltitude}
-                            onChangeText={setEditAltitude}
+                            value={editLatitude}
+                            onChangeText={setEditLatitude}
                             placeholder="Latitude"
                             placeholderTextColor={theme.textSecondary}
                             keyboardType="decimal-pad"

@@ -54,7 +54,7 @@ func (c *GymController) CreateGymLocation(ctx *gin.Context) {
 
 	loc := model.GymLocation{
 		Name:      m.Name,
-		Altitude:  m.Altitude,
+		Latitude:  m.Latitude,
 		Longitude: m.Longitude,
 		Rating:    m.Rating,
 	}
@@ -84,7 +84,7 @@ func (c *GymController) UpdateGymLocationByID(ctx *gin.Context) {
 	httpw.UpdateByID(ctx, func(id int64, info *dto_request.UpdateGymLocation) error {
 		loc := model.GymLocation{
 			Name:      info.Name,
-			Altitude:  info.Altitude,
+			Latitude:  info.Latitude,
 			Longitude: info.Longitude,
 			Rating:    info.Rating,
 		}

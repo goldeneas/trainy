@@ -205,7 +205,7 @@ export interface FullActualRoutine extends ActualRoutine {
 export interface GymLocation {
   ID: number;
   Name: string;
-  Altitude: number;
+  Latitude: number;
   Longitude: number;
   Rating: number | null;
 }
@@ -223,7 +223,7 @@ export interface GymLocationEquipment {
 
 export interface CreateGymLocationDto {
   name: string;
-  altitude: number;
+  latitude: number;
   longitude: number;
   rating?: number | null;
 }
