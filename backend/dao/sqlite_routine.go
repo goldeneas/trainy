@@ -25,8 +25,8 @@ func (d *SQLiteRoutineDAO) InsertRoutine(dbtx sqlw.DBTX, m *model.Routine) (int6
 }
 
 func (d *SQLiteRoutineDAO) InsertActualRoutine(dbtx sqlw.DBTX, m *model.ActualRoutine) (int64, error) {
-	res, err := dbtx.Exec("INSERT INTO ActualRoutine (start_timestamp, finish_timestamp, routine_id) VALUES (?, ?, ?)",
-		m.StartTimestamp, m.FinishTimestamp, m.RoutineID)
+	res, err := dbtx.Exec("INSERT INTO ActualRoutine (start_timestamp, finish_timestamp, routine_id, latitude, longitude) VALUES (?, ?, ?, ?, ?)",
+		m.StartTimestamp, m.FinishTimestamp, m.RoutineID, m.Latitude, m.Longitude)
 
 	if err != nil {
 		return 0, err

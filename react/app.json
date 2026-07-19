@@ -49,7 +49,10 @@
           "locationAlwaysPermission": "Allow $(PRODUCT_NAME) to access your location to show nearby gyms and calculate distances."
         }
       ],
-      "./plugins/withRemoveApsEnvironment"
+      "./plugins/withRemoveApsEnvironment",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

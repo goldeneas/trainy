@@ -120,6 +120,10 @@ export interface WeeklyWorkoutHourDistribution {
   hours: number;
 }
 
+export interface ExerciseWeightStats {
+  best_weight_oat_by_reps: number;
+}
+
 // Request payloads
 export interface CreateExerciseDto {
   name: string;
@@ -173,6 +177,8 @@ export interface RegisterActualRoutineDto {
   actual_set_infos: ActualSetInfoCreate[];
   start_timestamp: number;
   finish_timestamp: number;
+  latitude: number;
+  longitude: number;
 }
 
 // Custom structure for aggregated frontend display
@@ -359,6 +365,14 @@ export const api = {
   getStatsTotalWorkouts: () => request<number>('/v1/stats/workouts'),
   getStatsMuscleDistribution: () => request<MuscleGroupDistribution[]>('/v1/stats/distribution/monthly'),
   getStatsWeeklyHours: () => request<WeeklyWorkoutHourDistribution[]>('/v1/stats/weekly/hours'),
+  getExerciseWeightStats: (exerciseId: number, repCount: number) =>
+    request<ExerciseWeightStats>(`/v1/stats/exercise/weight/${exerciseId}`, {
+      method: 'GET',
+      body: JSON.stringify({
+        exercise_id: exerciseId,
+        rep_count: repCount,
+      }),
+    }),
 
   // Gym & Equipment Endpoints
   getGymLocations: () => request<GymLocation[]>('/v1/gym'),

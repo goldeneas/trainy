@@ -17,6 +17,8 @@ type RegisterActualRoutine struct {
 	StartTimestamp  int64           `json:"start_timestamp"`
 	FinishTimestamp int64           `json:"finish_timestamp"`
 	ActualSetInfos  []ActualSetInfo `json:"actual_set_infos"`
+	Latitude        float64         `json:"latitude"`
+	Longitude       float64         `json:"longitude"`
 }
 
 type ActualSetInfo struct {

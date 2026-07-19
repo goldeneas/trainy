@@ -12,6 +12,8 @@ type ActualRoutine struct {
 	StartTimestamp  int64
 	FinishTimestamp int64
 	RoutineID       int64
+	Latitude        float64
+	Longitude       float64
 }
 
 type ActualSetInfo struct {

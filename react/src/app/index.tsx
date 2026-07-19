@@ -26,6 +26,7 @@ import { useAudioPlayer } from 'expo-audio';
 import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle } from 'react-native-svg';
+import * as Location from 'expo-location';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -162,6 +163,43 @@ function Row({ style, widthArr, data }: RowProps) {
   );
 }
 
+async function getUserLocationSafe(): Promise<{ latitude: number; longitude: number } | null> {
+  try {
+    const isEnabled = await Location.hasServicesEnabledAsync();
+    if (!isEnabled) {
+      return null;
+    }
+    let { status } = await Location.getForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      const permissionRes = await Location.requestForegroundPermissionsAsync();
+      status = permissionRes.status;
+    }
+    if (status === 'granted') {
+      try {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        return {
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        };
+      } catch (err) {
+        console.warn('getCurrentPositionAsync failed, trying getLastKnownPositionAsync:', err);
+        const lastKnown = await Location.getLastKnownPositionAsync();
+        if (lastKnown) {
+          return {
+            latitude: lastKnown.coords.latitude,
+            longitude: lastKnown.coords.longitude,
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get user location safely:', error);
+  }
+  return null;
+}
+
 export default function WorkoutsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -214,12 +252,13 @@ export default function WorkoutsScreen() {
   ]);
   const [dropdownSearchQuery, setDropdownSearchQuery] = useState('');
   const [pendingDeletePlannedExerciseIds, setPendingDeletePlannedExerciseIds] = useState<number[]>([]);
+  const [startingWorkoutId, setStartingWorkoutId] = useState<number | null>(null);
 
   // Active Workout Log State
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
   const [workoutDuration, setWorkoutDuration] = useState(0);
   const [workoutLogs, setWorkoutLogs] = useState<{
-    [setInfoId: number]: { weight: string; reps: string; completed: boolean };
+    [setInfoId: number]: { weight: string; reps: string; completed: boolean; defaultWeight?: string; defaultReps?: string };
   }>({});
   const [restTimerSeconds, setRestTimerSeconds] = useState(45);
   const [restTimerActive, setRestTimerActive] = useState(false);
@@ -661,32 +700,67 @@ export default function WorkoutsScreen() {
   ), [plannedSets.length]);
 
   // Start workout flow
-  const handleStartWorkout = (routine: FullRoutine) => {
+  const handleStartWorkout = async (routine: FullRoutine) => {
     if (routine.plannedExercises.length === 0) {
       Alert.alert('Empty Routine', 'Add some exercises to this routine first before starting a workout!');
       return;
     }
 
-    setSelectedRoutineId(routine.ID);
+    setStartingWorkoutId(routine.ID);
 
-    // Populate initial empty logging structure
-    const initialLogs: typeof workoutLogs = {};
-    routine.plannedExercises.forEach((pe) => {
-      pe.sets.forEach((set) => {
-        initialLogs[set.ID] = {
-          weight: '0',
-          reps: set.Reps.toString(),
-          completed: false,
-        };
+    try {
+      // 1. Collect unique exercise ID and rep count combinations
+      const uniqueKeys = new Map<string, { exerciseId: number; reps: number }>();
+      routine.plannedExercises.forEach((pe) => {
+        pe.sets.forEach((set) => {
+          const key = `${pe.ExerciseID}_${set.Reps}`;
+          uniqueKeys.set(key, { exerciseId: pe.ExerciseID, reps: set.Reps });
+        });
       });
-    });
 
-    setWorkoutLogs(initialLogs);
-    setWorkoutStartTime(getNow());
-    setWorkoutDuration(0);
-    
-    setIsRoutineDetailVisible(false);
-    setIsWorkoutActive(true);
+      // 2. Fetch best weights in parallel
+      const bestWeightsMap: { [key: string]: number } = {};
+      const keysArray = Array.from(uniqueKeys.entries());
+      await Promise.all(
+        keysArray.map(async ([key, { exerciseId, reps }]) => {
+          try {
+            const stats = await api.getExerciseWeightStats(exerciseId, reps);
+            bestWeightsMap[key] = stats.best_weight_oat_by_reps;
+          } catch (err) {
+            console.warn(`Failed to fetch stats for exercise ${exerciseId} with ${reps} reps:`, err);
+            bestWeightsMap[key] = 0; // Fallback to 0
+          }
+        })
+      );
+
+      // 3. Initialize workout logs
+      setSelectedRoutineId(routine.ID);
+      const initialLogs: typeof workoutLogs = {};
+      routine.plannedExercises.forEach((pe) => {
+        pe.sets.forEach((set) => {
+          const key = `${pe.ExerciseID}_${set.Reps}`;
+          const bestWeight = bestWeightsMap[key] !== undefined ? bestWeightsMap[key] : 0;
+          initialLogs[set.ID] = {
+            weight: '',
+            reps: '',
+            completed: false,
+            defaultWeight: bestWeight.toString(),
+            defaultReps: set.Reps.toString(),
+          };
+        });
+      });
+
+      setWorkoutLogs(initialLogs);
+      setWorkoutStartTime(getNow());
+      setWorkoutDuration(0);
+
+      setIsRoutineDetailVisible(false);
+      setIsWorkoutActive(true);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to start workout');
+    } finally {
+      setStartingWorkoutId(null);
+    }
   };
 
   // Toggle check set and prompt rest timer
@@ -694,7 +768,7 @@ export default function WorkoutsScreen() {
     let shouldStartTimer = false;
     
     setWorkoutLogs((prev) => {
-      const current = prev[setID] || { weight: '0', reps: '10', completed: false };
+      const current = prev[setID] || { weight: '', reps: '', completed: false, defaultWeight: '0', defaultReps: '10' };
       const isNowCompleted = !current.completed;
       if (isNowCompleted && restTime && restTime > 0) {
         shouldStartTimer = true;
@@ -730,10 +804,12 @@ export default function WorkoutsScreen() {
         const log = workoutLogs[set.ID];
         if (log && log.completed) {
           completedSetsCount++;
+          const weightVal = log.weight.trim() !== '' ? log.weight : (log.defaultWeight || '0');
+          const repsVal = log.reps.trim() !== '' ? log.reps : (log.defaultReps || set.Reps.toString());
           actualSetInfos.push({
             planned_set_info_id: set.ID,
-            weight: parseFloat(log.weight) || 0,
-            actual_reps: parseInt(log.reps, 10) || set.Reps,
+            weight: parseFloat(weightVal) || 0,
+            actual_reps: parseInt(repsVal, 10) || set.Reps,
           });
         }
       });
@@ -745,11 +821,17 @@ export default function WorkoutsScreen() {
     }
 
     try {
+      const loc = await getUserLocationSafe();
+      const lat = loc ? loc.latitude : 0;
+      const lon = loc ? loc.longitude : 0;
+
       await api.registerActualRoutine({
         routine_id: selectedRoutine.ID,
         actual_set_infos: actualSetInfos,
         start_timestamp: Math.floor(workoutStartTime / 1000),
         finish_timestamp: Math.floor(Date.now() / 1000),
+        latitude: lat,
+        longitude: lon,
       });
 
       setIsWorkoutActive(false);
@@ -858,11 +940,16 @@ export default function WorkoutsScreen() {
                 onPress={() => {
                   handleStartWorkout(item);
                 }}
+                disabled={startingWorkoutId !== null}
                 style={({ pressed }) => [
                   styles.cardStartIconBtn,
                   pressed && styles.pressed,
                 ]}>
-                <SymbolView tintColor="#0A84FF" name="play.circle.fill" size={28} />
+                {startingWorkoutId === item.ID ? (
+                  <ActivityIndicator size="small" color="#0A84FF" style={{ padding: 2 }} />
+                ) : (
+                  <SymbolView tintColor="#0A84FF" name="play.circle.fill" size={28} />
+                )}
               </Pressable>
             </View>
           </View>
@@ -1751,148 +1838,151 @@ export default function WorkoutsScreen() {
             {/* Active Workout Scroll Area */}
             <ScrollView
               style={styles.workoutScrollView}
-              contentContainerStyle={{ paddingBottom: safeBottom + Spacing.six }}>
-              {selectedRoutine?.plannedExercises.map((pe) => (
-                <ThemedView
-                  key={pe.ID}
-                  type="backgroundElement"
-                  style={styles.workoutExerciseBlock}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                    <ThemedText type="default" style={{ fontWeight: 'bold', color: theme.text, fontSize: 18, flex: 1, marginRight: Spacing.two }}>
-                      {pe.exercise?.name}
-                    </ThemedText>
-                    <Pressable
-                      onPress={() => {
-                        const exerciseId = pe.exercise?.id || pe.ExerciseID;
-                        const fullExercise = exercises.find(e => e.id === exerciseId);
-                        if (fullExercise) {
-                          setSelectedExerciseForDetail(fullExercise);
-                          setIsExerciseDetailVisible(true);
-                        } else if (pe.exercise) {
-                          setSelectedExerciseForDetail(pe.exercise);
-                          setIsExerciseDetailVisible(true);
-                        }
-                      }}
-                      style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
-                      <SymbolView name="info.circle" tintColor="#0A84FF" size={20} />
-                    </Pressable>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.three }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
-                      <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
-                        {pe.RestTime ? `${pe.RestTime}s` : 'None'}
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: safeBottom + Spacing.six }}
+              keyboardShouldPersistTaps="handled">
+              <Pressable onPress={Keyboard.dismiss} style={{ flexGrow: 1 }}>
+                {selectedRoutine?.plannedExercises.map((pe) => (
+                  <ThemedView
+                    key={pe.ID}
+                    type="backgroundElement"
+                    style={styles.workoutExerciseBlock}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                      <ThemedText type="default" style={{ fontWeight: 'bold', color: theme.text, fontSize: 18, flex: 1, marginRight: Spacing.two }}>
+                        {pe.exercise?.name}
                       </ThemedText>
+                      <Pressable
+                        onPress={() => {
+                          const exerciseId = pe.exercise?.id || pe.ExerciseID;
+                          const fullExercise = exercises.find(e => e.id === exerciseId);
+                          if (fullExercise) {
+                            setSelectedExerciseForDetail(fullExercise);
+                            setIsExerciseDetailVisible(true);
+                          } else if (pe.exercise) {
+                            setSelectedExerciseForDetail(pe.exercise);
+                            setIsExerciseDetailVisible(true);
+                          }
+                        }}
+                        style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
+                        <SymbolView name="info.circle" tintColor="#0A84FF" size={20} />
+                      </Pressable>
                     </View>
-                    {pe.Notes ? (
-                      <ThemedText type="small" themeColor="textSecondary" style={{ fontStyle: 'italic', fontSize: 13 }}>
-                        {pe.Notes}
-                      </ThemedText>
-                    ) : null}
-                  </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.three }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
+                        <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
+                          {pe.RestTime ? `${pe.RestTime}s` : 'None'}
+                        </ThemedText>
+                      </View>
+                      {pe.Notes ? (
+                        <ThemedText type="small" themeColor="textSecondary" style={{ fontStyle: 'italic', fontSize: 13 }}>
+                          {pe.Notes}
+                        </ThemedText>
+                      ) : null}
+                    </View>
 
-                  {/* Table Headers */}
-                  {/* Table Headers */}
-                  <Row
-                    style={styles.tableHeaderRow}
-                    widthArr={[30, 'flex', 60, 60, 40]}
-                    data={[
-                      <ThemedText key="h-set" type="smallBold" themeColor="textSecondary" style={styles.thSet}>SET</ThemedText>,
-                      <ThemedText key="h-plan" type="smallBold" themeColor="textSecondary" style={styles.thPlanned}>PLANNED</ThemedText>,
-                      <ThemedText key="h-weight" type="smallBold" themeColor="textSecondary" style={styles.thWeight}>WEIGHT</ThemedText>,
-                      <ThemedText key="h-reps" type="smallBold" themeColor="textSecondary" style={styles.thReps}>
-                        {(repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps').toUpperCase()}
-                      </ThemedText>,
-                      <ThemedText key="h-log" type="smallBold" themeColor="textSecondary" style={styles.thLog}>LOG</ThemedText>
-                    ]}
-                  />
+                    {/* Table Headers */}
+                    {/* Table Headers */}
+                    <Row
+                      style={styles.tableHeaderRow}
+                      widthArr={[30, 'flex', 60, 60, 40]}
+                      data={[
+                        <ThemedText key="h-set" type="smallBold" themeColor="textSecondary" style={styles.thSet}>SET</ThemedText>,
+                        <ThemedText key="h-plan" type="smallBold" themeColor="textSecondary" style={styles.thPlanned}>PLANNED</ThemedText>,
+                        <ThemedText key="h-weight" type="smallBold" themeColor="textSecondary" style={styles.thWeight}>WEIGHT</ThemedText>,
+                        <ThemedText key="h-reps" type="smallBold" themeColor="textSecondary" style={styles.thReps}>
+                          {(repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps').toUpperCase()}
+                        </ThemedText>,
+                        <ThemedText key="h-log" type="smallBold" themeColor="textSecondary" style={styles.thLog}>LOG</ThemedText>
+                      ]}
+                    />
 
-                  {/* Set Log Rows */}
-                  <Table>
-                    {pe.sets.map((set) => {
-                      const log = workoutLogs[set.ID] || { weight: '0', reps: '10', completed: false };
-                      return (
-                        <Row
-                          key={set.ID}
-                          style={[
-                            styles.tableBodyRow,
-                            log.completed && { backgroundColor: 'rgba(48, 209, 88, 0.15)' },
-                          ]}
-                          widthArr={[30, 'flex', 60, 60, 40]}
-                          data={[
-                            <ThemedText key="b-set" type="smallBold" style={styles.tdSet}>{set.Ord}</ThemedText>,
-                            <ThemedText key="b-plan" type="small" themeColor="textSecondary" style={styles.tdPlanned}>
-                              {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || ''} {set.Notes ? `(${set.Notes})` : ''}
-                            </ThemedText>,
-                            <TextInput
-                              key="b-weight"
-                              placeholder="0"
-                              keyboardType="numeric"
-                              placeholderTextColor={theme.textSecondary}
-                              value={log.weight}
-                              onChangeText={(val) => {
-                                setWorkoutLogs((prev) => {
-                                  const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
-                                  return {
-                                    ...prev,
-                                    [set.ID]: { ...current, weight: val },
-                                  };
-                                });
-                              }}
-                              style={[
-                                styles.workoutCellInput,
-                                {
-                                  width: 54,
-                                  marginHorizontal: 0,
-                                  color: theme.text,
-                                  backgroundColor: theme.background,
-                                  borderColor: theme.backgroundSelected,
-                                },
-                              ]}
-                            />,
-                            <TextInput
-                              key="b-reps"
-                              placeholder={repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps'}
-                              keyboardType="numeric"
-                              placeholderTextColor={theme.textSecondary}
-                              value={log.reps}
-                              onChangeText={(val) => {
-                                setWorkoutLogs((prev) => {
-                                  const current = prev[set.ID] || { weight: '0', reps: set.Reps.toString(), completed: false };
-                                  return {
-                                    ...prev,
-                                    [set.ID]: { ...current, reps: val },
-                                  };
-                                });
-                              }}
-                              style={[
-                                styles.workoutCellInput,
-                                {
-                                  width: 54,
-                                  marginHorizontal: 0,
-                                  color: theme.text,
-                                  backgroundColor: theme.background,
-                                  borderColor: theme.backgroundSelected,
-                                },
-                              ]}
-                            />,
-                            <Pressable
-                              key="b-log"
-                              onPress={() => handleToggleSetComplete(set.ID, pe.RestTime)}
-                              style={styles.checkboxBtn}>
-                              <SymbolView
-                                tintColor={log.completed ? '#30D158' : theme.textSecondary}
-                                name={log.completed ? 'checkmark.circle.fill' : 'circle'}
-                                size={22}
-                              />
-                            </Pressable>
-                          ]}
-                        />
-                      );
-                    })}
-                  </Table>
-                </ThemedView>
-              ))}
+                    {/* Set Log Rows */}
+                    <Table>
+                      {pe.sets.map((set) => {
+                        const log = workoutLogs[set.ID] || { weight: '', reps: '', completed: false, defaultWeight: '0', defaultReps: set.Reps.toString() };
+                        return (
+                          <Row
+                            key={set.ID}
+                            style={[
+                              styles.tableBodyRow,
+                              log.completed && { backgroundColor: 'rgba(48, 209, 88, 0.15)' },
+                            ]}
+                            widthArr={[30, 'flex', 60, 60, 40]}
+                            data={[
+                              <ThemedText key="b-set" type="smallBold" style={styles.tdSet}>{set.Ord}</ThemedText>,
+                              <ThemedText key="b-plan" type="small" themeColor="textSecondary" style={styles.tdPlanned}>
+                                {set.Reps} {repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || ''} {set.Notes ? `(${set.Notes})` : ''}
+                              </ThemedText>,
+                              <TextInput
+                                key="b-weight"
+                                placeholder={log.defaultWeight || '0'}
+                                keyboardType="numeric"
+                                placeholderTextColor={theme.textSecondary}
+                                value={log.weight}
+                                onChangeText={(val) => {
+                                  setWorkoutLogs((prev) => {
+                                    const current = prev[set.ID] || { weight: '', reps: '', completed: false, defaultWeight: '0', defaultReps: set.Reps.toString() };
+                                    return {
+                                      ...prev,
+                                      [set.ID]: { ...current, weight: val },
+                                    };
+                                  });
+                                }}
+                                style={[
+                                  styles.workoutCellInput,
+                                  {
+                                    width: 54,
+                                    marginHorizontal: 0,
+                                    color: theme.text,
+                                    backgroundColor: theme.background,
+                                    borderColor: theme.backgroundSelected,
+                                  },
+                                ]}
+                              />,
+                              <TextInput
+                                key="b-reps"
+                                placeholder={log.defaultReps || set.Reps.toString()}
+                                keyboardType="numeric"
+                                placeholderTextColor={theme.textSecondary}
+                                value={log.reps}
+                                onChangeText={(val) => {
+                                  setWorkoutLogs((prev) => {
+                                    const current = prev[set.ID] || { weight: '', reps: '', completed: false, defaultWeight: '0', defaultReps: set.Reps.toString() };
+                                    return {
+                                      ...prev,
+                                      [set.ID]: { ...current, reps: val },
+                                    };
+                                  });
+                                }}
+                                style={[
+                                  styles.workoutCellInput,
+                                  {
+                                    width: 54,
+                                    marginHorizontal: 0,
+                                    color: theme.text,
+                                    backgroundColor: theme.background,
+                                    borderColor: theme.backgroundSelected,
+                                  },
+                                ]}
+                              />,
+                              <Pressable
+                                key="b-log"
+                                onPress={() => handleToggleSetComplete(set.ID, pe.RestTime)}
+                                style={styles.checkboxBtn}>
+                                <SymbolView
+                                  tintColor={log.completed ? '#30D158' : theme.textSecondary}
+                                  name={log.completed ? 'checkmark.circle.fill' : 'circle'}
+                                  size={22}
+                                />
+                              </Pressable>
+                            ]}
+                          />
+                        );
+                      })}
+                    </Table>
+                  </ThemedView>
+                ))}
+              </Pressable>
             </ScrollView>
 
             {/* Floating Rest Timer Pill */}

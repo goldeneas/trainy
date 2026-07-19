@@ -138,6 +138,8 @@ CREATE TABLE IF NOT EXISTS ActualRoutine (
     start_timestamp INTEGER NOT NULL,
     finish_timestamp INTEGER NOT NULL,
     routine_id INTEGER NOT NULL,
+    latitude REAL,
+    longitude REAL,
 
     CHECK (finish_timestamp >= start_timestamp),
     FOREIGN KEY (routine_id) REFERENCES Routine(id)

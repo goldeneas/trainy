@@ -86,6 +86,8 @@ func (c *RoutineController) RegisterActualRoutine(ctx *gin.Context) {
 		RoutineID:       request.RoutineID,
 		StartTimestamp:  request.StartTimestamp,
 		FinishTimestamp: request.FinishTimestamp,
+		Latitude:        request.Latitude,
+		Longitude:       request.Longitude,
 	}
 
 	infos := make([]model.ActualSetInfo, 0, len(request.ActualSetInfos))
