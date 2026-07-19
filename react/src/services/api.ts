@@ -367,7 +367,7 @@ export const api = {
   getStatsWeeklyHours: () => request<WeeklyWorkoutHourDistribution[]>('/v1/stats/weekly/hours'),
   getExerciseWeightStats: (exerciseId: number, repCount: number) =>
     request<ExerciseWeightStats>(`/v1/stats/exercise/weight/${exerciseId}`, {
-      method: 'GET',
+      method: 'POST',
       body: JSON.stringify({
         exercise_id: exerciseId,
         rep_count: repCount,
