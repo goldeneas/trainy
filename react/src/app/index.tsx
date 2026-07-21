@@ -323,6 +323,7 @@ export default function WorkoutsScreen() {
   const [dropdownSearchQuery, setDropdownSearchQuery] = useState('');
   const [pendingDeletePlannedExerciseIds, setPendingDeletePlannedExerciseIds] = useState<number[]>([]);
   const [startingWorkoutId, setStartingWorkoutId] = useState<number | null>(null);
+  const [bestWeightsMap, setBestWeightsMap] = useState<{ [key: string]: number }>({});
 
   // Active Workout Log State
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
@@ -524,6 +525,45 @@ export default function WorkoutsScreen() {
       } catch {}
     }
   }, [restTimerActive]);
+
+  // Fetch best weights for exercises in selected routine
+  useEffect(() => {
+    if (!isRoutineDetailVisible || !selectedRoutine || !selectedRoutine.plannedExercises) return;
+
+    let isMounted = true;
+    const fetchBestWeights = async () => {
+      const uniqueKeys = new Map<string, { exerciseId: number; reps: number }>();
+      selectedRoutine.plannedExercises.forEach((pe) => {
+        pe.sets?.forEach((set) => {
+          const key = `${pe.ExerciseID}_${set.Reps}`;
+          uniqueKeys.set(key, { exerciseId: pe.ExerciseID, reps: set.Reps });
+        });
+      });
+
+      const newMap: { [key: string]: number } = {};
+      const keysArray = Array.from(uniqueKeys.entries());
+      await Promise.all(
+        keysArray.map(async ([key, { exerciseId, reps }]) => {
+          try {
+            const stats = await api.getExerciseWeightStats(exerciseId, reps);
+            newMap[key] = stats.best_weight_oat_by_reps;
+          } catch (err) {
+            newMap[key] = 0;
+          }
+        })
+      );
+
+      if (isMounted) {
+        setBestWeightsMap(newMap);
+      }
+    };
+
+    fetchBestWeights();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isRoutineDetailVisible, selectedRoutine]);
 
   // Handle background / phone lock timer drift and schedule background notifications
   useEffect(() => {
@@ -1480,19 +1520,41 @@ export default function WorkoutsScreen() {
                                       </View>
                                       
                                       {pe.sets && pe.sets.length > 0 && (
-                                        <View style={{ flexDirection: 'column', marginTop: 3 }}>
-                                          {pe.sets.map((s, sIdx) => {
-                                            const unitText = s.Reps === 1 ? unitSingular : unitPlural;
-                                            return (
-                                              <ThemedText
-                                                key={sIdx}
-                                                type="small"
-                                                themeColor="textSecondary"
-                                                style={{ fontSize: 14, lineHeight: 18, fontWeight: '500', paddingLeft: 2 }}>
-                                                {`1 x ${s.Reps} ${unitText}`}
-                                              </ThemedText>
-                                            );
-                                          })}
+                                        <View style={{ marginTop: Spacing.four }}>
+                                          <Row
+                                            style={styles.tableHeaderRow}
+                                            widthArr={[30, 'flex', 70]}
+                                            data={[
+                                              <ThemedText key="h-set" type="smallBold" themeColor="textSecondary" style={styles.thSet}>SET</ThemedText>,
+                                              <ThemedText key="h-reps" type="smallBold" themeColor="textSecondary" style={styles.thPlanned}>REPS</ThemedText>,
+                                              <ThemedText key="h-weight" type="smallBold" themeColor="textSecondary" style={styles.thWeight}>WEIGHT</ThemedText>,
+                                            ]}
+                                          />
+                                          <Table>
+                                            {pe.sets.map((s, sIdx) => {
+                                              const unitText = s.Reps === 1 ? unitSingular : unitPlural;
+                                              const key = `${pe.ExerciseID}_${s.Reps}`;
+                                              const bestWeight = bestWeightsMap[key] !== undefined && bestWeightsMap[key] !== null ? bestWeightsMap[key] : 0;
+                                              const weightDisplay = bestWeight > 0 ? `${bestWeight} kg` : '-';
+
+                                              return (
+                                                <Row
+                                                  key={s.ID || sIdx}
+                                                  style={styles.tableBodyRow}
+                                                  widthArr={[30, 'flex', 70]}
+                                                  data={[
+                                                    <ThemedText key="b-set" type="smallBold" style={styles.tdSet}>{s.Ord || (sIdx + 1)}</ThemedText>,
+                                                    <ThemedText key="b-reps" type="small" themeColor="textSecondary" style={styles.tdPlanned}>
+                                                      {s.Reps} {unitText}
+                                                    </ThemedText>,
+                                                    <ThemedText key="b-weight" type="small" themeColor="textSecondary" style={styles.thWeight}>
+                                                      {weightDisplay}
+                                                    </ThemedText>,
+                                                  ]}
+                                                />
+                                              );
+                                            })}
+                                          </Table>
                                         </View>
                                       )}
 
