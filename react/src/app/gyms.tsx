@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, GymLocation, GymEquipment, GymLocationEquipment } from '@/services/api';
@@ -643,177 +644,200 @@ export default function GymsScreen() {
 
         {/* Add Gym Modal */}
         <Modal
-          animationType="none"
-          transparent={true}
+          animationType="slide"
+          transparent={false}
           visible={isAddModalVisible}
-          onRequestClose={addSwipe.close}>
-          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={addSwipe.close} />
-            <Animated.View
-              style={[
-                styles.modalContent,
-                {
-                  height: '70%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: addSwipe.translateY }],
-                },
-              ]}>
-                <View {...addSwipe.panHandlers}>
-                  <View style={styles.dragHandleContainer}>
-                    <View style={styles.dragHandle} />
-                  </View>
-                  <View style={styles.modalHeader}>
-                    <Pressable
-                      onPress={addSwipe.close}
-                      style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                      <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                    </Pressable>
-                    <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
-                      New Gym
-                    </ThemedText>
-                    <Pressable
-                      onPress={handleAddGymLocation}
-                      style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold', textAlign: 'right' }}>
-                        Save
-                      </ThemedText>
-                    </Pressable>
-                  </View>
+          onRequestClose={() => setIsAddModalVisible(false)}>
+          <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+            <View style={styles.modalHeader}>
+              <Pressable
+                onPress={() => setIsAddModalVisible(false)}
+                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+              </Pressable>
+              <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
+                New Gym
+              </ThemedText>
+              <Pressable
+                onPress={handleAddGymLocation}
+                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold', textAlign: 'right' }}>
+                  Save
+                </ThemedText>
+              </Pressable>
+            </View>
+
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}>
+              <ScrollView style={styles.modalScrollBody} contentContainerStyle={[styles.modalScrollContent, { paddingBottom: safeBottom + 120 }]}>
+              <View style={styles.inputGroup}>
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
+                  GYM NAME
+                </ThemedText>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="e.g. Central Calisthenics Park"
+                  placeholderTextColor={theme.textSecondary}
+                  style={[
+                    styles.textInput,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      color: theme.text,
+                      borderColor: theme.backgroundSelected,
+                    },
+                  ]}
+                />
+              </View>
+
+              {/* Coordinates Inputs */}
+              <View style={styles.coordRowInputs}>
+                <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two }]}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
+                    LATITUDE
+                  </ThemedText>
+                  <TextInput
+                    value={latitude}
+                    onChangeText={setLatitude}
+                    keyboardType="numeric"
+                    placeholder="e.g. 45.4642"
+                    placeholderTextColor={theme.textSecondary}
+                    style={[
+                      styles.textInput,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
                 </View>
 
-                <KeyboardAvoidingView
-                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                  style={{ flex: 1 }}>
-                  <ScrollView style={styles.modalScrollBody} contentContainerStyle={[styles.modalScrollContent, { paddingBottom: safeBottom + 120 }]}>
-                  <View style={styles.inputGroup}>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                      GYM NAME
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
+                    LONGITUDE
+                  </ThemedText>
+                  <TextInput
+                    value={longitude}
+                    onChangeText={setLongitude}
+                    keyboardType="numeric"
+                    placeholder="e.g. 9.1900"
+                    placeholderTextColor={theme.textSecondary}
+                    style={[
+                      styles.textInput,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+
+              <Pressable
+                onPress={async () => {
+                  setLocating(true);
+                  try {
+                    const userLoc = await getUserLocationSafe();
+                    if (userLoc) {
+                      setLatitude(userLoc.latitude.toString().replace('.', ','));
+                      setLongitude(userLoc.longitude.toString().replace('.', ','));
+                    }
+                  } finally {
+                    setLocating(false);
+                  }
+                }}
+                disabled={locating}
+                style={({ pressed }) => [
+                  styles.autodetectButton,
+                  { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected },
+                  pressed && styles.pressed,
+                ]}>
+                {locating ? (
+                  <ActivityIndicator size="small" color="#0A84FF" />
+                ) : (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <SymbolView name="location.fill" tintColor="#0A84FF" size={14} style={{ marginRight: 6 }} />
+                    <ThemedText style={{ color: '#0A84FF', fontWeight: 'bold' }}>
+                      Autodetect Current Location
                     </ThemedText>
-                    <TextInput
-                      value={name}
-                      onChangeText={setName}
-                      placeholder="e.g. Central Calisthenics Park"
-                      placeholderTextColor={theme.textSecondary}
-                      style={[
-                        styles.textInput,
-                        {
-                          backgroundColor: theme.backgroundElement,
-                          color: theme.text,
-                          borderColor: theme.backgroundSelected,
-                        },
-                      ]}
-                    />
                   </View>
-
-                  <View style={styles.coordRowInputs}>
-                    <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two }]}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                        LATITUDE
-                      </ThemedText>
-                      <TextInput
-                        value={latitude}
-                        onChangeText={setLatitude}
-                        placeholder="e.g. 45.4642"
-                        placeholderTextColor={theme.textSecondary}
-                        keyboardType="decimal-pad"
-                        style={[
-                          styles.textInput,
-                          {
-                            backgroundColor: theme.backgroundElement,
-                            color: theme.text,
-                            borderColor: theme.backgroundSelected,
-                          },
-                        ]}
-                      />
-                    </View>
-
-                    <View style={[styles.inputGroup, { flex: 1 }]}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                        Longitude
-                      </ThemedText>
-                      <TextInput
-                        value={longitude}
-                        onChangeText={setLongitude}
-                        placeholder="e.g. 9.1900"
-                        placeholderTextColor={theme.textSecondary}
-                        keyboardType="decimal-pad"
-                        style={[
-                          styles.textInput,
-                          {
-                            backgroundColor: theme.backgroundElement,
-                            color: theme.text,
-                            borderColor: theme.backgroundSelected,
-                          },
-                        ]}
-                      />
-                    </View>
-                  </View>
-
-                 </ScrollView>
-                </KeyboardAvoidingView>
-              </Animated.View>
-          </View>
+                )}
+              </Pressable>
+             </ScrollView>
+            </KeyboardAvoidingView>
+          </ThemedView>
         </Modal>
 
         {/* Define Equipment Modal */}
         <Modal
-          animationType="none"
-          transparent={true}
+          animationType="slide"
+          transparent={false}
           visible={isDefineEquipModalVisible}
-          onRequestClose={defineEquipSwipe.close}>
-          <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={defineEquipSwipe.close} />
-            <Animated.View
-              style={[
-                styles.modalContent,
-                {
-                  height: '85%',
-                  backgroundColor: theme.background,
-                  transform: [{ translateY: defineEquipSwipe.translateY }],
-                },
-              ]}>
-                <View {...defineEquipSwipe.panHandlers}>
-                  <View style={styles.dragHandleContainer}>
-                    <View style={styles.dragHandle} />
-                  </View>
-                  <View style={styles.modalHeader}>
-                    <Pressable
-                      onPress={defineEquipSwipe.close}
-                      style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                      <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                    </Pressable>
-                    <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
-                      Configure Gym
-                    </ThemedText>
-                    <Pressable
-                      onPress={handleSaveConfigureGym}
-                      style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold', textAlign: 'right' }}>
-                        Save
-                      </ThemedText>
-                    </Pressable>
-                  </View>
-                </View>
+          onRequestClose={() => setIsDefineEquipModalVisible(false)}>
+          <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+            <View style={styles.modalHeader}>
+              <Pressable
+                onPress={() => setIsDefineEquipModalVisible(false)}
+                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+              </Pressable>
+              <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
+                Configure Gym
+              </ThemedText>
+              <Pressable
+                onPress={handleSaveConfigureGym}
+                style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold', textAlign: 'right' }}>
+                  Save
+                </ThemedText>
+              </Pressable>
+            </View>
 
-                <KeyboardAvoidingView
-                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                  style={{ flex: 1 }}>
-                  <FlatList
-                  data={equipmentList}
-                  keyExtractor={(eq) => eq.ID.toString()}
-                  contentContainerStyle={{ padding: Spacing.four, paddingBottom: safeBottom + 120 }}
-                  ListHeaderComponent={
-                    <View style={{ marginBottom: Spacing.one }}>
-                      {/* Gym Name */}
-                      <View style={styles.inputGroup}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}>
+              <FlatList
+                data={equipmentList}
+                keyExtractor={(eq) => eq.ID.toString()}
+                contentContainerStyle={{ padding: Spacing.four, paddingBottom: safeBottom + 120 }}
+                ListHeaderComponent={
+                  <View style={{ marginBottom: Spacing.one }}>
+                    {/* Gym Name */}
+                    <View style={styles.inputGroup}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
+                        GYM NAME
+                      </ThemedText>
+                      <TextInput
+                        value={editName}
+                        onChangeText={setEditName}
+                        placeholder="Name"
+                        placeholderTextColor={theme.textSecondary}
+                        style={[
+                          styles.textInput,
+                          {
+                            backgroundColor: theme.backgroundElement,
+                            color: theme.text,
+                            borderColor: theme.backgroundSelected,
+                          },
+                        ]}
+                      />
+                    </View>
+
+                    {/* Coordinates */}
+                    <View style={styles.coordRowInputs}>
+                      <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two, marginBottom: Spacing.two }]}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                          GYM NAME
+                          LATITUDE
                         </ThemedText>
                         <TextInput
-                          value={editName}
-                          onChangeText={setEditName}
-                          placeholder="Name"
+                          value={editLatitude}
+                          onChangeText={setEditLatitude}
+                          placeholder="Latitude"
                           placeholderTextColor={theme.textSecondary}
+                          keyboardType="decimal-pad"
                           style={[
                             styles.textInput,
                             {
@@ -825,109 +849,85 @@ export default function GymsScreen() {
                         />
                       </View>
 
-                      {/* Coordinates */}
-                      <View style={styles.coordRowInputs}>
-                        <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.two, marginBottom: Spacing.two }]}>
-                          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                            LATITUDE
-                          </ThemedText>
-                          <TextInput
-                            value={editLatitude}
-                            onChangeText={setEditLatitude}
-                            placeholder="Latitude"
-                            placeholderTextColor={theme.textSecondary}
-                            keyboardType="decimal-pad"
-                            style={[
-                              styles.textInput,
-                              {
-                                backgroundColor: theme.backgroundElement,
-                                color: theme.text,
-                                borderColor: theme.backgroundSelected,
-                              },
-                            ]}
-                          />
-                        </View>
-
-                        <View style={[styles.inputGroup, { flex: 1, marginBottom: Spacing.two }]}>
-                          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
-                            LONGITUDE
-                          </ThemedText>
-                          <TextInput
-                            value={editLongitude}
-                            onChangeText={setEditLongitude}
-                            placeholder="Longitude"
-                            placeholderTextColor={theme.textSecondary}
-                            keyboardType="decimal-pad"
-                            style={[
-                              styles.textInput,
-                              {
-                                backgroundColor: theme.backgroundElement,
-                                color: theme.text,
-                                borderColor: theme.backgroundSelected,
-                              },
-                            ]}
-                          />
-                        </View>
-                      </View>
-
-                      {/* Autodetect Button */}
-                      <Pressable
-                        onPress={handleAutodetectEditLocation}
-                        disabled={locating}
-                        style={({ pressed }) => [
-                          styles.autodetectButton,
-                          {
-                            backgroundColor: theme.backgroundElement,
-                            borderColor: theme.backgroundSelected,
-                          },
-                          pressed && styles.pressed,
-                        ]}>
-                        {locating ? (
-                          <ActivityIndicator size="small" color="#0A84FF" />
-                        ) : (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                            <SymbolView tintColor="#0A84FF" name="location.fill" size={14} style={{ marginRight: 6 }} />
-                            <ThemedText style={{ color: '#0A84FF', fontWeight: '600', fontSize: 14 }}>
-                              Autodetect Current Location
-                            </ThemedText>
-                          </View>
-                        )}
-                      </Pressable>
-
-                      {/* Section Divider / Label */}
-                      <View>
-                        <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.inputLabel, { marginBottom: 0 }]}>
-                          EQUIPMENT LIST
+                      <View style={[styles.inputGroup, { flex: 1, marginBottom: Spacing.two }]}>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.inputLabel}>
+                          LONGITUDE
                         </ThemedText>
+                        <TextInput
+                          value={editLongitude}
+                          onChangeText={setEditLongitude}
+                          placeholder="Longitude"
+                          placeholderTextColor={theme.textSecondary}
+                          keyboardType="decimal-pad"
+                          style={[
+                            styles.textInput,
+                            {
+                              backgroundColor: theme.backgroundElement,
+                              color: theme.text,
+                              borderColor: theme.backgroundSelected,
+                            },
+                          ]}
+                        />
                       </View>
                     </View>
-                  }
-                  renderItem={({ item: eq }) => {
-                    const isChecked = selectedGym && locationEquipments.some(
-                      (le) => le.GymLocationID === selectedGym.ID && le.GymEquipmentID === eq.ID
-                    );
 
-                    return (
-                      <Pressable
-                        onPress={() => handleToggleEquipment(eq.ID)}
-                        style={({ pressed }) => [
-                          styles.equipmentRow,
-                          { backgroundColor: theme.backgroundElement },
-                          pressed && styles.pressed,
-                        ]}>
-                        <ThemedText style={{ fontSize: 16 }}>{eq.Name}</ThemedText>
-                        <SymbolView
-                          tintColor={isChecked ? '#0A84FF' : '#8E8E93'}
-                          name={isChecked ? 'checkmark.circle.fill' : 'circle'}
-                          size={24}
-                        />
-                      </Pressable>
-                    );
-                  }}
-                />
-                </KeyboardAvoidingView>
-              </Animated.View>
-          </View>
+                    {/* Autodetect Button */}
+                    <Pressable
+                      onPress={handleAutodetectEditLocation}
+                      disabled={locating}
+                      style={({ pressed }) => [
+                        styles.autodetectButton,
+                        {
+                          backgroundColor: theme.backgroundElement,
+                          borderColor: theme.backgroundSelected,
+                        },
+                        pressed && styles.pressed,
+                      ]}>
+                      {locating ? (
+                        <ActivityIndicator size="small" color="#0A84FF" />
+                      ) : (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                          <SymbolView tintColor="#0A84FF" name="location.fill" size={14} style={{ marginRight: 6 }} />
+                          <ThemedText style={{ color: '#0A84FF', fontWeight: '600', fontSize: 14 }}>
+                            Autodetect Current Location
+                          </ThemedText>
+                        </View>
+                      )}
+                    </Pressable>
+
+                    {/* Section Divider / Label */}
+                    <View>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.inputLabel, { marginBottom: 0 }]}>
+                        EQUIPMENT LIST
+                      </ThemedText>
+                    </View>
+                  </View>
+                }
+                renderItem={({ item: eq }) => {
+                  const isChecked = selectedGym && locationEquipments.some(
+                    (le) => le.GymLocationID === selectedGym.ID && le.GymEquipmentID === eq.ID
+                  );
+
+                  return (
+                    <Pressable
+                      onPress={() => handleToggleEquipment(eq.ID)}
+                      style={({ pressed }) => [
+                        styles.equipmentRow,
+                        { backgroundColor: theme.backgroundElement },
+                        pressed && styles.pressed,
+                      ]}>
+                      <ThemedText style={{ fontSize: 16 }}>{eq.Name}</ThemedText>
+                      <SymbolView
+                        tintColor={isChecked ? '#0A84FF' : '#8E8E93'}
+                        name={isChecked ? 'checkmark.circle.fill' : 'circle'}
+                        size={24}
+                      />
+                    </Pressable>
+                  );
+                }}
+              />
+            </KeyboardAvoidingView>
+          </ThemedView>
         </Modal>
 
         {/* Gym Details Modal */}

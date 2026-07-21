@@ -1267,60 +1267,132 @@ export default function ExercisesScreen() {
 
       {/* Add Progression Modal */}
       <Modal
-        animationType="none"
-        transparent={true}
+        animationType="slide"
+        transparent={false}
         visible={isAddProgModalVisible}
-        onRequestClose={addProgSwipe.close}>
-        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={addProgSwipe.close} />
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                height: '40%',
-                backgroundColor: theme.background,
-                transform: [{ translateY: addProgSwipe.translateY }]
-              }
-            ]}>
-            <View {...addProgSwipe.panHandlers}>
-              <View style={styles.dragHandleContainer}>
-                <View style={styles.dragHandle} />
-              </View>
-              <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={addProgSwipe.close}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                </Pressable>
-                <ThemedText type="smallBold" style={styles.modalTitle}>
-                  New Progression
-                </ThemedText>
-                <Pressable
-                  onPress={handleCreateProgression}
-                  disabled={isSubmitting}
-                  style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                  {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#0A84FF" />
-                  ) : (
-                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                  )}
-                </Pressable>
-              </View>
-            </View>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ flex: 1 }}>
-              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
+        onRequestClose={() => setIsAddProgModalVisible(false)}>
+        <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+          <View style={styles.modalHeader}>
+            <Pressable
+              onPress={() => setIsAddProgModalVisible(false)}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+            </Pressable>
+            <ThemedText type="smallBold" style={styles.modalTitle}>
+              New Progression
+            </ThemedText>
+            <Pressable
+              onPress={handleCreateProgression}
+              disabled={isSubmitting}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#0A84FF" />
+              ) : (
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+              )}
+            </Pressable>
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}>
+            <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+              <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    NAME *
+                  </ThemedText>
+                  <TextInput
+                    placeholder="e.g. Pull-up Progression"
+                    placeholderTextColor={theme.textSecondary}
+                    value={newProgName}
+                    onChangeText={setNewProgName}
+                    style={[
+                      styles.inputField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    NOTES
+                  </ThemedText>
+                  <TextInput
+                    placeholder="Short description..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={newProgNotes}
+                    onChangeText={setNewProgNotes}
+                    style={[
+                      styles.inputField,
+                      styles.textAreaField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                    multiline
+                    numberOfLines={2}
+                  />
+                </View>
+              </ScrollView>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </ThemedView>
+      </Modal>
+
+      {/* Edit Progression Modal */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={isEditProgModalVisible}
+        onRequestClose={() => setIsEditProgModalVisible(false)}>
+        <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+          <View style={styles.modalHeader}>
+            <Pressable
+              onPress={() => setIsEditProgModalVisible(false)}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+            </Pressable>
+            <ThemedText type="smallBold" style={styles.modalTitle}>
+              Edit Progression
+            </ThemedText>
+            <Pressable
+              onPress={handleSaveProgressionEdits}
+              disabled={isSubmitting}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#0A84FF" />
+              ) : (
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+              )}
+            </Pressable>
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}>
+            <ScrollView
+              style={styles.modalFormBody}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              onScrollBeginDrag={() => setIsProgSearchFocused(false)}
+              contentContainerStyle={{ paddingBottom: insets.bottom + 140 }}>
+              <Pressable onPress={() => { Keyboard.dismiss(); setIsProgSearchFocused(false); }}>
+                <View>
                   <View style={styles.formGroup}>
                     <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                       NAME *
                     </ThemedText>
                     <TextInput
-                      placeholder="e.g. Pull-up Progression"
+                      placeholder="Progression Name"
                       placeholderTextColor={theme.textSecondary}
-                      value={newProgName}
-                      onChangeText={setNewProgName}
+                      value={editingProgName}
+                      onChangeText={setEditingProgName}
                       style={[
                         styles.inputField,
                         {
@@ -1338,8 +1410,8 @@ export default function ExercisesScreen() {
                     <TextInput
                       placeholder="Short description..."
                       placeholderTextColor={theme.textSecondary}
-                      value={newProgNotes}
-                      onChangeText={setNewProgNotes}
+                      value={editingProgNotes}
+                      onChangeText={setEditingProgNotes}
                       style={[
                         styles.inputField,
                         styles.textAreaField,
@@ -1353,271 +1425,167 @@ export default function ExercisesScreen() {
                       numberOfLines={2}
                     />
                   </View>
-                </ScrollView>
-              </Pressable>
-            </KeyboardAvoidingView>
-          </Animated.View>
-        </View>
-      </Modal>
 
-      {/* Edit Progression Modal */}
-      <Modal
-        animationType="none"
-        transparent={true}
-        visible={isEditProgModalVisible}
-        onRequestClose={editProgSwipe.close}>
-        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={editProgSwipe.close} />
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                height: '80%',
-                backgroundColor: theme.background,
-                transform: [{ translateY: editProgSwipe.translateY }]
-              }
-            ]}>
-              <View {...editProgSwipe.panHandlers}>
-                <View style={styles.dragHandleContainer}>
-                  <View style={styles.dragHandle} />
-                </View>
-                <View style={styles.modalHeader}>
-                  <Pressable
-                    onPress={editProgSwipe.close}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                  </Pressable>
-                  <ThemedText type="smallBold" style={styles.modalTitle}>
-                    Edit Progression
-                  </ThemedText>
-                  <Pressable
-                    onPress={handleSaveProgressionEdits}
-                    disabled={isSubmitting}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    {isSubmitting ? (
-                      <ActivityIndicator size="small" color="#0A84FF" />
-                    ) : (
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                    )}
-                  </Pressable>
-                </View>
-              </View>
+                  {/* Search and Add Exercise Bar */}
+                  <View style={[styles.formGroup, { zIndex: 10 }]}>
+                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                      SELECT EXERCISE *
+                    </ThemedText>
+                    <View style={styles.dropdownContainer}>
+                      <View style={[
+                        styles.dropdownSearchContainer,
+                        {
+                          backgroundColor: theme.backgroundElement,
+                          borderColor: theme.backgroundSelected,
+                          borderWidth: 1,
+                          borderRadius: 8,
+                        }
+                      ]}>
+                        <SymbolView
+                          name="magnifyingglass"
+                          tintColor={theme.textSecondary}
+                          size={14}
+                          style={styles.dropdownSearchIcon}
+                        />
+                        <TextInput
+                          placeholder="Search exercises to add..."
+                          placeholderTextColor={theme.textSecondary}
+                          value={progSearchQuery}
+                          onChangeText={setProgSearchQuery}
+                          onFocus={() => setIsProgSearchFocused(true)}
+                          style={[styles.dropdownSearchInput, { color: theme.text }]}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                        {progSearchQuery ? (
+                          <Pressable 
+                            onPress={() => setProgSearchQuery('')} 
+                            style={styles.dropdownClearSearch}>
+                            <SymbolView
+                              name="xmark.circle.fill"
+                              tintColor={theme.textSecondary}
+                              size={14}
+                            />
+                          </Pressable>
+                        ) : null}
+                      </View>
 
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}>
-                <ScrollView 
-                style={styles.modalFormBody}
-                keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="on-drag"
-                onScrollBeginDrag={() => setIsProgSearchFocused(false)}
-                contentContainerStyle={{ paddingBottom: insets.bottom + 140 }}
-              >
-                <Pressable onPress={() => { Keyboard.dismiss(); setIsProgSearchFocused(false); }}>
-                  <View>
-                    <View style={styles.formGroup}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                        NAME *
-                      </ThemedText>
-                      <TextInput
-                        placeholder="Progression Name"
-                        placeholderTextColor={theme.textSecondary}
-                        value={editingProgName}
-                        onChangeText={setEditingProgName}
-                        style={[
-                          styles.inputField,
-                          {
-                            backgroundColor: theme.backgroundElement,
-                            color: theme.text,
-                            borderColor: theme.backgroundSelected,
-                          },
-                        ]}
-                      />
-                    </View>
-                    <View style={styles.formGroup}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                        NOTES
-                      </ThemedText>
-                      <TextInput
-                        placeholder="Short description..."
-                        placeholderTextColor={theme.textSecondary}
-                        value={editingProgNotes}
-                        onChangeText={setEditingProgNotes}
-                        style={[
-                          styles.inputField,
-                          styles.textAreaField,
-                          {
-                            backgroundColor: theme.backgroundElement,
-                            color: theme.text,
-                            borderColor: theme.backgroundSelected,
-                          },
-                        ]}
-                        multiline
-                        numberOfLines={2}
-                      />
-                    </View>
-
-                    {/* Search and Add Exercise Bar */}
-                    <View style={[styles.formGroup, { zIndex: 10 }]}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                        SELECT EXERCISE *
-                      </ThemedText>
-                      <View style={styles.dropdownContainer}>
+                      {/* The scrollable list of exercises directly below it, shown conditionally */}
+                      {isProgSearchFocused && progSearchQuery.trim() !== '' && (
                         <View style={[
-                          styles.dropdownSearchContainer,
+                          styles.dropdownMenu,
                           {
                             backgroundColor: theme.backgroundElement,
                             borderColor: theme.backgroundSelected,
                             borderWidth: 1,
-                            borderRadius: 8,
                           }
                         ]}>
-                          <SymbolView
-                            name="magnifyingglass"
-                            tintColor={theme.textSecondary}
-                            size={14}
-                            style={styles.dropdownSearchIcon}
-                          />
-                          <TextInput
-                            placeholder="Search exercises to add..."
-                            placeholderTextColor={theme.textSecondary}
-                            value={progSearchQuery}
-                            onChangeText={setProgSearchQuery}
-                            onFocus={() => setIsProgSearchFocused(true)}
-                            style={[styles.dropdownSearchInput, { color: theme.text }]}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                          />
-                          {progSearchQuery ? (
-                            <Pressable 
-                              onPress={() => setProgSearchQuery('')} 
-                              style={styles.dropdownClearSearch}>
-                              <SymbolView
-                                name="xmark.circle.fill"
-                                tintColor={theme.textSecondary}
-                                size={14}
-                              />
-                            </Pressable>
-                          ) : null}
-                        </View>
-
-                        {/* The scrollable list of exercises directly below it, shown conditionally */}
-                        {isProgSearchFocused && progSearchQuery.trim() !== '' && (
-                          <View style={[
-                            styles.dropdownMenu,
-                            {
-                              backgroundColor: theme.backgroundElement,
-                              borderColor: theme.backgroundSelected,
-                              borderWidth: 1,
-                            }
-                          ]}>
-                            <ScrollView 
-                              nestedScrollEnabled={true}
-                              style={styles.dropdownList}
-                              contentContainerStyle={{ paddingVertical: Spacing.one }}>
-                              {searchedExercisesNotInProg.length === 0 ? (
-                                <View style={{ padding: Spacing.three, alignItems: 'center' }}>
-                                  <ThemedText type="small" themeColor="textSecondary">
-                                    No exercises match your search
-                                  </ThemedText>
-                                </View>
-                              ) : (
-                                searchedExercisesNotInProg.map(ex => (
-                                  <Pressable
-                                    key={ex.id}
-                                    onPress={() => handleAddLocalExercise(ex.id)}
-                                    style={({ pressed }) => [
-                                      styles.dropdownItem,
-                                      pressed && styles.pressed,
-                                    ]}>
-                                    <View style={{ flex: 1 }}>
-                                      <ThemedText type="smallBold">
-                                        {ex.name}
-                                      </ThemedText>
-                                      {(() => {
-                                        const mgIds = ex.muscle_group_ids;
-                                        if (mgIds && mgIds.length > 0) {
-                                          const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                                          return names ? (
-                                            <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
-                                              {names}
-                                            </ThemedText>
-                                          ) : null;
-                                        }
-                                        return null;
-                                      })()}
-                                    </View>
-                                    <SymbolView
-                                      name="plus.circle.fill"
-                                      tintColor="#0A84FF"
-                                      size={20}
-                                    />
-                                  </Pressable>
-                                ))
-                              )}
-                            </ScrollView>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-
-                    {/* Exercises currently in progression */}
-                    {localExercises.length > 0 && (
-                      <View style={styles.formGroup}>
-                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                          EXERCISES IN PROGRESSION
-                        </ThemedText>
-                        <ThemedView type="backgroundElement" style={styles.appleListGroup}>
-                          {localExercises.map((ex, idx) => {
-                            const isLast = idx === localExercises.length - 1;
-                            return (
-                              <Swipeable
-                                key={`${ex.id}-${idx}`}
-                                renderLeftActions={() => renderLocalExerciseSwipeActions(ex.id)}
-                                containerStyle={{ overflow: 'hidden' }}>
+                          <ScrollView 
+                            nestedScrollEnabled={true}
+                            style={styles.dropdownList}
+                            contentContainerStyle={{ paddingVertical: Spacing.one }}>
+                            {searchedExercisesNotInProg.length === 0 ? (
+                              <View style={{ padding: Spacing.three, alignItems: 'center' }}>
+                                <ThemedText type="small" themeColor="textSecondary">
+                                  No exercises match your search
+                                </ThemedText>
+                              </View>
+                            ) : (
+                              searchedExercisesNotInProg.map(ex => (
                                 <Pressable
-                                  onPress={Keyboard.dismiss}
-                                  style={[
-                                    styles.appleListRow,
-                                    { backgroundColor: theme.backgroundElement },
-                                    !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
+                                  key={ex.id}
+                                  onPress={() => handleAddLocalExercise(ex.id)}
+                                  style={({ pressed }) => [
+                                    styles.dropdownItem,
+                                    pressed && styles.pressed,
                                   ]}>
-                                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                                    <ThemedText type="smallBold" style={{ color: '#0A84FF', marginRight: Spacing.two, width: 20 }}>
-                                      {idx + 1}
+                                  <View style={{ flex: 1 }}>
+                                    <ThemedText type="smallBold">
+                                      {ex.name}
                                     </ThemedText>
-                                    <View style={{ flex: 1 }}>
-                                      <ThemedText type="small" style={{ fontWeight: '500', fontSize: 14 }}>
-                                        {ex.name}
-                                      </ThemedText>
-                                      {(() => {
-                                        const mgIds = ex.muscle_group_ids;
-                                        if (mgIds && mgIds.length > 0) {
-                                          const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                                          return names ? (
-                                            <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
-                                              {names}
-                                            </ThemedText>
-                                          ) : null;
-                                        }
-                                        return null;
-                                      })()}
-                                    </View>
+                                    {(() => {
+                                      const mgIds = ex.muscle_group_ids;
+                                      if (mgIds && mgIds.length > 0) {
+                                        const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                        return names ? (
+                                          <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: 2 }}>
+                                            {names}
+                                          </ThemedText>
+                                        ) : null;
+                                      }
+                                      return null;
+                                    })()}
                                   </View>
+                                  <SymbolView
+                                    name="plus.circle.fill"
+                                    tintColor="#0A84FF"
+                                    size={20}
+                                  />
                                 </Pressable>
-                              </Swipeable>
-                            );
-                          })}
-                        </ThemedView>
-                      </View>
-                    )}
+                              ))
+                            )}
+                          </ScrollView>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                </Pressable>
-              </ScrollView>
-              </KeyboardAvoidingView>
-              </Animated.View>
-          </View>
-        </Modal>
+
+                  {/* Exercises currently in progression */}
+                  {localExercises.length > 0 && (
+                    <View style={styles.formGroup}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        EXERCISES IN PROGRESSION
+                      </ThemedText>
+                      <ThemedView type="backgroundElement" style={styles.appleListGroup}>
+                        {localExercises.map((ex, idx) => {
+                          const isLast = idx === localExercises.length - 1;
+                          return (
+                            <Swipeable
+                              key={`${ex.id}-${idx}`}
+                              renderLeftActions={() => renderLocalExerciseSwipeActions(ex.id)}
+                              containerStyle={{ overflow: 'hidden' }}>
+                              <Pressable
+                                onPress={Keyboard.dismiss}
+                                style={[
+                                  styles.appleListRow,
+                                  { backgroundColor: theme.backgroundElement },
+                                  !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
+                                ]}>
+                                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                                  <ThemedText type="smallBold" style={{ color: '#0A84FF', marginRight: Spacing.two, width: 20 }}>
+                                    {idx + 1}
+                                  </ThemedText>
+                                  <View style={{ flex: 1 }}>
+                                    <ThemedText type="small" style={{ fontWeight: '500', fontSize: 14 }}>
+                                      {ex.name}
+                                    </ThemedText>
+                                    {(() => {
+                                      const mgIds = ex.muscle_group_ids;
+                                      if (mgIds && mgIds.length > 0) {
+                                        const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
+                                        return names ? (
+                                          <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
+                                            {names}
+                                          </ThemedText>
+                                        ) : null;
+                                      }
+                                      return null;
+                                    })()}
+                                  </View>
+                                </View>
+                              </Pressable>
+                            </Swipeable>
+                          );
+                        })}
+                      </ThemedView>
+                    </View>
+                  )}
+                </View>
+              </Pressable>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </ThemedView>
+      </Modal>
 
       {/* Detail Modal */}
       <Modal
@@ -1631,7 +1599,7 @@ export default function ExercisesScreen() {
             style={[
               styles.modalContent,
               {
-                height: '80%',
+                height: '70%',
                 backgroundColor: theme.background,
                 transform: [{ translateY: detailSwipe.translateY }]
               }
@@ -1752,46 +1720,31 @@ export default function ExercisesScreen() {
 
       {/* Add Modal */}
       <Modal
-        animationType="none"
-        transparent={true}
+        animationType="slide"
+        transparent={false}
         visible={isAddModalVisible}
-        onRequestClose={addExerciseSwipe.close}>
-        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={addExerciseSwipe.close} />
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                height: '80%',
-                backgroundColor: theme.background,
-                transform: [{ translateY: addExerciseSwipe.translateY }]
-              }
-            ]}>
-              <View {...addExerciseSwipe.panHandlers}>
-                <View style={styles.dragHandleContainer}>
-                  <View style={styles.dragHandle} />
-                </View>
-                <View style={styles.modalHeader}>
-                  <Pressable
-                    onPress={addExerciseSwipe.close}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                  </Pressable>
-                  <ThemedText type="smallBold" style={styles.modalTitle}>
-                    {editingExerciseId !== null ? 'Edit Exercise' : 'New Exercise'}
-                  </ThemedText>
-                  <Pressable
-                    onPress={editingExerciseId !== null ? handleUpdateExercise : handleCreateExercise}
-                    disabled={isSubmitting}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    {isSubmitting ? (
-                      <ActivityIndicator size="small" color="#0A84FF" />
-                    ) : (
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                    )}
-                  </Pressable>
-                </View>
-              </View>
+        onRequestClose={() => setIsAddModalVisible(false)}>
+        <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+          <View style={styles.modalHeader}>
+            <Pressable
+              onPress={() => setIsAddModalVisible(false)}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+            </Pressable>
+            <ThemedText type="smallBold" style={styles.modalTitle}>
+              {editingExerciseId !== null ? 'Edit Exercise' : 'New Exercise'}
+            </ThemedText>
+            <Pressable
+              onPress={editingExerciseId !== null ? handleUpdateExercise : handleCreateExercise}
+              disabled={isSubmitting}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#0A84FF" />
+              ) : (
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+              )}
+            </Pressable>
+          </View>
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}>
@@ -1955,87 +1908,71 @@ export default function ExercisesScreen() {
               </Pressable>
             </ScrollView>
           </KeyboardAvoidingView>
-          </Animated.View>
-        </View>
+        </ThemedView>
       </Modal>
 
       {/* CSV Import Modal */}
       <Modal
-        animationType="none"
-        transparent={true}
+        animationType="slide"
+        transparent={false}
         visible={isImportModalVisible}
-        onRequestClose={importCSVSwipe.close}>
-        <View style={[styles.modalOverlay, { backgroundColor: 'transparent' }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={importCSVSwipe.close} />
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                height: '80%',
-                backgroundColor: theme.background,
-                transform: [{ translateY: importCSVSwipe.translateY }]
-              }
-            ]}>
-              <View {...importCSVSwipe.panHandlers}>
-                <View style={styles.dragHandleContainer}>
-                  <View style={styles.dragHandle} />
-                </View>
-                <View style={styles.modalHeader}>
-                  <Pressable
-                    onPress={importCSVSwipe.close}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                  </Pressable>
-                  <ThemedText type="smallBold" style={styles.modalTitle}>
-                    Import CSV
-                  </ThemedText>
-                  <Pressable
-                    onPress={handleImportCSV}
-                    disabled={isImporting}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    {isImporting ? (
-                      <ActivityIndicator size="small" color="#0A84FF" />
-                    ) : (
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Import</ThemedText>
-                    )}
-                  </Pressable>
-                </View>
-              </View>
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}>
-                <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
-                  <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
-                    CSV format: name,notes,instructions,muscle_group_ids,image_id
-                  </ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
-                    Example:{"\n"}
-                    Bench Press,Chest builder,Keep bar straight,1;5,null
-                  </ThemedText>
+        onRequestClose={() => setIsImportModalVisible(false)}>
+        <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+          <View style={styles.modalHeader}>
+            <Pressable
+              onPress={() => setIsImportModalVisible(false)}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+            </Pressable>
+            <ThemedText type="smallBold" style={styles.modalTitle}>
+              Import CSV
+            </ThemedText>
+            <Pressable
+              onPress={handleImportCSV}
+              disabled={isImporting}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              {isImporting ? (
+                <ActivityIndicator size="small" color="#0A84FF" />
+              ) : (
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Import</ThemedText>
+              )}
+            </Pressable>
+          </View>
 
-                  <TextInput
-                    placeholder="Paste CSV text here..."
-                    placeholderTextColor={theme.textSecondary}
-                    value={csvInput}
-                    onChangeText={setCsvInput}
-                    multiline
-                    style={[
-                      styles.inputField,
-                      styles.importCsvInput,
-                      {
-                        backgroundColor: theme.backgroundElement,
-                        color: theme.text,
-                        borderColor: theme.backgroundSelected,
-                      },
-                    ]}
-                  />
-                </ScrollView>
-              </Pressable>
-            </KeyboardAvoidingView>
-          </Animated.View>
-        </View>
-      </Modal>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}>
+            <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+            <ScrollView style={styles.modalFormBody} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
+              <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.two }}>
+                CSV format: name,notes,instructions,muscle_group_ids,image_id
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.four }}>
+                Example:{"\n"}
+                Bench Press,Chest builder,Keep bar straight,1;5,null
+              </ThemedText>
+
+              <TextInput
+                placeholder="Paste CSV text here..."
+                placeholderTextColor={theme.textSecondary}
+                value={csvInput}
+                onChangeText={setCsvInput}
+                multiline
+                style={[
+                  styles.inputField,
+                  styles.importCsvInput,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    color: theme.text,
+                    borderColor: theme.backgroundSelected,
+                  },
+                ]}
+              />
+            </ScrollView>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </ThemedView>
+    </Modal>
 
       {/* CSV Import Progression Modal */}
       <Modal

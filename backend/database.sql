@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS ActualSetInfo (
     FOREIGN KEY (actual_routine_id) REFERENCES ActualRoutine(id)
         ON DELETE CASCADE,
     FOREIGN KEY (set_info_id) REFERENCES PlannedSetInfo(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE ON UPDATE RESTRICT
 );
 
 INSERT OR IGNORE INTO MuscleGroup (id, name) VALUES 

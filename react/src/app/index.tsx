@@ -1257,424 +1257,399 @@ export default function WorkoutsScreen() {
 
       {/* MODAL: Create Routine */}
       <Modal
-        animationType="none"
-        transparent={true}
+        animationType="slide"
+        transparent={false}
         visible={isAddRoutineVisible}
-        onRequestClose={createRoutineSwipe.close}>
-        <View style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={createRoutineSwipe.close} />
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                height: '80%',
-                backgroundColor: theme.background,
-                transform: [{ translateY: createRoutineSwipe.translateY }]
-              }
-            ]}>
-            <View {...createRoutineSwipe.panHandlers}>
-              <View style={styles.dragHandleContainer}>
-                <View style={styles.dragHandle} />
-              </View>
-              <View style={styles.modalHeader}>
-                <Pressable
-                  onPress={createRoutineSwipe.close}
-                  style={styles.modalHeaderButton}>
-                  <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                </Pressable>
-                <ThemedText type="smallBold" style={styles.modalTitle}>
-                  New Routine
-                </ThemedText>
-                <Pressable onPress={handleCreateRoutine} style={styles.modalHeaderButton}>
-                  <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                </Pressable>
-              </View>
-            </View>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ flex: 1 }}>
-              <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                <View style={styles.modalFormBody}>
-                  <View style={styles.formGroup}>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                      ROUTINE NAME
-                    </ThemedText>
-                    <TextInput
-                      placeholder="e.g. Hypertrophy A"
-                      placeholderTextColor={theme.textSecondary}
-                      value={newRoutineName}
-                      onChangeText={setNewRoutineName}
-                      style={[
-                        styles.inputField,
-                        {
-                          backgroundColor: theme.backgroundElement,
-                          color: theme.text,
-                          borderColor: theme.backgroundSelected,
-                        },
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.formGroup}>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                      ROUTINE DESCRIPTION
-                    </ThemedText>
-                    <TextInput
-                      placeholder="e.g. Focus on chest and arms"
-                      placeholderTextColor={theme.textSecondary}
-                      value={newRoutineDesc}
-                      onChangeText={setNewRoutineDesc}
-                      style={[
-                        styles.inputField,
-                        styles.textAreaField,
-                        {
-                          backgroundColor: theme.backgroundElement,
-                          color: theme.text,
-                          borderColor: theme.backgroundSelected,
-                        },
-                      ]}
-                      multiline
-                      numberOfLines={2}
-                    />
-                  </View>
+        onRequestClose={() => setIsAddRoutineVisible(false)}>
+        <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+          <View style={styles.modalHeader}>
+            <Pressable
+              onPress={() => setIsAddRoutineVisible(false)}
+              style={styles.modalHeaderButton}>
+              <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+            </Pressable>
+            <ThemedText type="smallBold" style={styles.modalTitle}>
+              New Routine
+            </ThemedText>
+            <Pressable onPress={handleCreateRoutine} style={styles.modalHeaderButton}>
+              <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+            </Pressable>
+          </View>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}>
+            <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+              <View style={styles.modalFormBody}>
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    ROUTINE NAME
+                  </ThemedText>
+                  <TextInput
+                    placeholder="e.g. Hypertrophy A"
+                    placeholderTextColor={theme.textSecondary}
+                    value={newRoutineName}
+                    onChangeText={setNewRoutineName}
+                    style={[
+                      styles.inputField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
                 </View>
-              </Pressable>
-            </KeyboardAvoidingView>
-          </Animated.View>
-        </View>
+                <View style={styles.formGroup}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    ROUTINE DESCRIPTION
+                  </ThemedText>
+                  <TextInput
+                    placeholder="e.g. Focus on chest and arms"
+                    placeholderTextColor={theme.textSecondary}
+                    value={newRoutineDesc}
+                    onChangeText={setNewRoutineDesc}
+                    style={[
+                      styles.inputField,
+                      styles.textAreaField,
+                      {
+                        backgroundColor: theme.backgroundElement,
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                    multiline
+                    numberOfLines={2}
+                  />
+                </View>
+              </View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </ThemedView>
       </Modal>
 
       {/* MODAL: Routine Detail */}
       <Modal
-        animationType="none"
-        transparent={true}
+        animationType="slide"
+        transparent={false}
         visible={isRoutineDetailVisible}
-        onRequestClose={routineDetailSwipe.close}>
-        <View style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={routineDetailSwipe.close} />
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                height: '80%',
-                backgroundColor: theme.background,
-                transform: [{ translateY: routineDetailSwipe.translateY }]
-              }
-            ]}>
-            <View {...routineDetailSwipe.panHandlers}>
-                <View style={styles.dragHandleContainer}>
-                  <View style={styles.dragHandle} />
-                </View>
-                <View style={styles.modalHeader}>
-                  {isAddExerciseToRoutineVisible ? (
-                    <Pressable
-                      onPress={() => {
-                        setIsAddExerciseToRoutineVisible(false);
-                        setDropdownSearchQuery('');
-                        setSelectedExerciseId(null);
-                        setNewPlannedExerciseNotes('');
-                      }}
-                      style={styles.modalHeaderButton}>
-                      <ThemedText type="link" themeColor="textSecondary">
-                        Back
+        onRequestClose={() => {
+          if (isAddExerciseToRoutineVisible) {
+            setIsAddExerciseToRoutineVisible(false);
+          } else {
+            setIsRoutineDetailVisible(false);
+          }
+        }}>
+        <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+          <View style={styles.modalHeader}>
+            {isAddExerciseToRoutineVisible ? (
+              <Pressable
+                onPress={() => {
+                  setIsAddExerciseToRoutineVisible(false);
+                  setDropdownSearchQuery('');
+                  setSelectedExerciseId(null);
+                  setNewPlannedExerciseNotes('');
+                }}
+                style={styles.modalHeaderButton}>
+                <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => setIsRoutineDetailVisible(false)}
+                style={styles.modalHeaderButton}>
+                <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+              </Pressable>
+            )}
+            <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
+              {isAddExerciseToRoutineVisible ? 'Add Exercise' : 'Workout Plan'}
+            </ThemedText>
+            {isAddExerciseToRoutineVisible ? (
+              <Pressable onPress={handleAddExerciseToRoutine} style={styles.modalHeaderButton}>
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+              </Pressable>
+            ) : (
+              <Pressable onPress={handleUpdateRoutine} style={styles.modalHeaderButton}>
+                <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+              </Pressable>
+            )}
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}>
+            {selectedRoutine && (
+              <View style={{ flex: 1 }}>
+                {!isAddExerciseToRoutineVisible ? (
+                  <ScrollView
+                    style={styles.modalScrollBody}
+                    contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
+                    
+                    {/* Editable Routine Name */}
+                    <View style={styles.formGroup}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        ROUTINE NAME
                       </ThemedText>
-                    </Pressable>
-                  ) : (
-                    <Pressable
-                      onPress={routineDetailSwipe.close}
-                      style={styles.modalHeaderButton}>
-                      <ThemedText type="link" themeColor="textSecondary">
-                        Cancel
+                      <TextInput
+                        placeholder="e.g. Hypertrophy A"
+                        placeholderTextColor={theme.textSecondary}
+                        value={editRoutineName}
+                        onChangeText={setEditRoutineName}
+                        style={[
+                          styles.inputField,
+                          {
+                            backgroundColor: theme.backgroundElement,
+                            color: theme.text,
+                            borderColor: theme.backgroundSelected,
+                          },
+                        ]}
+                      />
+                    </View>
+
+                    {/* Editable Description */}
+                    <View style={styles.formGroup}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        DESCRIPTION
                       </ThemedText>
-                    </Pressable>
-                  )}
-                  <ThemedText type="smallBold" style={styles.modalTitle} numberOfLines={1}>
-                    {isAddExerciseToRoutineVisible ? 'Add Exercise' : 'Workout Plan'}
-                  </ThemedText>
-                  {isAddExerciseToRoutineVisible ? (
-                    <Pressable onPress={handleAddExerciseToRoutine} style={styles.modalHeaderButton}>
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                    </Pressable>
-                  ) : (
-                    <Pressable onPress={handleUpdateRoutine} style={styles.modalHeaderButton}>
-                      <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                    </Pressable>
-                  )}
-                </View>
-            </View>
+                      <TextInput
+                        placeholder="Optional description"
+                        placeholderTextColor={theme.textSecondary}
+                        value={editRoutineDesc}
+                        onChangeText={setEditRoutineDesc}
+                        style={[
+                          styles.inputField,
+                          styles.textAreaField,
+                          {
+                            backgroundColor: theme.backgroundElement,
+                            color: theme.text,
+                            borderColor: theme.backgroundSelected,
+                          },
+                        ]}
+                        multiline
+                        numberOfLines={3}
+                      />
+                    </View>
 
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ flex: 1 }}>
-              {selectedRoutine && (
-                <View style={{ flex: 1 }}>
-                  {!isAddExerciseToRoutineVisible ? (
-                    <ScrollView
-                      style={styles.modalScrollBody}
-                      contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}>
-                      
-                      {/* Editable Routine Name */}
-                      <View style={styles.formGroup}>
-                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                          ROUTINE NAME
-                        </ThemedText>
-                        <TextInput
-                          placeholder="Routine Name"
-                          placeholderTextColor={theme.textSecondary}
-                          value={editRoutineName}
-                          onChangeText={setEditRoutineName}
-                          style={[
-                            styles.inputField,
-                            {
-                              backgroundColor: theme.backgroundElement,
-                              color: theme.text,
-                              borderColor: theme.backgroundSelected,
-                            },
-                          ]}
-                        />
-                      </View>
+                    {/* Planned Exercises Section */}
+                    <View style={styles.detailSection}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        EXERCISES
+                      </ThemedText>
 
-                      {/* Editable Description */}
-                      <View style={styles.formGroup}>
-                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                          DESCRIPTION
-                        </ThemedText>
-                        <TextInput
-                          placeholder="Optional description"
-                          placeholderTextColor={theme.textSecondary}
-                          value={editRoutineDesc}
-                          onChangeText={setEditRoutineDesc}
-                          style={[
-                            styles.inputField,
-                            styles.textAreaField,
-                            {
-                              backgroundColor: theme.backgroundElement,
-                              color: theme.text,
-                              borderColor: theme.backgroundSelected,
-                              height: 60,
-                            },
-                          ]}
-                          multiline
-                          numberOfLines={2}
-                        />
-                      </View>
+                      {/* Planned Exercise Cards */}
+                      {selectedRoutine.plannedExercises && selectedRoutine.plannedExercises.filter(pe => !pendingDeletePlannedExerciseIds.includes(pe.ID)).length > 0 && (
+                        <View style={{ marginBottom: Spacing.two }}>
+                          {selectedRoutine.plannedExercises
+                            .filter(pe => !pendingDeletePlannedExerciseIds.includes(pe.ID))
+                            .map((pe, idx) => {
+                              const ex = exercises.find(e => e.id === pe.ExerciseID);
+                              const repUnit = ex ? repUnits[ex.rep_unit_id] : null;
+                              const unitSingular = (repUnit?.name_singular || 'rep').toLowerCase();
+                              const unitPlural = (repUnit?.name_plural || 'reps').toLowerCase();
 
-                      {/* Planned Exercises Section */}
-                      <View style={styles.detailSection}>
-                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                          EXERCISES
-                        </ThemedText>
-                        {selectedRoutine.plannedExercises
-                          .filter((pe) => !pendingDeletePlannedExerciseIds.includes(pe.ID))
-                          .map((pe) => {
-                            const repsList = pe.sets.map(s => s.Reps);
-                            const allSame = repsList.length > 0 && repsList.every(r => r === repsList[0]);
-                            const unitName = repUnits[pe.exercise?.rep_unit_id ?? 1]?.name_plural || 'Reps';
-                            const setsSummary = allSame
-                              ? `${pe.sets.length} × ${repsList[0]} ${unitName}`
-                              : `${pe.sets.length} Sets: ${repsList.join(', ')} ${unitName}`;
-
-                            return (
-                              <Swipeable
-                                key={pe.ID}
-                                renderLeftActions={() => renderPlannedExerciseSwipeActions(pe.ID)}
-                                containerStyle={[styles.swipeContainer, { borderRadius: 10, marginBottom: Spacing.two }]}>
-                                <Pressable onPress={Keyboard.dismiss}>
-                                  <ThemedView
-                                    type="backgroundElement"
-                                    style={[styles.appleListRow, { paddingVertical: Spacing.three, minHeight: 0, borderRadius: 10, flexDirection: 'column', alignItems: 'stretch' }]}>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                      <ThemedText type="small" style={{ fontWeight: '600', fontSize: 16, lineHeight: 20, flex: 1, marginRight: Spacing.two }} numberOfLines={1}>
-                                        {pe.exercise?.name || 'Exercise'}
-                                      </ThemedText>
-                                      {pe.RestTime ? (
-                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                          <SymbolView name="timer" tintColor={theme.textSecondary} size={14} style={{ marginRight: 4 }} />
-                                          <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 14, lineHeight: 18, fontWeight: '500' }}>
-                                            {pe.RestTime}s
-                                          </ThemedText>
-                                        </View>
-                                      ) : null}
+                              return (
+                                <Swipeable
+                                  key={pe.ID || `pe-${idx}`}
+                                  renderLeftActions={() => (
+                                    <View style={styles.swipeActionContainer}>
+                                      <Pressable
+                                        onPress={() => handleRemovePlannedExercise(pe.ID)}
+                                        style={({ pressed }) => [
+                                          styles.deleteSwipeBtn,
+                                          pressed && styles.pressed,
+                                        ]}>
+                                        <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+                                      </Pressable>
                                     </View>
-                                    
-                                    {pe.sets.length > 0 && (
-                                      <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 14, lineHeight: 18, fontWeight: '500', marginTop: 3 }}>
-                                        {setsSummary}
-                                      </ThemedText>
-                                    )}
-
-                                    {pe.Notes ? (
-                                      <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 14, lineHeight: 18, fontStyle: 'italic', marginTop: 3 }}>
-                                        Notes: {pe.Notes}
-                                      </ThemedText>
-                                    ) : null}
-                                  </ThemedView>
-                                </Pressable>
-                              </Swipeable>
-                            );
-                          })}
-
-                        <ThemedView type="backgroundElement" style={[styles.appleListGroup, { marginTop: Spacing.one }]}>
-                          <Pressable
-                            onPress={() => setIsAddExerciseToRoutineVisible(true)}
-                            style={({ pressed }) => [
-                              styles.appleListRow,
-                              pressed && styles.pressed,
-                            ]}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              <SymbolView name="plus.circle" tintColor="#0A84FF" size={20} style={{ marginRight: 8 }} />
-                              <ThemedText type="default" style={{ color: '#0A84FF', fontWeight: '500', fontSize: 16 }}>Add Exercise</ThemedText>
-                            </View>
-                          </Pressable>
-                        </ThemedView>
-                      </View>
-                    </ScrollView>
-                  ) : (
-                    <ScrollView 
-                      style={styles.modalFormBody}
-                      keyboardShouldPersistTaps="handled"
-                      keyboardDismissMode="on-drag"
-                      contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six + 100 }]}>
-                      <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flexGrow: 1 }}>
-                        {/* Exercise Selector */}
-                      <View style={styles.formGroup}>
-                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                          SELECT EXERCISE *
-                        </ThemedText>
-
-                          <View style={styles.dropdownContainer}>
-                            {selectedExerciseId !== null ? (
-                              <ThemedView type="backgroundElement" style={[styles.appleListRow, { borderRadius: 8, overflow: 'hidden' }]}>
-                                <View style={{ flex: 1 }}>
-                                  <ThemedText type="small" style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                    {exercises.find(e => e.id === selectedExerciseId)?.name}
-                                  </ThemedText>
-                                  {(() => {
-                                    const ex = exercises.find(e => e.id === selectedExerciseId);
-                                    const mgIds = ex?.muscle_group_ids;
-                                    if (mgIds && mgIds.length > 0) {
-                                      const names = mgIds.map((id: number) => muscleGroups.find(g => g.ID === id)?.Name).filter(Boolean).join(', ');
-                                      return names ? (
-                                        <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12, marginTop: 1 }}>
-                                          {names}
+                                  )}
+                                  containerStyle={styles.swipeContainer}>
+                                  <Pressable onPress={Keyboard.dismiss}>
+                                    <ThemedView
+                                      type="backgroundElement"
+                                      style={[styles.appleListRow, { paddingVertical: Spacing.three, minHeight: 0, borderRadius: 10, flexDirection: 'column', alignItems: 'stretch' }]}>
+                                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <ThemedText type="small" style={{ fontWeight: '600', fontSize: 16, lineHeight: 20, flex: 1, marginRight: Spacing.two }} numberOfLines={1}>
+                                          {ex?.name || 'Exercise'}
                                         </ThemedText>
-                                      ) : null;
-                                    }
-                                    return null;
-                                  })()}
-                                </View>
-                                <Pressable
-                                  onPress={() => {
-                                    setSelectedExerciseId(null);
-                                    setDropdownSearchQuery('');
-                                  }}
-                                  style={({ pressed }) => [
-                                    pressed && styles.pressed,
-                                    {
-                                      padding: 6,
-                                    }
-                                  ]}>
-                                  <SymbolView name="arrow.triangle.2.circlepath" tintColor="#0A84FF" size={18} />
-                                </Pressable>
-                              </ThemedView>
-                            ) : (
-                              <View>
-                                <View style={[
-                                  styles.dropdownSearchContainer,
-                                  {
-                                    backgroundColor: theme.backgroundElement,
-                                    borderColor: theme.backgroundSelected,
-                                    borderWidth: 1,
-                                    borderRadius: 8,
-                                  }
-                                ]}>
-                                  <SymbolView
-                                    name="magnifyingglass"
-                                    tintColor={theme.textSecondary}
-                                    size={14}
-                                    style={styles.dropdownSearchIcon}
-                                  />
-                                  <TextInput
-                                    placeholder="Search exercises..."
-                                    placeholderTextColor={theme.textSecondary}
-                                    value={dropdownSearchQuery}
-                                    onChangeText={setDropdownSearchQuery}
-                                    style={[styles.dropdownSearchInput, { color: theme.text }]}
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                  />
-                                  {dropdownSearchQuery ? (
-                                    <Pressable 
-                                      onPress={() => setDropdownSearchQuery('')} 
-                                      style={styles.dropdownClearSearch}>
-                                      <SymbolView
-                                        name="xmark.circle.fill"
-                                        tintColor={theme.textSecondary}
-                                        size={14}
-                                      />
-                                    </Pressable>
-                                  ) : null}
-                                </View>
-
-                                {dropdownSearchQuery.trim() !== '' && (
-                                  <View style={[
-                                    styles.dropdownMenu,
-                                    {
-                                      backgroundColor: theme.backgroundElement,
-                                      borderColor: theme.backgroundSelected,
-                                      marginTop: Spacing.one,
-                                    }
-                                  ]}>
-                                    <ScrollView 
-                                      nestedScrollEnabled={true}
-                                      keyboardShouldPersistTaps="handled"
-                                      style={styles.dropdownList}
-                                      contentContainerStyle={{ paddingVertical: Spacing.one }}>
-                                      {(() => {
-                                        const filtered = exercises.filter(e =>
-                                          e.name.toLowerCase().includes(dropdownSearchQuery.toLowerCase())
-                                        );
-                                        if (filtered.length === 0) {
-                                          return (
-                                            <View style={{ padding: Spacing.three, alignItems: 'center' }}>
-                                              <ThemedText type="small" themeColor="textSecondary">
-                                                No exercises match your search
+                                        {pe.RestTime ? (
+                                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <SymbolView name="timer" tintColor={theme.textSecondary} size={14} style={{ marginRight: 4 }} />
+                                            <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 14, lineHeight: 18, fontWeight: '500' }}>
+                                              {pe.RestTime}s
+                                            </ThemedText>
+                                          </View>
+                                        ) : null}
+                                      </View>
+                                      
+                                      {pe.sets && pe.sets.length > 0 && (
+                                        <View style={{ flexDirection: 'column', marginTop: 3 }}>
+                                          {pe.sets.map((s, sIdx) => {
+                                            const unitText = s.Reps === 1 ? unitSingular : unitPlural;
+                                            return (
+                                              <ThemedText
+                                                key={sIdx}
+                                                type="small"
+                                                themeColor="textSecondary"
+                                                style={{ fontSize: 14, lineHeight: 18, fontWeight: '500', paddingLeft: 2 }}>
+                                                {`1 x ${s.Reps} ${unitText}`}
                                               </ThemedText>
-                                            </View>
-                                          );
-                                        }
-                                        return filtered.map(ex => {
-                                          return (
-                                            <Pressable
-                                              key={ex.id}
-                                              onPress={() => {
-                                                setSelectedExerciseId(ex.id);
-                                                setDropdownSearchQuery(ex.name);
-                                                Keyboard.dismiss();
-                                              }}
-                                              style={styles.dropdownItem}>
-                                              <View style={{ flex: 1 }}>
-                                                <ThemedText type="smallBold">
-                                                  {ex.name}
-                                                </ThemedText>
-                                              </View>
-                                              <SymbolView
-                                                name="checkmark.circle.fill"
-                                                tintColor="#0A84FF"
-                                                size={22}
-                                              />
-                                            </Pressable>
-                                          );
-                                        });
-                                      })()}
-                                    </ScrollView>
-                                  </View>
-                                )}
-                              </View>
-                            )}
+                                            );
+                                          })}
+                                        </View>
+                                      )}
+
+                                      {pe.Notes ? (
+                                        <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 14, lineHeight: 18, fontStyle: 'italic', marginTop: 3 }}>
+                                          Notes: {pe.Notes}
+                                        </ThemedText>
+                                      ) : null}
+                                    </ThemedView>
+                                  </Pressable>
+                                </Swipeable>
+                              );
+                            })}
+                        </View>
+                      )}
+
+                      <ThemedView type="backgroundElement" style={[styles.appleListGroup, { marginTop: Spacing.one }]}>
+                        <Pressable
+                          onPress={() => setIsAddExerciseToRoutineVisible(true)}
+                          style={({ pressed }) => [
+                            styles.appleListRow,
+                            pressed && styles.pressed,
+                          ]}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <SymbolView name="plus.circle" tintColor="#0A84FF" size={20} style={{ marginRight: 8 }} />
+                            <ThemedText type="default" style={{ color: '#0A84FF', fontWeight: '500', fontSize: 16 }}>Add Exercise</ThemedText>
                           </View>
+                        </Pressable>
+                      </ThemedView>
+                    </View>
+
+                    {/* Delete Routine Button removed */}
+                  </ScrollView>
+                ) : (
+                  /* ADD EXERCISE FORM (Inside Routine Detail) */
+                  <ScrollView
+                    style={styles.modalScrollBody}
+                    contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + Spacing.six }]}
+                    keyboardShouldPersistTaps="handled">
+                    <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
+                      {/* Exercise Dropdown */}
+                      <View style={[styles.formGroup, { zIndex: 10 }]}>
+                        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                          EXERCISE
+                        </ThemedText>
+                        
+                        <View style={styles.dropdownContainer}>
+                          <View
+                            style={[
+                              styles.dropdownSearchContainer,
+                              {
+                                backgroundColor: theme.backgroundElement,
+                                borderColor: theme.backgroundSelected,
+                                borderWidth: 1,
+                                borderRadius: 10,
+                                borderBottomWidth: 1,
+                              },
+                            ]}>
+                            <SymbolView
+                              name="magnifyingglass"
+                              tintColor={theme.textSecondary}
+                              size={14}
+                              style={styles.dropdownSearchIcon}
+                            />
+                            <TextInput
+                              placeholder="Search exercises..."
+                              placeholderTextColor={theme.textSecondary}
+                              value={dropdownSearchQuery}
+                              onChangeText={setDropdownSearchQuery}
+                              style={[styles.dropdownSearchInput, { color: theme.text }]}
+                              autoCapitalize="none"
+                              autoCorrect={false}
+                            />
+                            {dropdownSearchQuery ? (
+                              <Pressable
+                                onPress={() => setDropdownSearchQuery('')}
+                                style={styles.dropdownClearSearch}>
+                                <SymbolView
+                                  name="xmark.circle.fill"
+                                  tintColor={theme.textSecondary}
+                                  size={14}
+                                />
+                              </Pressable>
+                            ) : null}
+                          </View>
+
+                          {/* Exercise List - Only shown when user is typing a search query */}
+                          {dropdownSearchQuery.trim().length > 0 && (
+                            <ThemedView
+                              type="backgroundElement"
+                              style={{
+                                marginTop: Spacing.one,
+                                borderRadius: 10,
+                                maxHeight: 180,
+                                borderColor: theme.backgroundSelected,
+                                borderWidth: 1,
+                                overflow: 'hidden',
+                              }}>
+                              <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                                {exercises
+                                  .filter((ex) =>
+                                    ex.name.toLowerCase().includes(dropdownSearchQuery.toLowerCase())
+                                  )
+                                  .map((ex) => (
+                                    <Pressable
+                                      key={ex.id}
+                                      onPress={() => {
+                                        setSelectedExerciseId(ex.id);
+                                        setDropdownSearchQuery('');
+                                        Keyboard.dismiss();
+                                      }}
+                                      style={({ pressed }) => [
+                                        styles.appleListRow,
+                                        selectedExerciseId === ex.id && { backgroundColor: theme.backgroundSelected },
+                                        pressed && styles.pressed,
+                                      ]}>
+                                      <ThemedText type="default" style={{ fontSize: 15, fontWeight: selectedExerciseId === ex.id ? '600' : '400' }}>
+                                        {ex.name}
+                                      </ThemedText>
+                                      {selectedExerciseId === ex.id && (
+                                        <SymbolView name="checkmark" tintColor="#0A84FF" size={16} />
+                                      )}
+                                    </Pressable>
+                                  ))}
+                              </ScrollView>
+                            </ThemedView>
+                          )}
+
+                          {/* Selected Exercise Badge */}
+                          {selectedExerciseId !== null && dropdownSearchQuery.trim().length === 0 && (() => {
+                            const selectedEx = exercises.find((e) => e.id === selectedExerciseId);
+                            if (!selectedEx) return null;
+                            return (
+                              <ThemedView type="backgroundElement" style={[styles.appleListGroup, { marginTop: Spacing.two }]}>
+                                <View style={[styles.appleListRow, { justifyContent: 'space-between' }]}>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: Spacing.two }}>
+                                    <SymbolView name="checkmark.circle.fill" tintColor="#34C759" size={20} style={{ marginRight: 8 }} />
+                                    <ThemedText type="default" style={{ fontWeight: '600', fontSize: 16 }} numberOfLines={1}>
+                                      {selectedEx.name}
+                                    </ThemedText>
+                                  </View>
+                                  <Pressable
+                                    onPress={() => {
+                                      setSelectedExerciseId(null);
+                                      setDropdownSearchQuery('');
+                                    }}
+                                    style={({ pressed }) => [pressed && styles.pressed, { padding: 4 }]}>
+                                    <SymbolView name="xmark.circle.fill" tintColor={theme.textSecondary} size={20} />
+                                  </Pressable>
+                                </View>
+                              </ThemedView>
+                            );
+                          })()}
+                        </View>
                       </View>
 
-                      {/* Rest Time (Clean Table-like Row) */}
+                      {/* Rest Time */}
                       <View style={styles.formGroup}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                           OPTIONS
@@ -1697,26 +1672,24 @@ export default function WorkoutsScreen() {
                                   backgroundColor: theme.background,
                                   borderColor: theme.backgroundSelected,
                                   borderWidth: 1,
-                                  borderRadius: 6,
-                                  minWidth: 50,
-                                  height: 26,
-                                  marginRight: 4,
-                                  fontWeight: 'normal',
+                                  borderRadius: 8,
+                                  width: 60,
+                                  height: 36,
                                 }}
                               />
-                              <ThemedText type="small" themeColor="textSecondary">sec</ThemedText>
+                              <ThemedText type="small" themeColor="textSecondary" style={{ marginLeft: 6, fontSize: 14 }}>sec</ThemedText>
                             </View>
                           </View>
                         </ThemedView>
                       </View>
 
-                      {/* Notes (Separate Section) */}
+                      {/* Notes */}
                       <View style={styles.formGroup}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                          NOTES
+                          INSTRUCTIONS / NOTES
                         </ThemedText>
                         <TextInput
-                          placeholder="Optional notes..."
+                          placeholder="Optional notes for execution"
                           placeholderTextColor={theme.textSecondary}
                           value={newPlannedExerciseNotes}
                           onChangeText={setNewPlannedExerciseNotes}
@@ -1727,6 +1700,7 @@ export default function WorkoutsScreen() {
                               backgroundColor: theme.backgroundElement,
                               color: theme.text,
                               borderColor: theme.backgroundSelected,
+                              height: 60,
                             },
                           ]}
                           multiline
@@ -1734,114 +1708,115 @@ export default function WorkoutsScreen() {
                         />
                       </View>
 
-                      {/* Sets Builder */}
+                      {/* Planned Sets */}
                       <View style={styles.formGroup}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
                           PLANNED SETS
                         </ThemedText>
-
                         {(() => {
-                          const selectedEx = exercises.find(ex => ex.id === selectedExerciseId);
-                          const unitName = selectedEx ? (repUnits[selectedEx.rep_unit_id]?.name_plural || 'Reps') : 'Reps';
+                          const selectedEx = selectedExerciseId ? exercises.find(e => e.id === selectedExerciseId) : null;
+                          const unitName = selectedEx ? (repUnits[selectedEx.rep_unit_id]?.name_plural || 'reps') : 'reps';
 
                           return (
-                            <ThemedView type="backgroundElement" style={styles.appleListGroup}>
-                              {plannedSets.map((s, idx) => {
-                                const isLast = idx === plannedSets.length - 1;
-                                return (
-                                  <Swipeable
-                                    key={idx}
-                                    renderLeftActions={plannedSets.length > 1 ? () => renderPlannedSetSwipeActions(idx) : undefined}
-                                    containerStyle={{ overflow: 'hidden' }}>
-                                    <View style={[
-                                      styles.appleListRow,
-                                      { backgroundColor: theme.backgroundElement },
-                                      !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.backgroundSelected }
-                                    ]}>
-                                      <ThemedText type="smallBold" style={{ width: 30, color: theme.textSecondary, fontSize: 16 }}>
-                                        S{idx + 1}
-                                      </ThemedText>
+                            <>
+                              <View style={{ marginBottom: Spacing.one }}>
+                                {plannedSets.map((s, idx) => {
+                                  return (
+                                    <Swipeable
+                                      key={idx}
+                                      renderLeftActions={() => (
+                                        <View style={styles.swipeActionContainer}>
+                                          <Pressable
+                                            onPress={() => {
+                                              if (plannedSets.length > 1) {
+                                                setPlannedSets((prev) => prev.filter((_, i) => i !== idx));
+                                              }
+                                            }}
+                                            style={({ pressed }) => [
+                                              styles.deleteSwipeBtn,
+                                              pressed && styles.pressed,
+                                            ]}>
+                                            <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+                                          </Pressable>
+                                        </View>
+                                      )}
+                                      containerStyle={styles.swipeContainer}>
+                                      <Pressable onPress={Keyboard.dismiss}>
+                                        <ThemedView
+                                          type="backgroundElement"
+                                          style={[
+                                            styles.appleListRow,
+                                            {
+                                              paddingVertical: Spacing.three,
+                                              minHeight: 0,
+                                              borderRadius: 10,
+                                              flexDirection: 'row',
+                                              alignItems: 'center',
+                                              justifyContent: 'space-between',
+                                            },
+                                          ]}>
+                                          <ThemedText type="small" style={{ fontWeight: '600', fontSize: 16, lineHeight: 20 }}>
+                                            Set {idx + 1}
+                                          </ThemedText>
+                                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <TextInput
+                                              keyboardType="numeric"
+                                              placeholder="10"
+                                              placeholderTextColor={theme.textSecondary}
+                                              value={s.reps}
+                                              onChangeText={(val) => {
+                                                setPlannedSets((prev) =>
+                                                  prev.map((item, i) => (i === idx ? { ...item, reps: val } : item))
+                                                );
+                                              }}
+                                              style={{
+                                                color: theme.text,
+                                                textAlign: 'center',
+                                                fontSize: 16,
+                                                width: 54,
+                                                backgroundColor: theme.background,
+                                                borderColor: theme.backgroundSelected,
+                                                borderWidth: 1,
+                                                borderRadius: 8,
+                                                height: 34,
+                                              }}
+                                            />
+                                            <ThemedText type="small" themeColor="textSecondary" style={{ marginLeft: 6, fontSize: 14, fontWeight: '500' }}>
+                                              {unitName}
+                                            </ThemedText>
+                                          </View>
+                                        </ThemedView>
+                                      </Pressable>
+                                    </Swipeable>
+                                  );
+                                })}
+                              </View>
 
-                                      <TextInput
-                                        placeholder={unitName}
-                                        keyboardType="numeric"
-                                        value={s.reps}
-                                        placeholderTextColor={theme.textSecondary}
-                                        onChangeText={(val) => {
-                                          const newSets = [...plannedSets];
-                                          newSets[idx].reps = val;
-                                          setPlannedSets(newSets);
-                                        }}
-                                        style={{
-                                          width: 50,
-                                          color: theme.text,
-                                          fontSize: 16,
-                                          padding: 0,
-                                          textAlign: 'center',
-                                          backgroundColor: theme.background,
-                                          borderColor: theme.backgroundSelected,
-                                          borderWidth: 1,
-                                          borderRadius: 8,
-                                          height: 34,
-                                          marginRight: Spacing.one,
-                                          fontWeight: '600',
-                                        }}
-                                      />
-                                      <ThemedText type="default" themeColor="textSecondary" style={{ marginRight: Spacing.four, fontSize: 16 }}>
-                                        {unitName}
-                                      </ThemedText>
-
-                                      <TextInput
-                                        placeholder="Notes"
-                                        value={s.notes}
-                                        placeholderTextColor={theme.textSecondary}
-                                        onChangeText={(val) => {
-                                          const newSets = [...plannedSets];
-                                          newSets[idx].notes = val;
-                                          setPlannedSets(newSets);
-                                        }}
-                                        style={{
-                                          flex: 1,
-                                          color: theme.text,
-                                          fontSize: 16,
-                                          paddingHorizontal: Spacing.two,
-                                          backgroundColor: theme.background,
-                                          borderColor: theme.backgroundSelected,
-                                          borderWidth: 1,
-                                          borderRadius: 8,
-                                          height: 34,
-                                        }}
-                                      />
-                                    </View>
-                                  </Swipeable>
-                                );
-                              })}
-
-                              {/* Add Set Row */}
-                              <Pressable
-                                onPress={() => setPlannedSets((prev) => [...prev, { reps: '10', notes: '' }])}
-                                style={({ pressed }) => [
-                                  styles.appleListRow,
-                                  { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.backgroundSelected },
-                                  pressed && styles.pressed,
-                                ]}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                  <SymbolView name="plus.circle" tintColor="#0A84FF" size={20} style={{ marginRight: 8 }} />
-                                  <ThemedText type="default" style={{ color: '#0A84FF', fontWeight: '500', fontSize: 16 }}>Add Set</ThemedText>
-                                </View>
-                              </Pressable>
-                            </ThemedView>
+                              {/* Add Set Button Card */}
+                              <ThemedView type="backgroundElement" style={[styles.appleListGroup, { marginTop: Spacing.one }]}>
+                                <Pressable
+                                  onPress={() => setPlannedSets((prev) => [...prev, { reps: '10', notes: '' }])}
+                                  style={({ pressed }) => [
+                                    styles.appleListRow,
+                                    pressed && styles.pressed,
+                                  ]}>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <SymbolView name="plus.circle" tintColor="#0A84FF" size={20} style={{ marginRight: 8 }} />
+                                    <ThemedText type="default" style={{ color: '#0A84FF', fontWeight: '500', fontSize: 16 }}>Add Set</ThemedText>
+                                  </View>
+                                </Pressable>
+                              </ThemedView>
+                            </>
                           );
                         })()}
                       </View>
                     </Pressable>
-                    </ScrollView>
-                  )}
-                </View>
-              )}
-            </KeyboardAvoidingView>
-          </Animated.View>
-        </View>
+                  </ScrollView>
+                )}
+              </View>
+            )}
+          </KeyboardAvoidingView>
+        </ThemedView>
       </Modal>
 
       <Modal
@@ -2343,7 +2318,7 @@ export default function WorkoutsScreen() {
                   style={[
                     styles.modalContent,
                     {
-                      height: '80%',
+                      height: '70%',
                       backgroundColor: theme.background,
                       transform: [{ translateY: exerciseDetailSwipe.translateY }]
                     }
@@ -2572,108 +2547,93 @@ export default function WorkoutsScreen() {
 
       {/* Settings Modal */}
       <Modal
-        animationType="none"
-        transparent={true}
+        animationType="slide"
+        transparent={false}
         visible={isSettingsVisible}
-        onRequestClose={settingsSwipe.close}>
-        <View style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={settingsSwipe.close} />
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                height: '60%',
-                backgroundColor: theme.background,
-                transform: [{ translateY: settingsSwipe.translateY }]
-              }
-            ]}>
-              <View {...settingsSwipe.panHandlers}>
-                <View style={styles.dragHandleContainer}>
-                  <View style={styles.dragHandle} />
-                </View>
-                <View style={styles.modalHeader}>
-                  <Pressable
-                    onPress={settingsSwipe.close}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    <ThemedText type="link" themeColor="textSecondary">Cancel</ThemedText>
-                  </Pressable>
-                  <ThemedText type="smallBold" style={styles.modalTitle}>
-                    Settings
-                  </ThemedText>
-                  <Pressable
-                    onPress={async () => {
-                      if (!tempServerUrl.trim()) {
-                        Alert.alert('Error', 'Server address is required');
-                        return;
-                      }
+        onRequestClose={() => setIsSettingsVisible(false)}>
+        <ThemedView type="background" style={{ flex: 1, paddingTop: insets.top }}>
+          <View style={styles.modalHeader}>
+            <Pressable
+              onPress={() => setIsSettingsVisible(false)}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
+            </Pressable>
+            <ThemedText type="smallBold" style={styles.modalTitle}>
+              Settings
+            </ThemedText>
+            <Pressable
+              onPress={async () => {
+                if (!tempServerUrl.trim()) {
+                  Alert.alert('Error', 'Server address is required');
+                  return;
+                }
 
-                      setApiBaseUrl(tempServerUrl.trim());
-                      settingsSwipe.close();
-                      fetchData(true);
-                    }}
-                    style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
-                    <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
-                  </Pressable>
-                </View>
+                setApiBaseUrl(tempServerUrl.trim());
+                setIsSettingsVisible(false);
+                fetchData(true);
+              }}
+              style={({ pressed }) => [styles.modalHeaderButton, pressed && styles.pressed]}>
+              <ThemedText type="linkPrimary" style={{ color: '#0A84FF', fontWeight: 'bold' }}>Save</ThemedText>
+            </Pressable>
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}>
+            <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
+            <ScrollView style={styles.modalFormBody}>
+              <View style={styles.formGroup}>
+                <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                  SERVER API BASE URL
+                </ThemedText>
+                <TextInput
+                  placeholder="e.g. http://localhost:8080"
+                  placeholderTextColor={theme.textSecondary}
+                  value={tempServerUrl}
+                  onChangeText={setTempServerUrl}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[
+                    styles.inputField,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      color: theme.text,
+                      borderColor: theme.backgroundSelected,
+                    },
+                  ]}
+                />
               </View>
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}>
-                <Pressable onPress={Keyboard.dismiss} style={{ width: '100%', flex: 1 }}>
-                <ScrollView style={styles.modalFormBody}>
-                  <View style={styles.formGroup}>
-                    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                      SERVER API BASE URL
-                    </ThemedText>
-                    <TextInput
-                      placeholder="e.g. http://localhost:8080"
-                      placeholderTextColor={theme.textSecondary}
-                      value={tempServerUrl}
-                      onChangeText={setTempServerUrl}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      style={[
-                        styles.inputField,
-                        {
-                          backgroundColor: theme.backgroundElement,
-                          color: theme.text,
-                          borderColor: theme.backgroundSelected,
-                        },
-                      ]}
-                    />
-                  </View>
 
-                  {Platform.OS === 'ios' && certInfo && certInfo.status !== 'unavailable' && (
-                    <View style={[styles.formGroup, { marginTop: Spacing.two }]}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                        PROVISIONING PROFILE EXPIRATION (iOS)
+              {Platform.OS === 'ios' && certInfo && certInfo.status !== 'unavailable' && (
+                <View style={[styles.formGroup, { marginTop: Spacing.two }]}>
+                  <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                    PROVISIONING PROFILE EXPIRATION (iOS)
+                  </ThemedText>
+                  <View style={{
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.backgroundSelected,
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    padding: Spacing.three,
+                  }}>
+                    {certInfo.status === 'active' && (
+                      <ThemedText type="small" style={{ color: (certInfo.daysRemaining! === 0 || certInfo.daysRemaining! <= 2) ? '#FF3B30' : theme.text }}>
+                        Expiring in {certInfo.daysRemaining! > 0 ? `${certInfo.daysRemaining}d ${certInfo.hoursRemaining}h` : `${certInfo.hoursRemaining}h`}
                       </ThemedText>
-                      <View style={{
-                        backgroundColor: theme.backgroundElement,
-                        borderColor: theme.backgroundSelected,
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        padding: Spacing.three,
-                      }}>
-                        {certInfo.status === 'active' && (
-                          <ThemedText type="small" style={{ color: (certInfo.daysRemaining! === 0 || certInfo.daysRemaining! <= 2) ? '#FF3B30' : theme.text }}>
-                            Expiring in {certInfo.daysRemaining! > 0 ? `${certInfo.daysRemaining}d ${certInfo.hoursRemaining}h` : `${certInfo.hoursRemaining}h`}
-                          </ThemedText>
-                        )}
-                        {certInfo.status === 'expired' && (
-                          <ThemedText type="smallBold" style={{ color: '#FF3B30' }}>
-                            Certificato Scaduto! Reinstalla l’app da Xcode.
-                          </ThemedText>
-                        )}
-                      </View>
-                    </View>
-                  )}
-                </ScrollView>
-              </Pressable>
-            </KeyboardAvoidingView>
-          </Animated.View>
-        </View>
-      </Modal>
+                    )}
+                    {certInfo.status === 'expired' && (
+                      <ThemedText type="smallBold" style={{ color: '#FF3B30' }}>
+                        Certificato Scaduto! Reinstalla l’app da Xcode.
+                      </ThemedText>
+                    )}
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </ThemedView>
+    </Modal>
 
       {isWorkoutActive && isWorkoutMinimized && selectedRoutine && (
         <Pressable
