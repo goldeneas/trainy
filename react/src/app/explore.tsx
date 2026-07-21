@@ -15,7 +15,6 @@ import {
   StyleSheet,
   TextInput,
   View,
-  InteractionManager,
   Linking,
   Dimensions,
 } from 'react-native';
@@ -23,7 +22,7 @@ import { SymbolView } from 'expo-symbols';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import YoutubePlayer from 'react-native-youtube-iframe';
+import { WebView } from 'react-native-webview';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -121,10 +120,64 @@ function useBottomSheet(visible: boolean, onClose: () => void) {
   return { translateY, panHandlers, close: animateClose };
 }
 
-const getYoutubeVideoId = (url: string) => {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
+interface EmbedInfo {
+  type: 'youtube' | 'instagram' | 'tiktok' | 'unknown';
+  embedUrl: string | null;
+}
+
+const getMediaEmbedInfo = (url: string): EmbedInfo => {
+  if (!url) return { type: 'unknown', embedUrl: null };
+  const cleaned = url.trim();
+
+  // 1. YouTube Shorts
+  const ytShortsRegex = /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
+  const ytShortsMatch = cleaned.match(ytShortsRegex);
+  if (ytShortsMatch) {
+    return {
+      type: 'youtube',
+      embedUrl: `https://www.youtube.com/embed/${ytShortsMatch[1]}?autoplay=0&mute=0&modestbranding=1&rel=0`
+    };
+  }
+
+  // 2. YouTube Standard
+  const ytRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
+  const ytMatch = cleaned.match(ytRegex);
+  if (ytMatch) {
+    return {
+      type: 'youtube',
+      embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0&mute=0&modestbranding=1&rel=0`
+    };
+  }
+
+  // 3. Instagram Reel or Post
+  const igRegex = /(?:instagram\.com\/(?:p|reel|tv)\/)([a-zA-Z0-9_-]+)/;
+  const igMatch = cleaned.match(igRegex);
+  if (igMatch) {
+    return {
+      type: 'instagram',
+      embedUrl: `https://www.instagram.com/p/${igMatch[1]}/embed/`
+    };
+  }
+
+  // 4. TikTok Video
+  const ttRegex = /(?:tiktok\.com\/@[^\/]+\/video\/)(\d+)/;
+  const ttMatch = cleaned.match(ttRegex);
+  if (ttMatch) {
+    return {
+      type: 'tiktok',
+      embedUrl: `https://www.tiktok.com/embed/v2/${ttMatch[1]}`
+    };
+  }
+
+  // 5. TikTok Short Link (vm or vt)
+  if (cleaned.includes('tiktok.com') && (cleaned.includes('vm.tiktok.com') || cleaned.includes('vt.tiktok.com') || cleaned.includes('vxtiktok.com'))) {
+    return {
+      type: 'tiktok',
+      embedUrl: cleaned
+    };
+  }
+
+  return { type: 'unknown', embedUrl: null };
 };
 
 export default function ExercisesScreen() {
@@ -158,10 +211,10 @@ export default function ExercisesScreen() {
   const [localExerciseIds, setLocalExerciseIds] = useState<number[]>([]);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const handle = requestIdleCallback(() => {
       setIsTransitionReady(true);
     });
-    return () => task.cancel();
+    return () => cancelIdleCallback(handle);
   }, []);
 
   // Modals state
@@ -1629,24 +1682,22 @@ export default function ExercisesScreen() {
 
                 {selectedExerciseVideo?.link ? (
                   (() => {
-                    const videoId = getYoutubeVideoId(selectedExerciseVideo.link);
+                    const mediaInfo = getMediaEmbedInfo(selectedExerciseVideo.link);
+                    const containerHeight = mediaInfo.type === 'youtube' ? VIDEO_HEIGHT : 400;
                     return (
                       <View style={styles.detailSection}>
                         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
-                          VIDEO PREVIEW
+                          EXECUTION VIDEO
                         </ThemedText>
-                        {videoId ? (
-                          <View style={{ borderRadius: 12, overflow: 'hidden', backgroundColor: '#000', width: '100%', height: VIDEO_HEIGHT }}>
-                            <YoutubePlayer
-                              height={VIDEO_HEIGHT}
-                              play={false}
-                              videoId={videoId}
-                              initialPlayerParams={{
-                                preventFullScreen: true,
-                                rel: false, // Hides related videos
-                                modestbranding: true, // Hides YouTube logo
-                                iv_load_policy: 3, // Hides annotations
-                              }}
+                        {mediaInfo.embedUrl ? (
+                          <View style={{ borderRadius: 12, overflow: 'hidden', backgroundColor: '#000', width: '100%', height: containerHeight }}>
+                            <WebView
+                              source={{ uri: mediaInfo.embedUrl }}
+                              style={{ flex: 1, height: containerHeight }}
+                              allowsInlineMediaPlayback={true}
+                              mediaPlaybackRequiresUserAction={true}
+                              javaScriptEnabled={true}
+                              domStorageEnabled={true}
                             />
                           </View>
                         ) : (
@@ -1884,10 +1935,10 @@ export default function ExercisesScreen() {
 
                 <View style={styles.formGroup}>
                   <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
-                    YOUTUBE VIDEO
+                    EXECUTION VIDEO
                   </ThemedText>
                   <TextInput
-                    placeholder="e.g. https://www.youtube.com/watch?v=..."
+                    placeholder="e.g. YouTube, Instagram or TikTok link"
                     placeholderTextColor={theme.textSecondary}
                     value={newVideoLink}
                     onChangeText={setNewVideoLink}

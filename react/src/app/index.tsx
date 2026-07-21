@@ -27,6 +27,8 @@ import * as Notifications from 'expo-notifications';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle } from 'react-native-svg';
 import * as Location from 'expo-location';
+import { Paths, File } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -200,6 +202,73 @@ async function getUserLocationSafe(): Promise<{ latitude: number; longitude: num
   return null;
 }
 
+interface CertExpirationInfo {
+  status: 'active' | 'expired' | 'unavailable';
+  daysRemaining?: number;
+  hoursRemaining?: number;
+  expirationDate?: Date;
+  details?: string;
+}
+
+async function getProvisioningProfileExpiration(): Promise<CertExpirationInfo> {
+  if (Platform.OS !== 'ios') {
+    return { status: 'unavailable', details: 'Non applicabile (dispositivo Android o Web)' };
+  }
+
+  try {
+    let bundleUri = Paths.bundle.uri;
+    if (!bundleUri.endsWith('/')) {
+      bundleUri += '/';
+    }
+    const profileUri = bundleUri + 'embedded.mobileprovision';
+
+    let content = '';
+    try {
+      const profileFile = new File(Paths.bundle, 'embedded.mobileprovision');
+      content = await profileFile.text();
+    } catch {
+      try {
+        content = await FileSystem.readAsStringAsync(profileUri, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+      } catch {
+        const response = await fetch(profileUri);
+        content = await response.text();
+      }
+    }
+
+    if (!content) {
+      return { status: 'unavailable', details: 'Profilo vuoto o non presente' };
+    }
+
+    const match = content.match(/<key>\s*ExpirationDate\s*<\/key>\s*<date>([^<]+)<\/date>/i);
+    if (!match || !match[1]) {
+      return { status: 'unavailable', details: 'Chiave ExpirationDate non trovata nel profilo' };
+    }
+
+    const dateStr = match[1].trim();
+    const expirationDate = new Date(dateStr);
+    if (isNaN(expirationDate.getTime())) {
+      return { status: 'unavailable', details: 'Data di scadenza non valida' };
+    }
+
+    const now = new Date();
+    const diffTime = expirationDate.getTime() - now.getTime();
+
+    if (diffTime <= 0) {
+      return { status: 'expired', expirationDate, daysRemaining: 0, hoursRemaining: 0 };
+    }
+
+    const daysRemaining = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const hoursRemaining = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    return { status: 'active', expirationDate, daysRemaining, hoursRemaining };
+  } catch (error: any) {
+    console.warn('Errore durante la lettura del profilo iOS:', error);
+    return { status: 'unavailable', details: error?.message || 'Errore di lettura' };
+  }
+}
+
 export default function WorkoutsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -283,6 +352,14 @@ export default function WorkoutsScreen() {
   // Settings Modal State
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [tempServerUrl, setTempServerUrl] = useState('');
+  const [certInfo, setCertInfo] = useState<CertExpirationInfo | null>(null);
+
+  useEffect(() => {
+    if (isSettingsVisible) {
+      getProvisioningProfileExpiration().then(setCertInfo);
+    }
+  }, [isSettingsVisible]);
+
   // Audio player and notifications setup
   const player = useAudioPlayer('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
 
@@ -2595,10 +2672,33 @@ export default function WorkoutsScreen() {
                         },
                       ]}
                     />
-                    <ThemedText type="small" themeColor="textSecondary" style={{ marginTop: Spacing.two, lineHeight: 18 }}>
-                      Change the connection address of the backend service.
-                    </ThemedText>
                   </View>
+
+                  {Platform.OS === 'ios' && certInfo && certInfo.status !== 'unavailable' && (
+                    <View style={[styles.formGroup, { marginTop: Spacing.two }]}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                        PROVISIONING PROFILE EXPIRATION (iOS)
+                      </ThemedText>
+                      <View style={{
+                        backgroundColor: theme.backgroundElement,
+                        borderColor: theme.backgroundSelected,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        padding: Spacing.three,
+                      }}>
+                        {certInfo.status === 'active' && (
+                          <ThemedText type="small" style={{ color: (certInfo.daysRemaining! === 0 || certInfo.daysRemaining! <= 2) ? '#FF3B30' : theme.text }}>
+                            Expiring in {certInfo.daysRemaining! > 0 ? `${certInfo.daysRemaining}d ${certInfo.hoursRemaining}h` : `${certInfo.hoursRemaining}h`}
+                          </ThemedText>
+                        )}
+                        {certInfo.status === 'expired' && (
+                          <ThemedText type="smallBold" style={{ color: '#FF3B30' }}>
+                            Certificato Scaduto! Reinstalla l’app da Xcode.
+                          </ThemedText>
+                        )}
+                      </View>
+                    </View>
+                  )}
                 </ScrollView>
               </Pressable>
             </KeyboardAvoidingView>

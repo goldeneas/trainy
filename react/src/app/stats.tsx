@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  InteractionManager,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -46,10 +45,10 @@ export default function StatsScreen() {
   const [repUnits, setRepUnits] = useState<RepUnit[]>([]);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const handle = requestIdleCallback(() => {
       setIsTransitionReady(true);
     });
-    return () => task.cancel();
+    return () => cancelIdleCallback(handle);
   }, []);
 
   const fetchData = useCallback(async (showLoading = false) => {

@@ -16,7 +16,6 @@ import {
   StyleSheet,
   TextInput,
   View,
-  InteractionManager,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import * as Location from 'expo-location';
@@ -171,10 +170,10 @@ export default function GymsScreen() {
   const [isTransitionReady, setIsTransitionReady] = useState(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const handle = requestIdleCallback(() => {
       setIsTransitionReady(true);
     });
-    return () => task.cancel();
+    return () => cancelIdleCallback(handle);
   }, []);
 
   // Modals visibility
