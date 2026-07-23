@@ -7,6 +7,7 @@ import {
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Modal,
   PanResponder,
   Platform,
@@ -15,6 +16,7 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
+  UIManager,
   Vibration,
   View,
 } from 'react-native';
@@ -38,6 +40,8 @@ import {
   api,
   FullRoutine,
   FullActualRoutine,
+  FullPlannedExercise,
+  PlannedSetInfo,
   Exercise,
   MuscleGroup,
   getApiBaseUrl,
@@ -269,6 +273,171 @@ async function getProvisioningProfileExpiration(): Promise<CertExpirationInfo> {
   }
 }
 
+interface PlannedExerciseCardProps {
+  pe: FullPlannedExercise;
+  idx: number;
+  totalVisible: number;
+  exercises: Exercise[];
+  repUnits: Record<number, { name_singular: string; name_plural: string }>;
+  bestWeightsMap: Record<string, number>;
+  theme: any;
+  handleRemovePlannedExercise: (id: number) => void;
+  onMoveUp: (idx: number) => void;
+  onMoveDown: (idx: number) => void;
+}
+
+function PlannedExerciseCard({
+  pe,
+  idx,
+  totalVisible,
+  exercises,
+  repUnits,
+  bestWeightsMap,
+  theme,
+  handleRemovePlannedExercise,
+  onMoveUp,
+  onMoveDown,
+}: PlannedExerciseCardProps) {
+  const ex = exercises.find((e) => e.id === pe.ExerciseID);
+  const repUnit = ex ? repUnits[ex.rep_unit_id] : null;
+  const unitSingular = (repUnit?.name_singular || 'rep').toLowerCase();
+  const unitPlural = (repUnit?.name_plural || 'reps').toLowerCase();
+
+  return (
+    <View style={styles.swipeContainer}>
+      <Swipeable
+        key={`swipe-${pe.ID || pe.ExerciseID}-${idx}`}
+        renderLeftActions={() => (
+          <View style={styles.swipeActionContainer}>
+            <Pressable
+              onPress={() => handleRemovePlannedExercise(pe.ID)}
+              style={({ pressed }) => [styles.deleteSwipeBtn, pressed && styles.pressed]}>
+              <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
+            </Pressable>
+          </View>
+        )}>
+        <ThemedView
+          type="backgroundElement"
+          style={[
+            styles.appleListRow,
+            {
+              paddingVertical: Spacing.three,
+              minHeight: 0,
+              borderRadius: 10,
+              flexDirection: 'column',
+              alignItems: 'stretch',
+            },
+          ]}>
+          {/* Header Row: Title & Reorder Up/Down Icons */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <ThemedText
+              type="small"
+              style={{ fontWeight: '600', fontSize: 16, lineHeight: 20, flex: 1, marginRight: Spacing.two }}
+              numberOfLines={1}>
+              {ex?.name || 'Exercise'}
+            </ThemedText>
+
+            {/* Reorder Buttons in place of rest timer */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Pressable
+                onPress={() => onMoveUp(idx)}
+                disabled={idx === 0}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  { padding: 4, opacity: idx === 0 ? 0.25 : pressed ? 0.5 : 1 },
+                ]}>
+                <SymbolView name="chevron.up" tintColor={theme.text} size={18} />
+              </Pressable>
+              <Pressable
+                onPress={() => onMoveDown(idx)}
+                disabled={idx === totalVisible - 1}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  { padding: 4, opacity: idx === totalVisible - 1 ? 0.25 : pressed ? 0.5 : 1 },
+                ]}>
+                <SymbolView name="chevron.down" tintColor={theme.text} size={18} />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Rest Time Slot: Positioned under Exercise Title with Spacing.half marginTop and Spacing.two marginBottom */}
+          <View style={{ marginBottom: 18, justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <SymbolView name="timer" tintColor={theme.textSecondary} size={14} style={{ marginRight: 4 }} />
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={{ fontSize: 14, lineHeight: 18, fontWeight: '500' }}>
+                {pe.RestTime ? pe.RestTime : 0}s
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Sets Table */}
+          {pe.sets && pe.sets.length > 0 && (
+            <View>
+              <Row
+                style={styles.tableHeaderRow}
+                widthArr={[30, 'flex', 70]}
+                data={[
+                  <ThemedText key="h-set" type="smallBold" themeColor="textSecondary" style={styles.thSet}>
+                    SET
+                  </ThemedText>,
+                  <ThemedText key="h-reps" type="smallBold" themeColor="textSecondary" style={styles.thPlanned}>
+                    REPS
+                  </ThemedText>,
+                  <ThemedText key="h-weight" type="smallBold" themeColor="textSecondary" style={styles.thWeight}>
+                    WEIGHT
+                  </ThemedText>,
+                ]}
+              />
+              <Table>
+                {pe.sets.map((s: PlannedSetInfo, sIdx: number) => {
+                  const unitText = s.Reps === 1 ? unitSingular : unitPlural;
+                  const key = `${pe.ExerciseID}_${s.Reps}`;
+                  const bestWeight =
+                    bestWeightsMap[key] !== undefined && bestWeightsMap[key] !== null
+                      ? bestWeightsMap[key]
+                      : 0;
+                  const weightDisplay = bestWeight > 0 ? `${bestWeight} kg` : '-';
+
+                  return (
+                    <Row
+                      key={s.ID || sIdx}
+                      style={styles.tableBodyRow}
+                      widthArr={[30, 'flex', 70]}
+                      data={[
+                        <ThemedText key="b-set" type="smallBold" style={styles.tdSet}>
+                          {s.Ord || sIdx + 1}
+                        </ThemedText>,
+                        <ThemedText key="b-reps" type="small" themeColor="textSecondary" style={styles.tdPlanned}>
+                          {s.Reps} {unitText}
+                        </ThemedText>,
+                        <ThemedText key="b-weight" type="small" themeColor="textSecondary" style={styles.thWeight}>
+                          {weightDisplay}
+                        </ThemedText>,
+                      ]}
+                    />
+                  );
+                })}
+              </Table>
+            </View>
+          )}
+
+          {pe.Notes ? (
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={{ fontSize: 14, lineHeight: 18, fontStyle: 'italic', marginTop: 4 }}>
+              Notes: {pe.Notes}
+            </ThemedText>
+          ) : null}
+        </ThemedView>
+      </Swipeable>
+    </View>
+  );
+}
+
 export default function WorkoutsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -324,6 +493,8 @@ export default function WorkoutsScreen() {
   const [pendingDeletePlannedExerciseIds, setPendingDeletePlannedExerciseIds] = useState<number[]>([]);
   const [startingWorkoutId, setStartingWorkoutId] = useState<number | null>(null);
   const [bestWeightsMap, setBestWeightsMap] = useState<{ [key: string]: number }>({});
+  const [isReorderingExercises, setIsReorderingExercises] = useState(false);
+  const [hasReorderedExercises, setHasReorderedExercises] = useState(false);
 
   // Active Workout Log State
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
@@ -378,6 +549,8 @@ export default function WorkoutsScreen() {
     setSelectedExerciseId(null);
     setNewPlannedExerciseNotes('');
     setPendingDeletePlannedExerciseIds([]);
+    setHasReorderedExercises(false);
+    fetchData();
   });
 
   const historyDetailSwipe = useBottomSheet(isHistoryDetailVisible, () => {
@@ -767,15 +940,40 @@ export default function WorkoutsScreen() {
         );
       }
 
-      // 2. Update routine metadata
+      // 2. If exercises were reordered, re-register them in their new order
+      if (hasReorderedExercises && selectedRoutine.plannedExercises) {
+        const remainingExercises = selectedRoutine.plannedExercises.filter(
+          (pe) => !pendingDeletePlannedExerciseIds.includes(pe.ID)
+        );
+        // Delete current planned exercises
+        for (const pe of remainingExercises) {
+          if (pe.ID) {
+            await api.deletePlannedExercise(pe.ID);
+          }
+        }
+        // Re-register in new order
+        for (const pe of remainingExercises) {
+          await api.registerPlannedExercise({
+            routine_id: selectedRoutine.ID,
+            exercise_id: pe.ExerciseID,
+            rest_time: pe.RestTime,
+            notes: pe.Notes,
+            planned_set_infos: pe.sets ? pe.sets.map((s, idx) => ({ ord: idx + 1, reps: s.Reps, notes: s.Notes || '' })) : [],
+          });
+        }
+      }
+
+      // 3. Update routine metadata
       await api.updateRoutine(selectedRoutine.ID, {
         name: editRoutineName.trim(),
         description: editRoutineDesc.trim(),
         image_id: selectedRoutine.ImageID,
       });
 
-      // 3. Reset state, refresh data and close modal
+      // 4. Reset state, refresh data and close modal
       setPendingDeletePlannedExerciseIds([]);
+      setIsReorderingExercises(false);
+      setHasReorderedExercises(false);
       fetchData();
       routineDetailSwipe.close();
     } catch (error: any) {
@@ -783,10 +981,47 @@ export default function WorkoutsScreen() {
     }
   };
 
+  // Reorder planned exercise handlers
+  const handleMoveExerciseUp = (idx: number) => {
+    if (idx <= 0 || !selectedRoutineId) return;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setRoutines((prevRoutines) =>
+      prevRoutines.map((routine) => {
+        if (routine.ID !== selectedRoutineId) return routine;
+        const newPlanned = [...routine.plannedExercises];
+        const temp = newPlanned[idx];
+        newPlanned[idx] = newPlanned[idx - 1];
+        newPlanned[idx - 1] = temp;
+        return { ...routine, plannedExercises: newPlanned };
+      })
+    );
+    setHasReorderedExercises(true);
+  };
+
+  const handleMoveExerciseDown = (idx: number) => {
+    if (!selectedRoutine || !selectedRoutine.plannedExercises || idx >= selectedRoutine.plannedExercises.length - 1 || !selectedRoutineId) return;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setRoutines((prevRoutines) =>
+      prevRoutines.map((routine) => {
+        if (routine.ID !== selectedRoutineId) return routine;
+        const newPlanned = [...routine.plannedExercises];
+        const temp = newPlanned[idx];
+        newPlanned[idx] = newPlanned[idx + 1];
+        newPlanned[idx + 1] = temp;
+        return { ...routine, plannedExercises: newPlanned };
+      })
+    );
+    setHasReorderedExercises(true);
+  };
+
+
+
   // Remove planned exercise handler
   const handleRemovePlannedExercise = useCallback((peId: number) => {
     setPendingDeletePlannedExerciseIds((prev) => [...prev, peId]);
   }, [setPendingDeletePlannedExerciseIds]);
+
+
 
   const renderPlannedExerciseSwipeActions = useCallback((peId: number) => (
     <View style={styles.swipeActionContainer}>
@@ -1376,6 +1611,9 @@ export default function WorkoutsScreen() {
           if (isAddExerciseToRoutineVisible) {
             setIsAddExerciseToRoutineVisible(false);
           } else {
+            setPendingDeletePlannedExerciseIds([]);
+            setHasReorderedExercises(false);
+            fetchData();
             setIsRoutineDetailVisible(false);
           }
         }}>
@@ -1394,7 +1632,12 @@ export default function WorkoutsScreen() {
               </Pressable>
             ) : (
               <Pressable
-                onPress={() => setIsRoutineDetailVisible(false)}
+                onPress={() => {
+                  setPendingDeletePlannedExerciseIds([]);
+                  setHasReorderedExercises(false);
+                  fetchData();
+                  setIsRoutineDetailVisible(false);
+                }}
                 style={styles.modalHeaderButton}>
                 <ThemedText type="link" themeColor="textSecondary">Back</ThemedText>
               </Pressable>
@@ -1470,7 +1713,7 @@ export default function WorkoutsScreen() {
 
                     {/* Planned Exercises Section */}
                     <View style={styles.detailSection}>
-                      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.formLabel}>
+                      <ThemedText type="smallBold" themeColor="textSecondary" style={[styles.formLabel, { marginBottom: Spacing.half }]}>
                         EXERCISES
                       </ThemedText>
 
@@ -1480,92 +1723,21 @@ export default function WorkoutsScreen() {
                           {selectedRoutine.plannedExercises
                             .filter(pe => !pendingDeletePlannedExerciseIds.includes(pe.ID))
                             .map((pe, idx) => {
-                              const ex = exercises.find(e => e.id === pe.ExerciseID);
-                              const repUnit = ex ? repUnits[ex.rep_unit_id] : null;
-                              const unitSingular = (repUnit?.name_singular || 'rep').toLowerCase();
-                              const unitPlural = (repUnit?.name_plural || 'reps').toLowerCase();
-
+                              const totalVisible = selectedRoutine.plannedExercises.filter(p => !pendingDeletePlannedExerciseIds.includes(p.ID)).length;
                               return (
-                                <Swipeable
-                                  key={pe.ID || `pe-${idx}`}
-                                  renderLeftActions={() => (
-                                    <View style={styles.swipeActionContainer}>
-                                      <Pressable
-                                        onPress={() => handleRemovePlannedExercise(pe.ID)}
-                                        style={({ pressed }) => [
-                                          styles.deleteSwipeBtn,
-                                          pressed && styles.pressed,
-                                        ]}>
-                                        <SymbolView tintColor="#FFFFFF" name="trash.fill" size={16} />
-                                      </Pressable>
-                                    </View>
-                                  )}
-                                  containerStyle={styles.swipeContainer}>
-                                  <Pressable onPress={Keyboard.dismiss}>
-                                    <ThemedView
-                                      type="backgroundElement"
-                                      style={[styles.appleListRow, { paddingVertical: Spacing.three, minHeight: 0, borderRadius: 10, flexDirection: 'column', alignItems: 'stretch' }]}>
-                                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <ThemedText type="small" style={{ fontWeight: '600', fontSize: 16, lineHeight: 20, flex: 1, marginRight: Spacing.two }} numberOfLines={1}>
-                                          {ex?.name || 'Exercise'}
-                                        </ThemedText>
-                                        {pe.RestTime ? (
-                                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            <SymbolView name="timer" tintColor={theme.textSecondary} size={14} style={{ marginRight: 4 }} />
-                                            <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 14, lineHeight: 18, fontWeight: '500' }}>
-                                              {pe.RestTime}s
-                                            </ThemedText>
-                                          </View>
-                                        ) : null}
-                                      </View>
-                                      
-                                      {pe.sets && pe.sets.length > 0 && (
-                                        <View style={{ marginTop: Spacing.four }}>
-                                          <Row
-                                            style={styles.tableHeaderRow}
-                                            widthArr={[30, 'flex', 70]}
-                                            data={[
-                                              <ThemedText key="h-set" type="smallBold" themeColor="textSecondary" style={styles.thSet}>SET</ThemedText>,
-                                              <ThemedText key="h-reps" type="smallBold" themeColor="textSecondary" style={styles.thPlanned}>REPS</ThemedText>,
-                                              <ThemedText key="h-weight" type="smallBold" themeColor="textSecondary" style={styles.thWeight}>WEIGHT</ThemedText>,
-                                            ]}
-                                          />
-                                          <Table>
-                                            {pe.sets.map((s, sIdx) => {
-                                              const unitText = s.Reps === 1 ? unitSingular : unitPlural;
-                                              const key = `${pe.ExerciseID}_${s.Reps}`;
-                                              const bestWeight = bestWeightsMap[key] !== undefined && bestWeightsMap[key] !== null ? bestWeightsMap[key] : 0;
-                                              const weightDisplay = bestWeight > 0 ? `${bestWeight} kg` : '-';
-
-                                              return (
-                                                <Row
-                                                  key={s.ID || sIdx}
-                                                  style={styles.tableBodyRow}
-                                                  widthArr={[30, 'flex', 70]}
-                                                  data={[
-                                                    <ThemedText key="b-set" type="smallBold" style={styles.tdSet}>{s.Ord || (sIdx + 1)}</ThemedText>,
-                                                    <ThemedText key="b-reps" type="small" themeColor="textSecondary" style={styles.tdPlanned}>
-                                                      {s.Reps} {unitText}
-                                                    </ThemedText>,
-                                                    <ThemedText key="b-weight" type="small" themeColor="textSecondary" style={styles.thWeight}>
-                                                      {weightDisplay}
-                                                    </ThemedText>,
-                                                  ]}
-                                                />
-                                              );
-                                            })}
-                                          </Table>
-                                        </View>
-                                      )}
-
-                                      {pe.Notes ? (
-                                        <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 14, lineHeight: 18, fontStyle: 'italic', marginTop: 3 }}>
-                                          Notes: {pe.Notes}
-                                        </ThemedText>
-                                      ) : null}
-                                    </ThemedView>
-                                  </Pressable>
-                                </Swipeable>
+                                <PlannedExerciseCard
+                                  key={`pe-${pe.ID || pe.ExerciseID}-${idx}`}
+                                  pe={pe}
+                                  idx={idx}
+                                  totalVisible={totalVisible}
+                                  exercises={exercises}
+                                  repUnits={repUnits}
+                                  bestWeightsMap={bestWeightsMap}
+                                  theme={theme}
+                                  handleRemovePlannedExercise={handleRemovePlannedExercise}
+                                  onMoveUp={handleMoveExerciseUp}
+                                  onMoveDown={handleMoveExerciseDown}
+                                />
                               );
                             })}
                         </View>
@@ -1942,7 +2114,7 @@ export default function WorkoutsScreen() {
                     key={pe.ID}
                     type="backgroundElement"
                     style={styles.workoutExerciseBlock}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <ThemedText type="default" style={{ fontWeight: 'bold', color: theme.text, fontSize: 18, flex: 1, marginRight: Spacing.two }}>
                         {pe.exercise?.name}
                       </ThemedText>
@@ -1962,11 +2134,11 @@ export default function WorkoutsScreen() {
                         <SymbolView name="info.circle" tintColor="#0A84FF" size={20} />
                       </Pressable>
                     </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.three }}>
+                    <View style={{ marginTop: Spacing.half, height: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.two }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <SymbolView name="timer" tintColor={theme.textSecondary} size={13} style={{ marginRight: 4 }} />
                         <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: '500' }}>
-                          {pe.RestTime ? `${pe.RestTime}s` : 'None'}
+                          {`${pe.RestTime ? pe.RestTime : 0}s`}
                         </ThemedText>
                       </View>
                       {pe.Notes ? (
